@@ -1,0 +1,1236 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Guide des Fonctionnalités - Plateforme Enchères</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      min-height: 100vh;
+      padding: 40px 20px;
+      color: #333;
+    }
+    
+    .container {
+      max-width: 1600px;
+      margin: 0 auto;
+    }
+    
+    header {
+      text-align: center;
+      margin-bottom: 40px;
+      color: #fff;
+    }
+    
+    header h1 {
+      font-size: 2.5rem;
+      margin-bottom: 10px;
+      background: linear-gradient(90deg, #d4af37, #f4e4bc);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    header p {
+      font-size: 1.1rem;
+      opacity: 0.8;
+    }
+    
+    .stats {
+      display: flex;
+      justify-content: center;
+      gap: 30px;
+      margin: 30px 0;
+      flex-wrap: wrap;
+    }
+    
+    .stat-box {
+      background: rgba(255,255,255,0.1);
+      padding: 15px 30px;
+      border-radius: 12px;
+      text-align: center;
+      border: 1px solid rgba(212, 175, 55, 0.3);
+    }
+    
+    .stat-box .number {
+      font-size: 2rem;
+      font-weight: bold;
+      color: #d4af37;
+    }
+    
+    .stat-box .label {
+      font-size: 0.85rem;
+      color: rgba(255,255,255,0.7);
+      margin-top: 5px;
+    }
+    
+    .legend {
+      background: rgba(255,255,255,0.95);
+      border-radius: 12px;
+      padding: 20px 30px;
+      margin-bottom: 30px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 25px;
+      justify-content: center;
+      align-items: center;
+    }
+    
+    .legend-title {
+      font-weight: bold;
+      color: #1a1a2e;
+      width: 100%;
+      text-align: center;
+      margin-bottom: 10px;
+      font-size: 1.1rem;
+    }
+    
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.85rem;
+      color: #333;
+    }
+    
+    .section {
+      background: #fff;
+      border-radius: 16px;
+      margin-bottom: 30px;
+      overflow: hidden;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+    }
+    
+    .section-header {
+      background: linear-gradient(135deg, #d4af37 0%, #b8962e 100%);
+      color: #1a1a2e;
+      padding: 20px 30px;
+      font-size: 1.3rem;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+    
+    .section-header .icon {
+      font-size: 1.5rem;
+    }
+    
+    .section-header .count {
+      margin-left: auto;
+      background: rgba(255,255,255,0.3);
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+    }
+    
+    .table-wrapper {
+      overflow-x: auto;
+    }
+    
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 900px;
+    }
+    
+    th {
+      background: #f8f9fa;
+      padding: 12px 15px;
+      text-align: left;
+      font-weight: 600;
+      color: #1a1a2e;
+      border-bottom: 2px solid #e9ecef;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    td {
+      padding: 12px 15px;
+      border-bottom: 1px solid #e9ecef;
+      vertical-align: middle;
+    }
+    
+    tr:hover {
+      background: #fefcf3;
+    }
+    
+    tr:last-child td {
+      border-bottom: none;
+    }
+    
+    .feature-name {
+      font-weight: 600;
+      color: #1a1a2e;
+    }
+    
+    .feature-desc {
+      color: #666;
+      font-size: 0.85rem;
+      line-height: 1.4;
+    }
+    
+    .tag {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      margin: 2px;
+    }
+    
+    .tag-sync { background: #e8f5e9; color: #2e7d32; }
+    .tag-ia { background: #f3e5f5; color: #7b1fa2; }
+    .tag-seo { background: #e3f2fd; color: #1565c0; }
+    .tag-manual { background: #fff3e0; color: #e65100; }
+    .tag-new { background: #fce4ec; color: #c2185b; border: 1px solid #c2185b; }
+    
+    .benefit {
+      background: #f0fdf4;
+      padding: 6px 10px;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      color: #166534;
+      display: inline-block;
+    }
+    
+    .tags-cell {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+    
+    .footer {
+      text-align: center;
+      color: rgba(255,255,255,0.6);
+      margin-top: 40px;
+      font-size: 0.9rem;
+    }
+    
+    .footer a {
+      color: #d4af37;
+    }
+    
+    @media (max-width: 768px) {
+      .section-header {
+        font-size: 1.1rem;
+        padding: 15px 20px;
+      }
+      
+      th, td {
+        padding: 8px 10px;
+        font-size: 0.8rem;
+      }
+      
+      .stats {
+        gap: 15px;
+      }
+      
+      .stat-box {
+        padding: 12px 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🏛️ Guide des Fonctionnalités</h1>
+      <p>Plateforme Digitale pour Maison de Ventes aux Enchères</p>
+      
+      <div class="stats">
+        <div class="stat-box">
+          <div class="number">95+</div>
+          <div class="label">Fonctionnalités</div>
+        </div>
+        <div class="stat-box">
+          <div class="number">12</div>
+          <div class="label">Sections</div>
+        </div>
+        <div class="stat-box">
+          <div class="number">15</div>
+          <div class="label">Edge Functions</div>
+        </div>
+        <div class="stat-box">
+          <div class="number">8</div>
+          <div class="label">Spécialités</div>
+        </div>
+      </div>
+    </header>
+
+    <!-- LÉGENDE -->
+    <div class="legend">
+      <div class="legend-title">Légende des types de mise à jour</div>
+      <div class="legend-item">
+        <span class="tag tag-sync">🔄 Auto Sync</span>
+        <span>Synchronisation automatique Interenchères</span>
+      </div>
+      <div class="legend-item">
+        <span class="tag tag-ia">🤖 Auto IA</span>
+        <span>Enrichi par intelligence artificielle</span>
+      </div>
+      <div class="legend-item">
+        <span class="tag tag-seo">📈 SEO</span>
+        <span>Optimisation référencement</span>
+      </div>
+      <div class="legend-item">
+        <span class="tag tag-manual">✏️ Manuel</span>
+        <span>Contenu géré manuellement</span>
+      </div>
+      <div class="legend-item">
+        <span class="tag tag-new">✨ Nouveau</span>
+        <span>Fonctionnalité récente</span>
+      </div>
+    </div>
+
+    <!-- HEADER & FOOTER -->
+    <div class="section">
+      <div class="section-header">
+        <span class="icon">🎯</span>
+        Header & Footer
+        <span class="count">10 fonctionnalités</span>
+      </div>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 18%">Fonctionnalité</th>
+              <th style="width: 40%">Description</th>
+              <th style="width: 18%">Bénéfice</th>
+              <th style="width: 24%">Type</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="feature-name">Logo cliquable</td>
+              <td class="feature-desc">Retour à l'accueil depuis toute page</td>
+              <td><span class="benefit">Navigation intuitive</span></td>
+              <td><span class="tag tag-manual">✏️ Manuel</span></td>
+            </tr>
+            <tr>
+              <td class="feature-name">Menu iconographique</td>
+              <td class="feature-desc">Navigation avec icônes : Home, Vendre, Acheter, À propos, Contact, Mon compte</td>
+              <td><span class="benefit">Ergonomie visuelle</span></td>
+              <td><span class="tag tag-manual">✏️ Manuel</span></td>
+            </tr>
+            <tr>
+              <td class="feature-name">Sous-menus contextuels</td>
+              <td class="feature-desc">Menus déroulants pour Acheter, Vendre, Spécialités, À propos</td>
+              <td><span class="benefit">Accès rapide</span></td>
+              <td><span class="tag tag-manual">✏️ Manuel</span></td>
+            </tr>
+            <tr>
+              <td class="feature-name">Badge notifications</td>
+              <td class="feature-desc">Indicateur visuel des alertes non lues sur l'icône compte</td>
+              <td><span class="benefit">Engagement utilisateur</span></td>
+              <td><span class="tag tag-sync">🔄 Auto Sync</span></td>
+            </tr>
+            <tr>
+              <td class="feature-name">Horloge temps réel</td>
+              <td class="feature-desc">Affichage de l'heure courante avec lien vers calendrier</td>
+              <td><span class="benefit">Immersion enchères</span></td>
+              <td><span class="tag tag-manual">✏️ Manuel</span></td>
+            </tr>
+            <tr>
+              <td class="feature-name">Bouton Estimation gratuite</td>
+              <td class="feature-desc">Accès direct au formulaire d'estimation</td>
+              <td><span class="benefit">Conversion vendeurs</span></td>
+              <td><span class="tag tag-manual">✏️ Manuel</span></td>
+            </tr>
+            <tr>
+              <td class="feature-name">Menu mobile burger</td>
+              <td class="feature-desc">Navigation adaptée smartphones avec bouton fermeture</td>
+              <td><span class="benefit">Expérience mobile</span></td>
+              <td><span class="tag tag-manual">✏️ Manuel</span></td>
+            </tr>
+            <tr>
+              <td class="feature-name">Footer - Coordonnées</td>
+              <td class="feature-desc">Adresse, téléphone, emails par service</td>
+              <td><span class="benefit">Contact facilité</span></td>
+              <td><span class="tag tag-manual">✏️ Manuel</span></td>
+            </tr>
+            <tr>
+              <td class="feature-name">Footer - 8 Spécialités</td>
+              <td class="feature-desc">Liste textuelle des 8 spécialités avec liens</td>
+              <td><span class="benefit">Navigation thématique</span></td>
+              <td><span class="tag tag-seo">📈 SEO</span></td>
+            </tr>
+            <tr>
+              <td class="feature-name">Footer - Régler un achat</td>
+              <td class="feature-desc">Lien avec bordure dorée vers le paiement</td>
+              <td><span class="benefit">Facilite règlement</span></td>
+              <td><span class="tag tag-manual">✏️ Manuel</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- PAGE D'ACCUEIL -->
+    <div class="section">
+      <div class="section-header">
+        <span class="icon">🏠</span>
+        Page d'Accueil
+        <span class="count">8 fonctionnalités</span>
+      </div>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 18%">Fonctionnalité</th>
+              <th style="width: 40%">Description</th>
+              <th style="width: 18%">Bénéfice</th>
+              <th style="width: 24%">Type</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="feature-name">Hero visuel</td>
+              <td class="feature-desc">Image pleine largeur avec accroche et CTA</td>
+              <td><span class="benefit">Impact visuel</span></td>
+              <td><span class="tag tag-manual">✏️ Manuel</span></td>
+            </tr>
+            <tr>
+              <td class="feature-name">Prochaines ventes</td>
+              <td class="feature-desc">Carrousel des ventes à venir avec images et dates</td>
+              <td><span class="benefit">Visibilité événements</span></td>
+              <td><span class="tag tag-sync">🔄 Auto Sync</span></td>
+            </tr>
+            <tr>
+              <td class="feature-name">Section onboarding</td>
+              <td class="feature-desc">"Vous n'êtes jamais venu à une vente aux enchères ?" avec 3 cartouches</td>
+              <td><span class="benefit">Accueil nouveaux</span></td>
+              <td><span class="tag tag-manual">✏️ Manuel</span></td>
+            </tr>
+            <tr>
+              <td class="feature-name">Création compte invitée</td>
+              <td class="feature-desc">Cartouche blanc sur noir : favoris, alertes, Lia</td>
+              <td><span class="benefit">Conversion inscription</span></td>
+              <td><span class="tag tag-manual">✏️ Manuel</span></td>
+            </tr>
+            <tr>
+              <td class="feature-name">8 Spécialités visuelles</td>
+              <td class="feature-desc">Grille des spécialités avec images et liens</td>
+              <td><span class="benefit">Navigation thématique</span></td>
+              <td><span class="tag tag-seo">📈 SEO</span></td>
+            </tr>
+            <tr>
+              <td class="feature-name">Témoignages clients</td>
+              <td class="feature-desc">Carrousel d'avis avec notes et commentaires</td>
+              <td><span class="benefit">Preuve sociale</span></td>
+              <td><span class="tag tag-manual">✏️ Manuel</span></td>
+            </tr>
+            <tr>
+              <td class="feature-name">Aventures d'Enchères</td>
+              <td class="feature-desc">Aperçu des histoires et anecdotes</td>
+              <td><span class="benefit">Storytelling</span></td>
+              <td><span class="tag tag-seo">📈 SEO</span></td>
+            </tr>
+            <tr>
+              <td class="feature-name">Coups de cœur régionaux</td>
+              <td class="feature-desc">Mise en avant des artisans et lieux locaux</td>
+              <td><span class="benefit">Ancrage territorial</span></td>
+              <td><span class="tag tag-seo">📈 SEO</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- SERVICES ACHETEURS -->
+    <div class="section">
+      <div class="section-header">
+        <span class="icon">🛒</span>
+        Services aux Acheteurs
+        <span class="count">16 fonctionnalités</span>
+      </div>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 18%">Fonctionnalité</th>
+              <th style="width: 40%">Description</th>
+              <th style="width: 18%">Bénéfice</th>
+              <th style="width: 24%">Type</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="feature-name">Guide de l'acheteur</td>
+              <td class="feature-desc">Page pédagogique complète : enchérir, payer, retirer</td>
+              <td><span class="benefit">Éducation & confiance</span></td>
+              <td><span class="tag tag-seo">📈 SEO</span></td>
+            </tr>
+            <tr>
+              <td class="feature-name">Glossaire des enchères</td>
+              <td class="feature-desc">Définitions des termes techniques (adjudication, estimation...)</td>
+              <td><span class="benefit">Démystification</span></td>
+              <td><span class="tag tag-seo">📈 SEO</span></td>
+            </tr>
+            <tr>
+              <td class="feature-name">Ventes à venir</td>
+              <td class="feature-desc">Liste chronologique des ventes futures avec filtres</td>
+              <td><span class="benefit">Planification achats</span></td>
+              <td><span class="tag tag-sync">🔄 Auto Sync</span></td>
+            </tr>
+            <tr>
+              <td class="feature-name">Ventes passées chronologiques</td>
+              <td class="feature-desc">Archive des ventes avec résultats d'adjudication</td>
+              <td><span class="benefit">Référence marché</span></td>
+              <td><span class="tag tag-sync">🔄 Auto Sync</span></td>
+            </tr>
+            <tr>
+              <td class="feature-name">Ventes passées par catégorie</td>
+              <td class="feature-desc">Navigation par nature d'objet (voitures de sport, mobilier XVIIe, bijoux...)</td>
+              <td><span class="benefit">Recherche ciblée</span></td>
+              <td class="tags-cell"><span class="tag tag-ia">🤖 Auto IA</span><span class="tag tag-new">✨ Nouveau</span></td>
+            </tr>
+            <tr>
+              <td class="feature-name">Détail d'une vente</td>
+              <td class="feature-desc">Page complète : date, lieu, lots, exposition, frais</td>
+              <td><span class="benefit">Information exhaustive</span></td>
+              <td><span class="tag tag-sync">🔄 Auto Sync</span></td>
+            </tr>
+            <tr>
+              <td class="feature-name">Catalogue intégré</td>
+              <td class="feature-desc">Visualisation des lots sans quitter le site</td>
+              <td><span class="benefit">Rétention visiteurs</span></td>
+              <td><span class="tag tag-sync">🔄 Auto Sync</span></td>
+            </tr>
+            <tr>
+              <td class="feature-name">Détail d'un lot</td>
+              <td class="feature-desc">Fiche complète : images HD, description, estimations, dimensions</td>
+              <td><span class="benefit">Décision éclairée</span></td>
+              <td><span class="tag tag-sync">🔄 Auto Sync</span></td>
+            </tr>
+            <tr>
+              <td class="feature-name">Zoom haute définition</td>
+              <td class="feature-desc">Visualisation détaillée des images de lots</td>
+              <td><span class="benefit">Expertise visuelle</span></td>
+              <td><span class="tag tag-sync">🔄 Auto Sync</span></td>
+            </tr>
+            <tr>
+              <td class="feature-name">Analyse IA du lot</td>
+              <td class="feature-desc">Contexte historique, créateur, observations visuelles</td>
+              <td><span class="benefit">Expertise augmentée</span></td>
+              <td><span class="tag tag-ia">🤖 Auto IA</span></td>
+            </tr>
+            <tr>
+              <td class="feature-name">Ordre d'achat en ligne</td>
+              <td class="feature-desc">Dépôt d'enchère maximale avant la vente</td>
+              <td><span class="benefit">Participation distance</span></td>
+              <td><span class="tag tag-manual">✏️ Manuel</span></td>
+            </tr>
+            <tr>
+              <td class="feature-name">Enchère par téléphone</td>
+              <td class="feature-desc">Demande de participation téléphonique</td>
+              <td><span class="benefit">Enchère en direct</span></td>
+              <td><span class="tag tag-manual">✏️ Manuel</span></td>
+            </tr>
+            <tr>
+              <td class="feature-name">Demande d'information</td>
+              <td class="feature-desc">Rapport de condition et questions sur un lot</td>
+              <td><span class="benefit">Décision informée</span></td>
+              <td><span class="tag tag-manual">✏️ Manuel</span></td>
+            </tr>
+            <tr>
+              <td class="feature-name">Mémoriser un lot</td>
+              <td class="feature-desc">Ajout aux favoris avec compteur</td>
+              <td><span class="benefit">Suivi personnalisé</span></td>
+              <td><span class="tag tag-manual">✏️ Manuel</span></td>
+            </tr>
+            <tr>
+              <td class="feature-name">After-sale</td>
+              <td class="feature-desc">Lots invendus disponibles à prix fixe</td>
+              <td><span class="benefit">Seconde chance</span></td>
+              <td><span class="tag tag-sync">🔄 Auto Sync</span></td>
+            </tr>
+            <tr>
+              <td class="feature-name">Prise de RDV enlèvement</td>
+              <td class="feature-desc">Calendrier de créneaux disponibles</td>
+              <td><span class="benefit">Organisation pratique</span></td>
+              <td><span class="tag tag-manual">✏️ Manuel</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- SERVICES VENDEURS -->
+    <div class="section">
+      <div class="section-header">
+        <span class="icon">💎</span>
+        Services aux Vendeurs
+        <span class="count">8 fonctionnalités</span>
+      </div>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 18%">Fonctionnalité</th>
+              <th style="width: 40%">Description</th>
+              <th style="width: 18%">Bénéfice</th>
+              <th style="width: 24%">Type</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="feature-name">Guide du vendeur</td>
+              <td class="feature-desc">Explication complète : mandat, expertise, frais, délais</td>
+              <td><span class="benefit">Transparence</span></td>
+              <td><span class="tag tag-seo">📈 SEO</span></td>
+            </tr>
+            <tr>
+              <td class="feature-name">Estimation en ligne</td>
+              <td class="feature-desc">Formulaire avec upload photos et description</td>
+              <td><span class="benefit">Premier contact</span></td>
+              <td><span class="tag tag-manual">✏️ Manuel</span></td>
+            </tr>
+            <tr>
+              <td class="feature-name">Journées d'expertise</td>
+              <td class="feature-desc">Calendrier des expertises gratuites en maison</td>
+              <td><span class="benefit">Expertise accessible</span></td>
+              <td><span class="tag tag-manual">✏️ Manuel</span></td>
+            </tr>
+            <tr>
+              <td class="feature-name">Expertises itinérantes</td>
+              <td class="feature-desc">Cartes des villes avec prochaines dates</td>
+              <td><span class="benefit">Proximité géographique</span></td>
+              <td><span class="tag tag-manual">✏️ Manuel</span></td>
+            </tr>
+            <tr>
+              <td class="feature-name">Inventaire à domicile</td>
+              <td class="feature-desc">Service de déplacement pour successions/collections</td>
+              <td><span class="benefit">Service premium</span></td>
+              <td><span class="tag tag-manual">✏️ Manuel</span></td>
+            </tr>
+            <tr>
+              <td class="feature-name">Vendre un objet similaire</td>
+              <td class="feature-desc">Mailto pré-rempli depuis une fiche lot</td>
+              <td><span class="benefit">Conversion vendeur</span></td>
+              <td><span class="tag tag-manual">✏️ Manuel</span></td>
+            </tr>
+            <tr>
+              <td class="feature-name">Évaluation marché par catégorie</td>
+              <td class="feature-desc">Consultation des prix passés par famille d'objets</td>
+              <td><span class="benefit">Estimation réaliste</span></td>
+              <td class="tags-cell"><span class="tag tag-ia">🤖 Auto IA</span><span class="tag tag-new">✨ Nouveau</span></td>
+            </tr>
+            <tr>
+              <td class="feature-name">Choix ventes thématiques</td>
+              <td class="feature-desc">L'étude sélectionne la vente optimale pour chaque objet</td>
+              <td><span class="benefit">Visibilité maximisée</span></td>
+              <td><span class="tag tag-manual">✏️ Manuel</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- CALENDRIER -->
+    <div class="section">
+      <div class="section-header">
+        <span class="icon">📅</span>
+        Calendrier Unifié
+        <span class="count">5 fonctionnalités</span>
+      </div>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 18%">Fonctionnalité</th>
+              <th style="width: 40%">Description</th>
+              <th style="width: 18%">Bénéfice</th>
+              <th style="width: 24%">Type</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="feature-name">Vue calendrier globale</td>
+              <td class="feature-desc">Tous les événements sur une seule page</td>
+              <td><span class="benefit">Vision d'ensemble</span></td>
+              <td><span class="tag tag-sync">🔄 Auto Sync</span></td>
+            </tr>
+            <tr>
+              <td class="feature-name">Codage couleur par type</td>
+              <td class="feature-desc">Ventes, expositions, expertises différenciées</td>
+              <td><span class="benefit">Lecture instantanée</span></td>
+              <td><span class="tag tag-manual">✏️ Manuel</span></td>
+            </tr>
+            <tr>
+              <td class="feature-name">Pop-up détails événement</td>
+              <td class="feature-desc">Informations au survol ou clic</td>
+              <td><span class="benefit">Accès rapide infos</span></td>
+              <td><span class="tag tag-manual">✏️ Manuel</span></td>
+            </tr>
+            <tr>
+              <td class="feature-name">Navigation vers événement</td>
+              <td class="feature-desc">Clic vers la page détaillée</td>
+              <td><span class="benefit">Fluidité navigation</span></td>
+              <td><span class="tag tag-manual">✏️ Manuel</span></td>
+            </tr>
+            <tr>
+              <td class="feature-name">Légende explicative</td>
+              <td class="feature-desc">Explication des types d'événements</td>
+              <td><span class="benefit">Compréhension immédiate</span></td>
+              <td><span class="tag tag-manual">✏️ Manuel</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ESPACE CLIENT -->
+    <div class="section">
+      <div class="section-header">
+        <span class="icon">👤</span>
+        Espace Client Personnel
+        <span class="count">14 fonctionnalités</span>
+      </div>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 18%">Fonctionnalité</th>
+              <th style="width: 40%">Description</th>
+              <th style="width: 18%">Bénéfice</th>
+              <th style="width: 24%">Type</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="feature-name">Authentification</td>
+              <td class="feature-desc">Inscription et connexion sécurisées</td>
+              <td><span class="benefit">Accès personnalisé</span></td>
+              <td><span class="tag tag-manual">✏️ Manuel</span></td>
+            </tr>
+            <tr>
+              <td class="feature-name">Tableau de bord</td>
+              <td class="feature-desc">Vue d'ensemble : alertes, favoris, ordres, adjudications</td>
+              <td><span class="benefit">Pilotage centralisé</span></td>
+              <td><span class="tag tag-sync">🔄 Auto Sync</span></td>
+            </tr>
+            <tr>
+              <td class="feature-name">Progression onboarding</td>
+              <td class="feature-desc">Indicateur de complétion du profil</td>
+              <td><span class="benefit">Engagement utilisateur</span></td>
+              <td><span class="tag tag-manual">✏️ Manuel</span></td>
+            </tr>
+            <tr>
+              <td class="feature-name">Mes alertes</td>
+              <td class="feature-desc">Gestion des mots-clés suivis</td>
+              <td><span class="benefit">Ne rien manquer</span></td>
+              <td><span class="tag tag-ia">🤖 Auto IA</span></td>
+            </tr>
+            <tr>
+              <td class="feature-name">Synthèse des alertes</td>
+              <td class="feature-desc">Résumé IA des lots correspondants</td>
+              <td><span class="benefit">Gain de temps</span></td>
+              <td><span class="tag tag-ia">🤖 Auto IA</span></td>
+            </tr>
+            <tr>
+              <td class="feature-name">Ce que j'aime (Lia)</td>
+              <td class="feature-desc">Dialogue conversationnel avec l'IA pour définir ses goûts</td>
+              <td><span class="benefit">Personnalisation fine</span></td>
+              <td><span class="tag tag-ia">🤖 Auto IA</span></td>
+            </tr>
+            <tr>
+              <td class="feature-name">Centres d'intérêts</td>
+              <td class="feature-desc">Sélection des spécialités préférées</td>
+              <td><span class="benefit">Ciblage contenus</span></td>
+              <td><span class="tag tag-manual">✏️ Manuel</span></td>
+            </tr>
+            <tr>
+              <td class="feature-name">Suggestions personnalisées</td>
+              <td class="feature-desc">Lots recommandés selon le profil de goûts</td>
+              <td><span class="benefit">Découverte facilitée</span></td>
+              <td><span class="tag tag-ia">🤖 Auto IA</span></td>
+            </tr>
+            <tr>
+              <td class="feature-name">Mes favoris</td>
+              <td class="feature-desc">Liste des lots mémorisés avec partage</td>
+              <td><span class="benefit">Album personnalisé</span></td>
+              <td><span class="tag tag-manual">✏️ Manuel</span></td>
+            </tr>
+            <tr>
+              <td class="feature-name">Mes ordres d'achat</td>
+              <td class="feature-desc">Historique et suivi des ordres déposés</td>
+              <td><span class="benefit">Suivi enchères</span></td>
+              <td><span class="tag tag-sync">🔄 Auto Sync</span></td>
+            </tr>
+            <tr>
+              <td class="feature-name">Enchères téléphoniques</td>
+              <td class="feature-desc">Demandes de participation par téléphone</td>
+              <td><span class="benefit">Organisation enchères</span></td>
+              <td><span class="tag tag-manual">✏️ Manuel</span></td>
+            </tr>
+            <tr>
+              <td class="feature-name">Mes adjudications</td>
+              <td class="feature-desc">Lots remportés avec statut paiement/enlèvement</td>
+              <td><span class="benefit">Suivi achats</span></td>
+              <td><span class="tag tag-sync">🔄 Auto Sync</span></td>
+            </tr>
+            <tr>
+              <td class="feature-name">Régler mes achats</td>
+              <td class="feature-desc">Bordereaux et paiement en ligne</td>
+              <td><span class="benefit">Facilité paiement</span></td>
+              <td><span class="tag tag-manual">✏️ Manuel</span></td>
+            </tr>
+            <tr>
+              <td class="feature-name">Mon profil</td>
+              <td class="feature-desc">Coordonnées, préférences, pièce d'identité</td>
+              <td><span class="benefit">Gestion compte</span></td>
+              <td><span class="tag tag-manual">✏️ Manuel</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- INTELLIGENCE ARTIFICIELLE -->
+    <div class="section">
+      <div class="section-header">
+        <span class="icon">🤖</span>
+        Intelligence Artificielle Intégrée
+        <span class="count">10 fonctionnalités</span>
+      </div>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 18%">Fonctionnalité</th>
+              <th style="width: 40%">Description</th>
+              <th style="width: 18%">Bénéfice</th>
+              <th style="width: 24%">Type</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="feature-name">Lia - Assistante IA</td>
+              <td class="feature-desc">Dialogue conversationnel pour définir les goûts</td>
+              <td><span class="benefit">Profil goûts précis</span></td>
+              <td><span class="tag tag-ia">🤖 Auto IA</span></td>
+            </tr>
+            <tr>
+              <td class="feature-name">Suggestions personnalisées</td>
+              <td class="feature-desc">Recommandations de lots selon profil</td>
+              <td><span class="benefit">Découverte ciblée</span></td>
+              <td><span class="tag tag-ia">🤖 Auto IA</span></td>
+            </tr>
+            <tr>
+              <td class="feature-name">Analyse expert IA</td>
+              <td class="feature-desc">Contexte historique, créateur, observations visuelles</td>
+              <td><span class="benefit">Expertise augmentée</span></td>
+              <td><span class="tag tag-ia">🤖 Auto IA</span></td>
+            </tr>
+            <tr>
+              <td class="feature-name">Enrichissement descriptions</td>
+              <td class="feature-desc">Nettoyage et amélioration des textes de lots</td>
+              <td><span class="benefit">Qualité catalogue</span></td>
+              <td><span class="tag tag-ia">🤖 Auto IA</span></td>
+            </tr>
+            <tr>
+              <td class="feature-name">Analyse d'images</td>
+              <td class="feature-desc">Identification styles, périodes, matériaux</td>
+              <td><span class="benefit">Données enrichies</span></td>
+              <td><span class="tag tag-ia">🤖 Auto IA</span></td>
+            </tr>
+            <tr>
+              <td class="feature-name">Classification par familles</td>
+              <td class="feature-desc">Catégorisation précise : voitures de sport, mobilier XVIIe, bijoux...</td>
+              <td><span class="benefit">Navigation thématique</span></td>
+              <td class="tags-cell"><span class="tag tag-ia">🤖 Auto IA</span><span class="tag tag-new">✨ Nouveau</span></td>
+            </tr>
+            <tr>
+              <td class="feature-name">Validation alertes</td>
+              <td class="feature-desc">Vérification IA de la pertinence des mots-clés</td>
+              <td><span class="benefit">Alertes qualifiées</span></td>
+              <td><span class="tag tag-ia">🤖 Auto IA</span></td>
+            </tr>
+            <tr>
+              <td class="feature-name">Synthèse alertes</td>
+              <td class="feature-desc">Résumé intelligent des lots correspondants</td>
+              <td><span class="benefit">Gain de temps</span></td>
+              <td><span class="tag tag-ia">🤖 Auto IA</span></td>
+            </tr>
+            <tr>
+              <td class="feature-name">Questions sur lot</td>
+              <td class="feature-desc">Réponses IA aux questions des utilisateurs</td>
+              <td><span class="benefit">Information immédiate</span></td>
+              <td><span class="tag tag-ia">🤖 Auto IA</span></td>
+            </tr>
+            <tr>
+              <td class="feature-name">Détection intérêts</td>
+              <td class="feature-desc">Analyse comportementale pour profil CRM</td>
+              <td><span class="benefit">Connaissance client</span></td>
+              <td><span class="tag tag-ia">🤖 Auto IA</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- GESTION DES VENTES -->
+    <div class="section">
+      <div class="section-header">
+        <span class="icon">⚡</span>
+        Gestion des Ventes
+        <span class="count">7 fonctionnalités</span>
+      </div>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 18%">Fonctionnalité</th>
+              <th style="width: 40%">Description</th>
+              <th style="width: 18%">Bénéfice</th>
+              <th style="width: 24%">Type</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="feature-name">Pages ventes détaillées</td>
+              <td class="feature-desc">Toutes informations d'une vente sur une page</td>
+              <td><span class="benefit">Information complète</span></td>
+              <td><span class="tag tag-sync">🔄 Auto Sync</span></td>
+            </tr>
+            <tr>
+              <td class="feature-name">Sync Interenchères</td>
+              <td class="feature-desc">Import automatique des ventes et lots</td>
+              <td><span class="benefit">Données à jour</span></td>
+              <td><span class="tag tag-sync">🔄 Auto Sync</span></td>
+            </tr>
+            <tr>
+              <td class="feature-name">Stockage images HD</td>
+              <td class="feature-desc">Images haute définition stockées en interne</td>
+              <td><span class="benefit">Disponibilité garantie</span></td>
+              <td><span class="tag tag-sync">🔄 Auto Sync</span></td>
+            </tr>
+            <tr>
+              <td class="feature-name">Ventes live</td>
+              <td class="feature-desc">Redirection vers plateforme d'enchères temps réel</td>
+              <td><span class="benefit">Participation facile</span></td>
+              <td><span class="tag tag-sync">🔄 Auto Sync</span></td>
+            </tr>
+            <tr>
+              <td class="feature-name">Ventes chrono</td>
+              <td class="feature-desc">Enchères avec compte à rebours</td>
+              <td><span class="benefit">Format accessible</span></td>
+              <td><span class="tag tag-sync">🔄 Auto Sync</span></td>
+            </tr>
+            <tr>
+              <td class="feature-name">After-sale</td>
+              <td class="feature-desc">Gestion des lots invendus disponibles</td>
+              <td><span class="benefit">Seconde chance</span></td>
+              <td><span class="tag tag-sync">🔄 Auto Sync</span></td>
+            </tr>
+            <tr>
+              <td class="feature-name">Résultats adjudications</td>
+              <td class="feature-desc">Prix marteau affichés sur lots vendus</td>
+              <td><span class="benefit">Transparence marché</span></td>
+              <td><span class="tag tag-sync">🔄 Auto Sync</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- COMMUNICATION & MARKETING -->
+    <div class="section">
+      <div class="section-header">
+        <span class="icon">📢</span>
+        Communication & Marketing
+        <span class="count">8 fonctionnalités</span>
+      </div>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 18%">Fonctionnalité</th>
+              <th style="width: 40%">Description</th>
+              <th style="width: 18%">Bénéfice</th>
+              <th style="width: 24%">Type</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="feature-name">Pages spécialités</td>
+              <td class="feature-desc">8 pages dédiées avec expertise et prochaines ventes</td>
+              <td><span class="benefit">Référencement thématique</span></td>
+              <td><span class="tag tag-seo">📈 SEO</span></td>
+            </tr>
+            <tr>
+              <td class="feature-name">Aventures d'Enchères</td>
+              <td class="feature-desc">Histoires et anecdotes de découvertes</td>
+              <td><span class="benefit">Storytelling engageant</span></td>
+              <td><span class="tag tag-seo">📈 SEO</span></td>
+            </tr>
+            <tr>
+              <td class="feature-name">Notre Maison</td>
+              <td class="feature-desc">Histoire, équipe, valeurs de l'étude</td>
+              <td><span class="benefit">Confiance & proximité</span></td>
+              <td><span class="tag tag-seo">📈 SEO</span></td>
+            </tr>
+            <tr>
+              <td class="feature-name">Coups de cœur régionaux</td>
+              <td class="feature-desc">Artisans et lieux locaux mis en avant</td>
+              <td><span class="benefit">Ancrage territorial</span></td>
+              <td><span class="tag tag-seo">📈 SEO</span></td>
+            </tr>
+            <tr>
+              <td class="feature-name">Page Contact</td>
+              <td class="feature-desc">Formulaire et coordonnées complètes</td>
+              <td><span class="benefit">Accessibilité</span></td>
+              <td><span class="tag tag-manual">✏️ Manuel</span></td>
+            </tr>
+            <tr>
+              <td class="feature-name">Témoignages clients</td>
+              <td class="feature-desc">Avis et notes des acheteurs/vendeurs</td>
+              <td><span class="benefit">Preuve sociale</span></td>
+              <td><span class="tag tag-manual">✏️ Manuel</span></td>
+            </tr>
+            <tr>
+              <td class="feature-name">Newsletter</td>
+              <td class="feature-desc">Inscription et gestion des préférences</td>
+              <td><span class="benefit">Fidélisation</span></td>
+              <td><span class="tag tag-manual">✏️ Manuel</span></td>
+            </tr>
+            <tr>
+              <td class="feature-name">Réseaux sociaux</td>
+              <td class="feature-desc">Liens vers profils et encouragement à suivre</td>
+              <td><span class="benefit">Communauté</span></td>
+              <td><span class="tag tag-manual">✏️ Manuel</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ADMINISTRATION & CRM -->
+    <div class="section">
+      <div class="section-header">
+        <span class="icon">⚙️</span>
+        Administration & CRM
+        <span class="count">5 fonctionnalités</span>
+      </div>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 18%">Fonctionnalité</th>
+              <th style="width: 40%">Description</th>
+              <th style="width: 18%">Bénéfice</th>
+              <th style="width: 24%">Type</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="feature-name">Profils clients auto</td>
+              <td class="feature-desc">Création automatique à l'inscription</td>
+              <td><span class="benefit">Base clients structurée</span></td>
+              <td><span class="tag tag-sync">🔄 Auto Sync</span></td>
+            </tr>
+            <tr>
+              <td class="feature-name">Détection intérêts</td>
+              <td class="feature-desc">Analyse IA des comportements et préférences</td>
+              <td><span class="benefit">Connaissance client</span></td>
+              <td><span class="tag tag-ia">🤖 Auto IA</span></td>
+            </tr>
+            <tr>
+              <td class="feature-name">Suivi paiements</td>
+              <td class="feature-desc">Statuts des bordereaux et relances</td>
+              <td><span class="benefit">Gestion financière</span></td>
+              <td><span class="tag tag-sync">🔄 Auto Sync</span></td>
+            </tr>
+            <tr>
+              <td class="feature-name">Suivi enlèvements</td>
+              <td class="feature-desc">Planification et validation des retraits</td>
+              <td><span class="benefit">Logistique optimisée</span></td>
+              <td><span class="tag tag-manual">✏️ Manuel</span></td>
+            </tr>
+            <tr>
+              <td class="feature-name">Statistiques d'usage</td>
+              <td class="feature-desc">Métriques de fréquentation et engagement</td>
+              <td><span class="benefit">Pilotage activité</span></td>
+              <td><span class="tag tag-sync">🔄 Auto Sync</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- EDGE FUNCTIONS -->
+    <div class="section">
+      <div class="section-header">
+        <span class="icon">🔧</span>
+        Edge Functions (Backend)
+        <span class="count">15 fonctionnalités</span>
+      </div>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 18%">Fonction</th>
+              <th style="width: 40%">Description</th>
+              <th style="width: 18%">Service associé</th>
+              <th style="width: 24%">Type</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="feature-name">taste-interview</td>
+              <td class="feature-desc">Dialogue conversationnel Lia</td>
+              <td>Ce que j'aime</td>
+              <td><span class="tag tag-ia">🤖 Auto IA</span></td>
+            </tr>
+            <tr>
+              <td class="feature-name">validate-alert-keyword</td>
+              <td class="feature-desc">Validation pertinence mots-clés</td>
+              <td>Alertes</td>
+              <td><span class="tag tag-ia">🤖 Auto IA</span></td>
+            </tr>
+            <tr>
+              <td class="feature-name">synthesize-alerts</td>
+              <td class="feature-desc">Résumé des lots correspondants</td>
+              <td>Alertes</td>
+              <td><span class="tag tag-ia">🤖 Auto IA</span></td>
+            </tr>
+            <tr>
+              <td class="feature-name">enrich-lot-ai</td>
+              <td class="feature-desc">Enrichissement descriptions lots</td>
+              <td>Détail lot</td>
+              <td><span class="tag tag-ia">🤖 Auto IA</span></td>
+            </tr>
+            <tr>
+              <td class="feature-name">enrich-lots</td>
+              <td class="feature-desc">Enrichissement par batch</td>
+              <td>Catalogue</td>
+              <td><span class="tag tag-ia">🤖 Auto IA</span></td>
+            </tr>
+            <tr>
+              <td class="feature-name">enrich-sale-lots-ai</td>
+              <td class="feature-desc">Enrichissement lots d'une vente</td>
+              <td>Détail vente</td>
+              <td><span class="tag tag-ia">🤖 Auto IA</span></td>
+            </tr>
+            <tr>
+              <td class="feature-name">answer-lot-question</td>
+              <td class="feature-desc">Réponses IA sur lots</td>
+              <td>Détail lot</td>
+              <td><span class="tag tag-ia">🤖 Auto IA</span></td>
+            </tr>
+            <tr>
+              <td class="feature-name">classify-lot-category</td>
+              <td class="feature-desc">Classification par familles précises</td>
+              <td>Ventes passées par catégorie</td>
+              <td class="tags-cell"><span class="tag tag-ia">🤖 Auto IA</span><span class="tag tag-new">✨ Nouveau</span></td>
+            </tr>
+            <tr>
+              <td class="feature-name">scrape-interencheres</td>
+              <td class="feature-desc">Import données Interenchères</td>
+              <td>Synchronisation</td>
+              <td><span class="tag tag-sync">🔄 Auto Sync</span></td>
+            </tr>
+            <tr>
+              <td class="feature-name">scrape-lots</td>
+              <td class="feature-desc">Import détail des lots</td>
+              <td>Catalogue</td>
+              <td><span class="tag tag-sync">🔄 Auto Sync</span></td>
+            </tr>
+            <tr>
+              <td class="feature-name">scrape-lot-images</td>
+              <td class="feature-desc">Récupération images lots</td>
+              <td>Catalogue</td>
+              <td><span class="tag tag-sync">🔄 Auto Sync</span></td>
+            </tr>
+            <tr>
+              <td class="feature-name">store-lot-images</td>
+              <td class="feature-desc">Stockage images HD</td>
+              <td>Catalogue</td>
+              <td><span class="tag tag-sync">🔄 Auto Sync</span></td>
+            </tr>
+            <tr>
+              <td class="feature-name">hydrate-lot-images</td>
+              <td class="feature-desc">Chargement images optimisé</td>
+              <td>Affichage lots</td>
+              <td><span class="tag tag-sync">🔄 Auto Sync</span></td>
+            </tr>
+            <tr>
+              <td class="feature-name">image-proxy</td>
+              <td class="feature-desc">Proxy images externes</td>
+              <td>Affichage</td>
+              <td><span class="tag tag-sync">🔄 Auto Sync</span></td>
+            </tr>
+            <tr>
+              <td class="feature-name">get-sales-data</td>
+              <td class="feature-desc">API données ventes</td>
+              <td>Toutes pages</td>
+              <td><span class="tag tag-sync">🔄 Auto Sync</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- RÉSUMÉ -->
+    <div class="section">
+      <div class="section-header">
+        <span class="icon">📊</span>
+        Résumé par Type de Mise à Jour
+      </div>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 25%">Type</th>
+              <th style="width: 15%">Nombre</th>
+              <th style="width: 60%">Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="tag tag-sync">🔄 Auto Sync</span></td>
+              <td><strong>28</strong></td>
+              <td>Synchronisation automatique avec Interenchères et base de données</td>
+            </tr>
+            <tr>
+              <td><span class="tag tag-ia">🤖 Auto IA</span></td>
+              <td><strong>22</strong></td>
+              <td>Fonctionnalités enrichies par intelligence artificielle</td>
+            </tr>
+            <tr>
+              <td><span class="tag tag-seo">📈 SEO</span></td>
+              <td><strong>10</strong></td>
+              <td>Contenus optimisés pour le référencement naturel</td>
+            </tr>
+            <tr>
+              <td><span class="tag tag-manual">✏️ Manuel</span></td>
+              <td><strong>35</strong></td>
+              <td>Fonctionnalités gérées manuellement ou par l'utilisateur</td>
+            </tr>
+            <tr>
+              <td><span class="tag tag-new">✨ Nouveau</span></td>
+              <td><strong>3</strong></td>
+              <td>Classification IA par familles, évaluation marché par catégorie</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="footer">
+      <p>Document généré le 4 janvier 2026 — Plateforme SVV</p>
+      <p style="margin-top: 10px;">Pour copier dans Google Sheets : sélectionnez les tableaux, copiez (Ctrl+C) et collez (Ctrl+V)</p>
+    </div>
+  </div>
+</body>
+</html>

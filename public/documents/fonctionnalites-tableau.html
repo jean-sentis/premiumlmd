@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fonctionnalités du Site - Analyse WordPress</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+            font-size: 12px;
+        }
+        .container {
+            max-width: 100%;
+            overflow-x: auto;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 10px;
+            color: #1a1a2e;
+            font-size: 24px;
+        }
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 20px;
+        }
+        .actions {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        .btn-excel {
+            background: #217346;
+            color: white;
+        }
+        .btn-excel:hover {
+            background: #1a5c38;
+        }
+        .btn-copy {
+            background: #4a90d9;
+            color: white;
+        }
+        .btn-copy:hover {
+            background: #3a7bc8;
+        }
+        .legend {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 11px;
+        }
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        th {
+            background: #1a1a2e;
+            color: white;
+            padding: 12px 8px;
+            text-align: left;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            font-size: 11px;
+        }
+        td {
+            padding: 8px;
+            border-bottom: 1px solid #eee;
+            vertical-align: top;
+        }
+        tr:hover {
+            background: #f8f9fa;
+        }
+        tr.section-header {
+            background: #e8e8f0 !important;
+            font-weight: bold;
+        }
+        tr.total-row {
+            background: #fff3cd !important;
+            font-weight: bold;
+        }
+        tr.grand-total {
+            background: #d4edda !important;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        /* Couleurs conditionnelles pour difficultés */
+        .diff-0 { background: #c8e6c9; color: #1b5e20; }
+        .diff-1 { background: #dcedc8; color: #33691e; }
+        .diff-2 { background: #f0f4c3; color: #827717; }
+        .diff-3 { background: #fff9c4; color: #f57f17; }
+        .diff-4 { background: #ffecb3; color: #ff6f00; }
+        .diff-5 { background: #ffe0b2; color: #e65100; }
+        .diff-6 { background: #ffccbc; color: #bf360c; }
+        .diff-7 { background: #ffab91; color: #bf360c; }
+        .diff-8 { background: #ef9a9a; color: #b71c1c; }
+        .diff-9 { background: #e57373; color: #b71c1c; }
+        .diff-10 { background: #c62828; color: white; }
+        .diff-z { background: #4a148c; color: white; font-weight: bold; }
+        .export-oui { background: #a5d6a7; color: #1b5e20; }
+        .export-non { background: #ef9a9a; color: #b71c1c; }
+        .export-nsp { background: #fff59d; color: #f57f17; }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .stat-card {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 28px;
+            font-weight: bold;
+            color: #1a1a2e;
+        }
+        .stat-label {
+            color: #666;
+            font-size: 12px;
+        }
+        @media print {
+            body { padding: 0; }
+            .actions { display: none; }
+            th { position: static; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 Analyse des Fonctionnalités - Site Enchères</h1>
+        <p class="subtitle">Évaluation de la complexité d'implémentation WordPress et exportabilité</p>
+        
+        <div class="stats" id="stats"></div>
+        
+        <div class="actions">
+            <button class="btn-excel" onclick="exportToExcel()">📥 Exporter vers Excel</button>
+            <button class="btn-copy" onclick="copyTable()">📋 Copier le tableau</button>
+        </div>
+        
+        <div class="legend">
+            <div class="legend-item"><div class="legend-color diff-0"></div> 0 - Trivial</div>
+            <div class="legend-item"><div class="legend-color diff-2"></div> 1-2 - Facile</div>
+            <div class="legend-item"><div class="legend-color diff-4"></div> 3-4 - Moyen</div>
+            <div class="legend-item"><div class="legend-color diff-6"></div> 5-6 - Difficile</div>
+            <div class="legend-item"><div class="legend-color diff-8"></div> 7-8 - Très difficile</div>
+            <div class="legend-item"><div class="legend-color diff-10"></div> 9-10 - Extrême</div>
+            <div class="legend-item"><div class="legend-color diff-z"></div> Z - Impossible</div>
+        </div>
+        
+        <table id="mainTable">
+            <thead>
+                <tr>
+                    <th style="width:10%">Espace</th>
+                    <th style="width:12%">Sous-partie</th>
+                    <th style="width:22%">Fonctionnalité utilisateur</th>
+                    <th style="width:15%">Technique informatique</th>
+                    <th style="width:8%">Difficulté WP (0-10/Z)</th>
+                    <th style="width:8%">Export Lovable→WP</th>
+                    <th style="width:15%">Extensions WP</th>
+                    <th style="width:10%">Difficulté duplication enfant</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+        </table>
+    </div>
+
+    <script>
+        const data = [
+            // HEADER
+            { espace: "Header", sousPartie: "Logo", fonctionnalite: "Affichage logo cliquable vers accueil", technique: "HTML/CSS", difficulteWP: "1", export: "Oui", extensions: "Thème standard", duplication: "1" },
+            { espace: "Header", sousPartie: "Logo", fonctionnalite: "Logo responsive (adapté mobile)", technique: "CSS Media Queries", difficulteWP: "1", export: "Oui", extensions: "Thème standard", duplication: "1" },
+            { espace: "Header", sousPartie: "Navigation", fonctionnalite: "Menu principal avec liens", technique: "React Router / HTML", difficulteWP: "2", export: "Oui", extensions: "Menu natif WP", duplication: "1" },
+            { espace: "Header", sousPartie: "Navigation", fonctionnalite: "Sous-menus déroulants (Acheter, Vendre, Spécialités)", technique: "React Components / CSS", difficulteWP: "3", export: "Oui", extensions: "Menu natif WP", duplication: "2" },
+            { espace: "Header", sousPartie: "Navigation", fonctionnalite: "Images dans sous-menus spécialités", technique: "React Components", difficulteWP: "4", export: "Non", extensions: "Max Mega Menu Pro", duplication: "3" },
+            { espace: "Header", sousPartie: "Horloge", fonctionnalite: "Horloge temps réel (heure Paris)", technique: "JavaScript setInterval", difficulteWP: "3", export: "Non", extensions: "Code personnalisé", duplication: "2" },
+            { espace: "Header", sousPartie: "Actions", fonctionnalite: "Bouton Planning flottant", technique: "React State / CSS", difficulteWP: "4", export: "Non", extensions: "Code personnalisé", duplication: "3" },
+            { espace: "Header", sousPartie: "Actions", fonctionnalite: "Panneau Planning déroulant", technique: "React Context / Framer Motion", difficulteWP: "6", export: "Non", extensions: "Code personnalisé", duplication: "5" },
+            { espace: "Header", sousPartie: "Actions", fonctionnalite: "Bouton connexion/compte", technique: "React / Supabase Auth", difficulteWP: "5", export: "Non", extensions: "WooCommerce / MemberPress", duplication: "3" },
+            { espace: "Header", sousPartie: "Mobile", fonctionnalite: "Menu hamburger responsive", technique: "React State / CSS", difficulteWP: "3", export: "Oui", extensions: "Thème responsive", duplication: "2" },
+            { espace: "Header", sousPartie: "Sticky", fonctionnalite: "Header fixe au scroll", technique: "CSS position:sticky", difficulteWP: "2", export: "Oui", extensions: "Thème standard", duplication: "1" },
+            { espace: "", sousPartie: "", fonctionnalite: "TOTAL HEADER", technique: "", difficulteWP: "34", export: "", extensions: "", duplication: "24", isTotal: true },
+            
+            // FOOTER
+            { espace: "Footer", sousPartie: "Contact", fonctionnalite: "Adresse et téléphone", technique: "HTML statique", difficulteWP: "1", export: "Oui", extensions: "Widget texte", duplication: "1" },
+            { espace: "Footer", sousPartie: "Contact", fonctionnalite: "Lien email cliquable (mailto)", technique: "HTML lien", difficulteWP: "1", export: "Oui", extensions: "Aucune", duplication: "1" },
+            { espace: "Footer", sousPartie: "Contact", fonctionnalite: "Lien téléphone cliquable (tel:)", technique: "HTML lien", difficulteWP: "1", export: "Oui", extensions: "Aucune", duplication: "1" },
+            { espace: "Footer", sousPartie: "Navigation", fonctionnalite: "Liens vers pages principales", technique: "React Router / HTML", difficulteWP: "1", export: "Oui", extensions: "Menu natif WP", duplication: "1" },
+            { espace: "Footer", sousPartie: "Navigation", fonctionnalite: "Liens vers spécialités", technique: "React Router / HTML", difficulteWP: "1", export: "Oui", extensions: "Menu natif WP", duplication: "1" },
+            { espace: "Footer", sousPartie: "Réseaux sociaux", fonctionnalite: "Icônes réseaux (Instagram, Facebook)", technique: "HTML/CSS + liens externes", difficulteWP: "1", export: "Oui", extensions: "Widget social", duplication: "1" },
+            { espace: "Footer", sousPartie: "Légal", fonctionnalite: "Mentions légales, CGV", technique: "Liens HTML", difficulteWP: "1", export: "Oui", extensions: "Pages WP", duplication: "1" },
+            { espace: "Footer", sousPartie: "Design", fonctionnalite: "Design responsive multi-colonnes", technique: "CSS Grid/Flexbox", difficulteWP: "2", export: "Oui", extensions: "Thème standard", duplication: "1" },
+            { espace: "", sousPartie: "", fonctionnalite: "TOTAL FOOTER", technique: "", difficulteWP: "9", export: "", extensions: "", duplication: "8", isTotal: true },
+            
+            // PAGE ACCUEIL
+            { espace: "Accueil", sousPartie: "Hero", fonctionnalite: "Image de fond plein écran", technique: "CSS background-image", difficulteWP: "2", export: "Oui", extensions: "Elementor / Thème", duplication: "1" },
+            { espace: "Accueil", sousPartie: "Hero", fonctionnalite: "Titre et sous-titre animés", technique: "Framer Motion", difficulteWP: "4", export: "Non", extensions: "Elementor Pro", duplication: "3" },
+            { espace: "Accueil", sousPartie: "Hero", fonctionnalite: "Boutons CTA (Acheter/Vendre)", technique: "React Router / HTML", difficulteWP: "2", export: "Oui", extensions: "Elementor", duplication: "1" },
+            { espace: "Accueil", sousPartie: "Ventes à venir", fonctionnalite: "Carrousel de ventes", technique: "Embla Carousel React", difficulteWP: "5", export: "Non", extensions: "Slider Revolution", duplication: "3" },
+            { espace: "Accueil", sousPartie: "Ventes à venir", fonctionnalite: "Cartes ventes avec image, titre, date", technique: "React Components", difficulteWP: "4", export: "Non", extensions: "CPT + ACF", duplication: "3" },
+            { espace: "Accueil", sousPartie: "Ventes à venir", fonctionnalite: "Lien vers détail de vente", technique: "React Router", difficulteWP: "2", export: "Oui", extensions: "CPT natif", duplication: "1" },
+            { espace: "Accueil", sousPartie: "Ventes à venir", fonctionnalite: "Données dynamiques depuis BDD", technique: "Supabase Query", difficulteWP: "5", export: "Non", extensions: "CPT + ACF Pro", duplication: "3" },
+            { espace: "Accueil", sousPartie: "Spécialités", fonctionnalite: "Grille de spécialités avec images", technique: "CSS Grid + React", difficulteWP: "3", export: "Oui", extensions: "Elementor", duplication: "2" },
+            { espace: "Accueil", sousPartie: "Spécialités", fonctionnalite: "Liens vers pages spécialités", technique: "React Router", difficulteWP: "2", export: "Oui", extensions: "Liens natifs", duplication: "1" },
+            { espace: "Accueil", sousPartie: "Aventures", fonctionnalite: "Section témoignages/histoires", technique: "React Components", difficulteWP: "3", export: "Oui", extensions: "CPT + Elementor", duplication: "2" },
+            { espace: "Accueil", sousPartie: "Aventures", fonctionnalite: "Lien vers page Aventures", technique: "React Router", difficulteWP: "1", export: "Oui", extensions: "Lien natif", duplication: "1" },
+            { espace: "Accueil", sousPartie: "La Maison", fonctionnalite: "Présentation avec image et texte", technique: "HTML/CSS", difficulteWP: "2", export: "Oui", extensions: "Elementor", duplication: "1" },
+            { espace: "Accueil", sousPartie: "CTA", fonctionnalite: "Section estimation en ligne", technique: "HTML/CSS + lien", difficulteWP: "2", export: "Oui", extensions: "Elementor", duplication: "1" },
+            { espace: "", sousPartie: "", fonctionnalite: "TOTAL ACCUEIL", technique: "", difficulteWP: "37", export: "", extensions: "", duplication: "23", isTotal: true },
+            
+            // VENTES À VENIR
+            { espace: "Ventes à venir", sousPartie: "Liste", fonctionnalite: "Affichage liste des ventes futures", technique: "Supabase Query + React", difficulteWP: "5", export: "Non", extensions: "CPT + ACF", duplication: "3" },
+            { espace: "Ventes à venir", sousPartie: "Liste", fonctionnalite: "Filtrage par type de vente", technique: "React State", difficulteWP: "4", export: "Non", extensions: "FacetWP", duplication: "3" },
+            { espace: "Ventes à venir", sousPartie: "Liste", fonctionnalite: "Tri par date", technique: "JavaScript sort", difficulteWP: "3", export: "Non", extensions: "FacetWP", duplication: "2" },
+            { espace: "Ventes à venir", sousPartie: "Cartes", fonctionnalite: "Image de couverture vente", technique: "HTML img", difficulteWP: "2", export: "Oui", extensions: "CPT", duplication: "1" },
+            { espace: "Ventes à venir", sousPartie: "Cartes", fonctionnalite: "Titre, date, lieu, nombre de lots", technique: "React Components", difficulteWP: "3", export: "Non", extensions: "ACF", duplication: "2" },
+            { espace: "Ventes à venir", sousPartie: "Cartes", fonctionnalite: "Badge type de vente", technique: "CSS + React", difficulteWP: "2", export: "Oui", extensions: "ACF", duplication: "1" },
+            { espace: "Ventes à venir", sousPartie: "Actions", fonctionnalite: "Lien vers catalogue PDF externe", technique: "HTML lien", difficulteWP: "1", export: "Oui", extensions: "Aucune", duplication: "1" },
+            { espace: "Ventes à venir", sousPartie: "Actions", fonctionnalite: "Lien vers Interenchères", technique: "HTML lien externe", difficulteWP: "1", export: "Oui", extensions: "Aucune", duplication: "1" },
+            { espace: "", sousPartie: "", fonctionnalite: "TOTAL VENTES À VENIR", technique: "", difficulteWP: "21", export: "", extensions: "", duplication: "14", isTotal: true },
+            
+            // DÉTAIL VENTE À VENIR
+            { espace: "Détail vente", sousPartie: "Header vente", fonctionnalite: "Image bannière vente", technique: "CSS background", difficulteWP: "2", export: "Oui", extensions: "ACF", duplication: "1" },
+            { espace: "Détail vente", sousPartie: "Header vente", fonctionnalite: "Titre, date, heure, lieu", technique: "React + Supabase", difficulteWP: "3", export: "Non", extensions: "ACF", duplication: "2" },
+            { espace: "Détail vente", sousPartie: "Header vente", fonctionnalite: "Compte à rebours avant vente", technique: "JavaScript Interval", difficulteWP: "4", export: "Non", extensions: "Code personnalisé", duplication: "3" },
+            { espace: "Détail vente", sousPartie: "Header sticky", fonctionnalite: "Barre sticky avec infos vente", technique: "CSS sticky + React", difficulteWP: "5", export: "Non", extensions: "Code personnalisé", duplication: "4" },
+            { espace: "Détail vente", sousPartie: "Informations", fonctionnalite: "Description de la vente", technique: "HTML texte", difficulteWP: "1", export: "Oui", extensions: "Éditeur WP", duplication: "1" },
+            { espace: "Détail vente", sousPartie: "Informations", fonctionnalite: "Frais acheteurs", technique: "HTML texte", difficulteWP: "1", export: "Oui", extensions: "ACF", duplication: "1" },
+            { espace: "Détail vente", sousPartie: "Informations", fonctionnalite: "Contact commissaire-priseur", technique: "HTML + mailto", difficulteWP: "1", export: "Oui", extensions: "ACF", duplication: "1" },
+            { espace: "Détail vente", sousPartie: "Expositions", fonctionnalite: "Dates et horaires expositions", technique: "Supabase Query", difficulteWP: "4", export: "Non", extensions: "ACF Repeater", duplication: "3" },
+            { espace: "Détail vente", sousPartie: "Catalogue", fonctionnalite: "Grille de lots avec images", technique: "React Grid + Supabase", difficulteWP: "6", export: "Non", extensions: "CPT + ACF + Grid", duplication: "4" },
+            { espace: "Détail vente", sousPartie: "Catalogue", fonctionnalite: "Pagination des lots", technique: "React State", difficulteWP: "4", export: "Non", extensions: "WP Query", duplication: "2" },
+            { espace: "Détail vente", sousPartie: "Catalogue", fonctionnalite: "Recherche dans les lots", technique: "JavaScript filter", difficulteWP: "5", export: "Non", extensions: "SearchWP", duplication: "4" },
+            { espace: "Détail vente", sousPartie: "Catalogue", fonctionnalite: "Tri par numéro/estimation", technique: "React State + sort", difficulteWP: "4", export: "Non", extensions: "FacetWP", duplication: "3" },
+            { espace: "Détail vente", sousPartie: "Actions", fonctionnalite: "Bouton télécharger catalogue PDF", technique: "HTML lien", difficulteWP: "1", export: "Oui", extensions: "Aucune", duplication: "1" },
+            { espace: "Détail vente", sousPartie: "Actions", fonctionnalite: "Bouton enchérir sur Interenchères", technique: "HTML lien externe", difficulteWP: "1", export: "Oui", extensions: "Aucune", duplication: "1" },
+            { espace: "", sousPartie: "", fonctionnalite: "TOTAL DÉTAIL VENTE", technique: "", difficulteWP: "42", export: "", extensions: "", duplication: "31", isTotal: true },
+            
+            // DÉTAIL LOT
+            { espace: "Détail lot", sousPartie: "Images", fonctionnalite: "Galerie d'images du lot", technique: "React Components", difficulteWP: "5", export: "Non", extensions: "Lightbox + ACF Gallery", duplication: "3" },
+            { espace: "Détail lot", sousPartie: "Images", fonctionnalite: "Zoom sur image", technique: "React State + CSS", difficulteWP: "4", export: "Non", extensions: "Lightbox plugin", duplication: "3" },
+            { espace: "Détail lot", sousPartie: "Images", fonctionnalite: "Navigation entre images", technique: "React State", difficulteWP: "3", export: "Non", extensions: "Lightbox plugin", duplication: "2" },
+            { espace: "Détail lot", sousPartie: "Informations", fonctionnalite: "Numéro de lot", technique: "Supabase data", difficulteWP: "2", export: "Oui", extensions: "ACF", duplication: "1" },
+            { espace: "Détail lot", sousPartie: "Informations", fonctionnalite: "Titre et description", technique: "Supabase data", difficulteWP: "2", export: "Oui", extensions: "ACF", duplication: "1" },
+            { espace: "Détail lot", sousPartie: "Informations", fonctionnalite: "Estimations (fourchette)", technique: "Supabase data", difficulteWP: "2", export: "Oui", extensions: "ACF", duplication: "1" },
+            { espace: "Détail lot", sousPartie: "Informations", fonctionnalite: "Dimensions", technique: "Supabase data", difficulteWP: "2", export: "Oui", extensions: "ACF", duplication: "1" },
+            { espace: "Détail lot", sousPartie: "Vente liée", fonctionnalite: "Accordion infos vente parente", technique: "Radix Accordion", difficulteWP: "4", export: "Non", extensions: "ACF + JS", duplication: "3" },
+            { espace: "Détail lot", sousPartie: "Actions", fonctionnalite: "Bouton Mémoriser (favoris)", technique: "Supabase + React", difficulteWP: "6", export: "Non", extensions: "WooCommerce Wishlist", duplication: "4" },
+            { espace: "Détail lot", sousPartie: "Actions", fonctionnalite: "Bouton Ordre d'achat", technique: "Supabase + Modal", difficulteWP: "7", export: "Non", extensions: "Formulaire personnalisé", duplication: "5" },
+            { espace: "Détail lot", sousPartie: "Actions", fonctionnalite: "Bouton Enchère téléphone", technique: "Supabase + Modal", difficulteWP: "7", export: "Non", extensions: "Formulaire personnalisé", duplication: "5" },
+            { espace: "Détail lot", sousPartie: "Actions", fonctionnalite: "Bouton Demande d'info", technique: "Supabase + Modal", difficulteWP: "6", export: "Non", extensions: "Contact Form 7", duplication: "4" },
+            { espace: "Détail lot", sousPartie: "Actions", fonctionnalite: "Compteur actions utilisateur", technique: "Supabase Query", difficulteWP: "6", export: "Non", extensions: "Code personnalisé", duplication: "5" },
+            { espace: "Détail lot", sousPartie: "IA", fonctionnalite: "Analyse IA du lot", technique: "Edge Function + OpenAI", difficulteWP: "Z", export: "Non", extensions: "Impossible WP standard", duplication: "Z" },
+            { espace: "Détail lot", sousPartie: "IA", fonctionnalite: "Questions/Réponses IA sur le lot", technique: "Edge Function + OpenAI", difficulteWP: "Z", export: "Non", extensions: "Impossible WP standard", duplication: "Z" },
+            { espace: "Détail lot", sousPartie: "Navigation", fonctionnalite: "Lot précédent/suivant", technique: "React Router + Query", difficulteWP: "4", export: "Non", extensions: "WP Query", duplication: "3" },
+            { espace: "Détail lot", sousPartie: "Navigation", fonctionnalite: "Retour au catalogue", technique: "React Router", difficulteWP: "1", export: "Oui", extensions: "Lien natif", duplication: "1" },
+            { espace: "", sousPartie: "", fonctionnalite: "TOTAL DÉTAIL LOT", technique: "", difficulteWP: "61+Z", export: "", extensions: "", duplication: "42+Z", isTotal: true },
+            
+            // VENTES PASSÉES
+            { espace: "Ventes passées", sousPartie: "Liste", fonctionnalite: "Affichage ventes terminées", technique: "Supabase Query", difficulteWP: "4", export: "Non", extensions: "CPT + Query", duplication: "3" },
+            { espace: "Ventes passées", sousPartie: "Liste", fonctionnalite: "Filtrage par année", technique: "React State", difficulteWP: "3", export: "Non", extensions: "FacetWP", duplication: "2" },
+            { espace: "Ventes passées", sousPartie: "Liste", fonctionnalite: "Filtrage par spécialité", technique: "React State", difficulteWP: "3", export: "Non", extensions: "FacetWP", duplication: "2" },
+            { espace: "Ventes passées", sousPartie: "Cartes", fonctionnalite: "Résultats de vente (total adjugé)", technique: "Supabase aggregation", difficulteWP: "5", export: "Non", extensions: "Code personnalisé", duplication: "4" },
+            { espace: "Ventes passées", sousPartie: "Cartes", fonctionnalite: "Nombre de lots vendus", technique: "Supabase count", difficulteWP: "4", export: "Non", extensions: "Code personnalisé", duplication: "3" },
+            { espace: "", sousPartie: "", fonctionnalite: "TOTAL VENTES PASSÉES", technique: "", difficulteWP: "19", export: "", extensions: "", duplication: "14", isTotal: true },
+            
+            // DÉTAIL VENTE PASSÉE
+            { espace: "Détail vente passée", sousPartie: "Résultats", fonctionnalite: "Liste lots avec prix adjugés", technique: "Supabase Query", difficulteWP: "5", export: "Non", extensions: "CPT + ACF", duplication: "4" },
+            { espace: "Détail vente passée", sousPartie: "Résultats", fonctionnalite: "Indication lots vendus/invendus", technique: "Conditional rendering", difficulteWP: "3", export: "Non", extensions: "ACF", duplication: "2" },
+            { espace: "Détail vente passée", sousPartie: "After-sale", fonctionnalite: "Badge 'Disponible after-sale'", technique: "React + Supabase", difficulteWP: "5", export: "Non", extensions: "ACF + Code", duplication: "4" },
+            { espace: "Détail vente passée", sousPartie: "After-sale", fonctionnalite: "Prix after-sale affiché", technique: "Supabase data", difficulteWP: "3", export: "Non", extensions: "ACF", duplication: "2" },
+            { espace: "Détail vente passée", sousPartie: "Statistiques", fonctionnalite: "Total adjugé de la vente", technique: "Supabase SUM", difficulteWP: "4", export: "Non", extensions: "Code personnalisé", duplication: "3" },
+            { espace: "", sousPartie: "", fonctionnalite: "TOTAL DÉTAIL VENTE PASSÉE", technique: "", difficulteWP: "20", export: "", extensions: "", duplication: "15", isTotal: true },
+            
+            // AFTER-SALE
+            { espace: "After-sale", sousPartie: "Liste", fonctionnalite: "Affichage lots disponibles", technique: "Supabase Query filter", difficulteWP: "5", export: "Non", extensions: "CPT + Query", duplication: "4" },
+            { espace: "After-sale", sousPartie: "Liste", fonctionnalite: "Compte à rebours fin after-sale", technique: "JavaScript + Date", difficulteWP: "5", export: "Non", extensions: "Code personnalisé", duplication: "4" },
+            { espace: "After-sale", sousPartie: "Actions", fonctionnalite: "Bouton acheter maintenant", technique: "React + Supabase", difficulteWP: "7", export: "Non", extensions: "WooCommerce", duplication: "5" },
+            { espace: "After-sale", sousPartie: "Détail lot", fonctionnalite: "Prix fixe affiché", technique: "Supabase data", difficulteWP: "2", export: "Oui", extensions: "ACF", duplication: "1" },
+            { espace: "", sousPartie: "", fonctionnalite: "TOTAL AFTER-SALE", technique: "", difficulteWP: "19", export: "", extensions: "", duplication: "14", isTotal: true },
+            
+            // GUIDE ACHETEUR
+            { espace: "Guide acheteur", sousPartie: "Contenu", fonctionnalite: "Sections accordéon", technique: "Radix Accordion", difficulteWP: "3", export: "Non", extensions: "Elementor Accordion", duplication: "2" },
+            { espace: "Guide acheteur", sousPartie: "Contenu", fonctionnalite: "Texte explicatif riche", technique: "HTML/CSS", difficulteWP: "1", export: "Oui", extensions: "Éditeur WP", duplication: "1" },
+            { espace: "Guide acheteur", sousPartie: "Contenu", fonctionnalite: "Images illustrations", technique: "HTML img", difficulteWP: "1", export: "Oui", extensions: "Médias WP", duplication: "1" },
+            { espace: "Guide acheteur", sousPartie: "Navigation", fonctionnalite: "Ancres vers sections", technique: "HTML anchors", difficulteWP: "2", export: "Oui", extensions: "Elementor", duplication: "1" },
+            { espace: "Guide acheteur", sousPartie: "PDF", fonctionnalite: "Téléchargement règles PDF", technique: "HTML lien", difficulteWP: "1", export: "Oui", extensions: "Médias WP", duplication: "1" },
+            { espace: "", sousPartie: "", fonctionnalite: "TOTAL GUIDE ACHETEUR", technique: "", difficulteWP: "8", export: "", extensions: "", duplication: "6", isTotal: true },
+            
+            // GUIDE VENDEUR
+            { espace: "Guide vendeur", sousPartie: "Contenu", fonctionnalite: "Étapes de vente illustrées", technique: "HTML/CSS", difficulteWP: "2", export: "Oui", extensions: "Elementor", duplication: "1" },
+            { espace: "Guide vendeur", sousPartie: "Contenu", fonctionnalite: "FAQ accordéon", technique: "Radix Accordion", difficulteWP: "3", export: "Non", extensions: "Elementor Accordion", duplication: "2" },
+            { espace: "Guide vendeur", sousPartie: "CTA", fonctionnalite: "Bouton estimation en ligne", technique: "React Router", difficulteWP: "1", export: "Oui", extensions: "Lien natif", duplication: "1" },
+            { espace: "Guide vendeur", sousPartie: "CTA", fonctionnalite: "Bouton RDV expertise", technique: "React Router", difficulteWP: "1", export: "Oui", extensions: "Lien natif", duplication: "1" },
+            { espace: "", sousPartie: "", fonctionnalite: "TOTAL GUIDE VENDEUR", technique: "", difficulteWP: "7", export: "", extensions: "", duplication: "5", isTotal: true },
+            
+            // ESTIMATION EN LIGNE
+            { espace: "Estimation en ligne", sousPartie: "Formulaire", fonctionnalite: "Champs texte (nom, email, téléphone)", technique: "React Hook Form", difficulteWP: "3", export: "Non", extensions: "Contact Form 7 / Gravity", duplication: "2" },
+            { espace: "Estimation en ligne", sousPartie: "Formulaire", fonctionnalite: "Champ description objet", technique: "HTML textarea", difficulteWP: "1", export: "Oui", extensions: "Contact Form 7", duplication: "1" },
+            { espace: "Estimation en ligne", sousPartie: "Formulaire", fonctionnalite: "Upload photos (jusqu'à 4)", technique: "React + FileReader", difficulteWP: "5", export: "Non", extensions: "Gravity Forms", duplication: "4" },
+            { espace: "Estimation en ligne", sousPartie: "Formulaire", fonctionnalite: "Validation des champs", technique: "Zod + React Hook Form", difficulteWP: "4", export: "Non", extensions: "Gravity Forms", duplication: "3" },
+            { espace: "Estimation en ligne", sousPartie: "Formulaire", fonctionnalite: "Preview des images uploadées", technique: "React State + URL.createObjectURL", difficulteWP: "4", export: "Non", extensions: "Code personnalisé", duplication: "3" },
+            { espace: "Estimation en ligne", sousPartie: "Soumission", fonctionnalite: "Envoi email avec pièces jointes", technique: "Edge Function + SMTP", difficulteWP: "6", export: "Non", extensions: "WP Mail SMTP + Gravity", duplication: "4" },
+            { espace: "Estimation en ligne", sousPartie: "Soumission", fonctionnalite: "Toast de confirmation", technique: "Sonner toast", difficulteWP: "2", export: "Non", extensions: "Code JS", duplication: "1" },
+            { espace: "", sousPartie: "", fonctionnalite: "TOTAL ESTIMATION EN LIGNE", technique: "", difficulteWP: "25", export: "", extensions: "", duplication: "18", isTotal: true },
+            
+            // JOURNÉES ESTIMATION
+            { espace: "Journées estimation", sousPartie: "Calendrier", fonctionnalite: "Affichage dates par ville", technique: "Supabase Query", difficulteWP: "5", export: "Non", extensions: "Events Calendar", duplication: "4" },
+            { espace: "Journées estimation", sousPartie: "Calendrier", fonctionnalite: "Filtrage par ville", technique: "React State", difficulteWP: "3", export: "Non", extensions: "FacetWP", duplication: "2" },
+            { espace: "Journées estimation", sousPartie: "Détails", fonctionnalite: "Lieu et horaires", technique: "Supabase data", difficulteWP: "2", export: "Oui", extensions: "ACF", duplication: "1" },
+            { espace: "Journées estimation", sousPartie: "Détails", fonctionnalite: "Spécialités du jour", technique: "Supabase data", difficulteWP: "3", export: "Non", extensions: "ACF", duplication: "2" },
+            { espace: "Journées estimation", sousPartie: "CTA", fonctionnalite: "Bouton prendre RDV", technique: "Lien / Modal", difficulteWP: "3", export: "Oui", extensions: "Booking plugin", duplication: "2" },
+            { espace: "", sousPartie: "", fonctionnalite: "TOTAL JOURNÉES ESTIMATION", technique: "", difficulteWP: "16", export: "", extensions: "", duplication: "11", isTotal: true },
+            
+            // INVENTAIRE À DOMICILE
+            { espace: "Inventaire domicile", sousPartie: "Contenu", fonctionnalite: "Description du service", technique: "HTML/CSS", difficulteWP: "1", export: "Oui", extensions: "Éditeur WP", duplication: "1" },
+            { espace: "Inventaire domicile", sousPartie: "Contenu", fonctionnalite: "Tarifs indicatifs", technique: "HTML/CSS", difficulteWP: "1", export: "Oui", extensions: "Éditeur WP", duplication: "1" },
+            { espace: "Inventaire domicile", sousPartie: "CTA", fonctionnalite: "Formulaire de contact", technique: "React Hook Form", difficulteWP: "3", export: "Non", extensions: "Contact Form 7", duplication: "2" },
+            { espace: "", sousPartie: "", fonctionnalite: "TOTAL INVENTAIRE DOMICILE", technique: "", difficulteWP: "5", export: "", extensions: "", duplication: "4", isTotal: true },
+            
+            // CONTACT
+            { espace: "Contact", sousPartie: "Informations", fonctionnalite: "Adresse avec carte Google Maps", technique: "iframe Google Maps", difficulteWP: "2", export: "Oui", extensions: "WP Google Maps", duplication: "1" },
+            { espace: "Contact", sousPartie: "Informations", fonctionnalite: "Horaires d'ouverture", technique: "HTML texte", difficulteWP: "1", export: "Oui", extensions: "Éditeur WP", duplication: "1" },
+            { espace: "Contact", sousPartie: "Informations", fonctionnalite: "Téléphone et email cliquables", technique: "HTML liens", difficulteWP: "1", export: "Oui", extensions: "Aucune", duplication: "1" },
+            { espace: "Contact", sousPartie: "Formulaire", fonctionnalite: "Formulaire contact complet", technique: "React Hook Form", difficulteWP: "3", export: "Non", extensions: "Contact Form 7", duplication: "2" },
+            { espace: "Contact", sousPartie: "Formulaire", fonctionnalite: "Upload photos estimation", technique: "React + FileReader", difficulteWP: "5", export: "Non", extensions: "Gravity Forms", duplication: "4" },
+            { espace: "Contact", sousPartie: "Social", fonctionnalite: "Liens réseaux sociaux", technique: "HTML liens", difficulteWP: "1", export: "Oui", extensions: "Aucune", duplication: "1" },
+            { espace: "", sousPartie: "", fonctionnalite: "TOTAL CONTACT", technique: "", difficulteWP: "13", export: "", extensions: "", duplication: "10", isTotal: true },
+            
+            // CALENDRIER
+            { espace: "Calendrier", sousPartie: "Vue timeline", fonctionnalite: "Timeline visuelle des événements", technique: "React Custom Components", difficulteWP: "7", export: "Non", extensions: "Events Calendar Pro", duplication: "6" },
+            { espace: "Calendrier", sousPartie: "Vue timeline", fonctionnalite: "Affichage multi-types (ventes, expertises, expos)", technique: "React + Supabase", difficulteWP: "6", export: "Non", extensions: "Events Calendar Pro", duplication: "5" },
+            { espace: "Calendrier", sousPartie: "Vue timeline", fonctionnalite: "Codes couleur par type", technique: "CSS + React", difficulteWP: "3", export: "Non", extensions: "Events Calendar Pro", duplication: "2" },
+            { espace: "Calendrier", sousPartie: "Filtres", fonctionnalite: "Filtrage par type d'événement", technique: "React State", difficulteWP: "4", export: "Non", extensions: "FacetWP", duplication: "3" },
+            { espace: "Calendrier", sousPartie: "Filtres", fonctionnalite: "Filtrage par mois", technique: "React State", difficulteWP: "3", export: "Non", extensions: "Events Calendar", duplication: "2" },
+            { espace: "Calendrier", sousPartie: "Interactions", fonctionnalite: "Clic sur événement → détail", technique: "React Dialog", difficulteWP: "5", export: "Non", extensions: "Events Calendar Pro", duplication: "4" },
+            { espace: "Calendrier", sousPartie: "Données", fonctionnalite: "Fusion événements BDD + ventes", technique: "Supabase multi-query", difficulteWP: "6", export: "Non", extensions: "Code personnalisé", duplication: "5" },
+            { espace: "", sousPartie: "", fonctionnalite: "TOTAL CALENDRIER", technique: "", difficulteWP: "34", export: "", extensions: "", duplication: "27", isTotal: true },
+            
+            // LA MAISON
+            { espace: "La Maison", sousPartie: "Histoire", fonctionnalite: "Texte de présentation", technique: "HTML/CSS", difficulteWP: "1", export: "Oui", extensions: "Éditeur WP", duplication: "1" },
+            { espace: "La Maison", sousPartie: "Histoire", fonctionnalite: "Photos de l'étude", technique: "HTML img", difficulteWP: "1", export: "Oui", extensions: "Médias WP", duplication: "1" },
+            { espace: "La Maison", sousPartie: "Équipe", fonctionnalite: "Portrait commissaire-priseur", technique: "HTML/CSS", difficulteWP: "2", export: "Oui", extensions: "Elementor", duplication: "1" },
+            { espace: "La Maison", sousPartie: "Valeurs", fonctionnalite: "Section valeurs illustrées", technique: "CSS Grid + HTML", difficulteWP: "2", export: "Oui", extensions: "Elementor", duplication: "1" },
+            { espace: "La Maison", sousPartie: "Coups de cœur", fonctionnalite: "Carrousel lieux partenaires", technique: "Embla Carousel", difficulteWP: "5", export: "Non", extensions: "Slider Revolution", duplication: "3" },
+            { espace: "", sousPartie: "", fonctionnalite: "TOTAL LA MAISON", technique: "", difficulteWP: "11", export: "", extensions: "", duplication: "7", isTotal: true },
+            
+            // AVENTURES ENCHÈRES
+            { espace: "Aventures enchères", sousPartie: "Liste", fonctionnalite: "Grille d'histoires", technique: "CSS Grid + React", difficulteWP: "3", export: "Oui", extensions: "CPT + Elementor", duplication: "2" },
+            { espace: "Aventures enchères", sousPartie: "Cartes", fonctionnalite: "Image, titre, catégorie, date", technique: "React Components", difficulteWP: "3", export: "Non", extensions: "ACF", duplication: "2" },
+            { espace: "Aventures enchères", sousPartie: "Cartes", fonctionnalite: "Extrait de description", technique: "CSS line-clamp", difficulteWP: "2", export: "Oui", extensions: "CSS natif", duplication: "1" },
+            { espace: "Aventures enchères", sousPartie: "CTA", fonctionnalite: "Lien vers estimation", technique: "React Router", difficulteWP: "1", export: "Oui", extensions: "Lien natif", duplication: "1" },
+            { espace: "", sousPartie: "", fonctionnalite: "TOTAL AVENTURES ENCHÈRES", technique: "", difficulteWP: "9", export: "", extensions: "", duplication: "6", isTotal: true },
+            
+            // TALENTS DE LA RÉGION
+            { espace: "Talents région", sousPartie: "Contenu", fonctionnalite: "Présentation artisans locaux", technique: "HTML/CSS", difficulteWP: "2", export: "Oui", extensions: "Elementor", duplication: "1" },
+            { espace: "Talents région", sousPartie: "Contenu", fonctionnalite: "Photos et descriptions", technique: "HTML/CSS", difficulteWP: "2", export: "Oui", extensions: "Elementor", duplication: "1" },
+            { espace: "Talents région", sousPartie: "Liens", fonctionnalite: "Liens vers sites partenaires", technique: "HTML liens externes", difficulteWP: "1", export: "Oui", extensions: "Aucune", duplication: "1" },
+            { espace: "", sousPartie: "", fonctionnalite: "TOTAL TALENTS RÉGION", technique: "", difficulteWP: "5", export: "", extensions: "", duplication: "3", isTotal: true },
+            
+            // GLOSSAIRE
+            { espace: "Glossaire", sousPartie: "Contenu", fonctionnalite: "Liste termes A-Z", technique: "React + Radix Accordion", difficulteWP: "4", export: "Non", extensions: "Elementor Accordion", duplication: "3" },
+            { espace: "Glossaire", sousPartie: "Contenu", fonctionnalite: "Définitions détaillées", technique: "HTML texte", difficulteWP: "1", export: "Oui", extensions: "Éditeur WP", duplication: "1" },
+            { espace: "Glossaire", sousPartie: "Navigation", fonctionnalite: "Filtrage par lettre", technique: "React State", difficulteWP: "3", export: "Non", extensions: "Code personnalisé", duplication: "2" },
+            { espace: "Glossaire", sousPartie: "Navigation", fonctionnalite: "Recherche dans termes", technique: "JavaScript filter", difficulteWP: "4", export: "Non", extensions: "SearchWP", duplication: "3" },
+            { espace: "", sousPartie: "", fonctionnalite: "TOTAL GLOSSAIRE", technique: "", difficulteWP: "12", export: "", extensions: "", duplication: "9", isTotal: true },
+            
+            // PAGES SPÉCIALITÉS (x11)
+            { espace: "Spécialités", sousPartie: "Template", fonctionnalite: "Image hero plein écran", technique: "CSS background", difficulteWP: "2", export: "Oui", extensions: "Elementor", duplication: "1" },
+            { espace: "Spécialités", sousPartie: "Template", fonctionnalite: "Titre et introduction", technique: "HTML/CSS", difficulteWP: "1", export: "Oui", extensions: "Éditeur WP", duplication: "1" },
+            { espace: "Spécialités", sousPartie: "Template", fonctionnalite: "Carrousel ventes de la spécialité", technique: "Embla + Supabase filter", difficulteWP: "6", export: "Non", extensions: "CPT + Slider Revolution", duplication: "4" },
+            { espace: "Spécialités", sousPartie: "Template", fonctionnalite: "Section expertise dédiée", technique: "HTML/CSS", difficulteWP: "2", export: "Oui", extensions: "Elementor", duplication: "1" },
+            { espace: "Spécialités", sousPartie: "Template", fonctionnalite: "Anecdotes / histoires", technique: "HTML/CSS", difficulteWP: "2", export: "Oui", extensions: "Elementor", duplication: "1" },
+            { espace: "Spécialités", sousPartie: "Template", fonctionnalite: "Records de vente", technique: "Supabase Query MAX", difficulteWP: "5", export: "Non", extensions: "Code personnalisé", duplication: "4" },
+            { espace: "Spécialités", sousPartie: "CTA", fonctionnalite: "Bouton estimation", technique: "React Router", difficulteWP: "1", export: "Oui", extensions: "Lien natif", duplication: "1" },
+            { espace: "Spécialités", sousPartie: "Duplication", fonctionnalite: "11 pages avec même template", technique: "React Component réutilisable", difficulteWP: "3", export: "Non", extensions: "Template WP", duplication: "2" },
+            { espace: "", sousPartie: "", fonctionnalite: "TOTAL SPÉCIALITÉS (x11)", technique: "", difficulteWP: "22", export: "", extensions: "", duplication: "15", isTotal: true },
+            
+            // AUTHENTIFICATION
+            { espace: "Auth", sousPartie: "Connexion", fonctionnalite: "Formulaire email/mot de passe", technique: "Supabase Auth", difficulteWP: "4", export: "Non", extensions: "WooCommerce / MemberPress", duplication: "3" },
+            { espace: "Auth", sousPartie: "Connexion", fonctionnalite: "Connexion Google OAuth", technique: "Supabase Auth Google", difficulteWP: "6", export: "Non", extensions: "Social Login plugin", duplication: "4" },
+            { espace: "Auth", sousPartie: "Inscription", fonctionnalite: "Formulaire création compte", technique: "Supabase Auth", difficulteWP: "4", export: "Non", extensions: "WooCommerce / MemberPress", duplication: "3" },
+            { espace: "Auth", sousPartie: "Inscription", fonctionnalite: "Validation email auto", technique: "Supabase Auth config", difficulteWP: "3", export: "Non", extensions: "MemberPress", duplication: "2" },
+            { espace: "Auth", sousPartie: "Récupération", fonctionnalite: "Réinitialisation mot de passe", technique: "Supabase Auth", difficulteWP: "4", export: "Non", extensions: "WP natif", duplication: "2" },
+            { espace: "Auth", sousPartie: "Session", fonctionnalite: "Persistance session", technique: "Supabase Session", difficulteWP: "3", export: "Non", extensions: "WP natif", duplication: "2" },
+            { espace: "Auth", sousPartie: "Protection", fonctionnalite: "Routes protégées", technique: "React Router + Auth", difficulteWP: "5", export: "Non", extensions: "MemberPress", duplication: "4" },
+            { espace: "", sousPartie: "", fonctionnalite: "TOTAL AUTH", technique: "", difficulteWP: "29", export: "", extensions: "", duplication: "20", isTotal: true },
+            
+            // COMPTE - DASHBOARD
+            { espace: "Compte", sousPartie: "Dashboard", fonctionnalite: "Vue d'ensemble activité", technique: "Supabase multi-query", difficulteWP: "6", export: "Non", extensions: "Code personnalisé", duplication: "5" },
+            { espace: "Compte", sousPartie: "Dashboard", fonctionnalite: "Compteurs (favoris, ordres, etc.)", technique: "Supabase count", difficulteWP: "5", export: "Non", extensions: "Code personnalisé", duplication: "4" },
+            { espace: "Compte", sousPartie: "Dashboard", fonctionnalite: "Liens rapides vers sections", technique: "React Router", difficulteWP: "2", export: "Oui", extensions: "Liens natifs", duplication: "1" },
+            { espace: "Compte", sousPartie: "Sidebar", fonctionnalite: "Menu navigation compte", technique: "React Components", difficulteWP: "4", export: "Non", extensions: "WooCommerce", duplication: "3" },
+            { espace: "Compte", sousPartie: "Sidebar", fonctionnalite: "Indicateurs progression profil", technique: "React + Supabase", difficulteWP: "5", export: "Non", extensions: "Code personnalisé", duplication: "4" },
+            { espace: "", sousPartie: "", fonctionnalite: "TOTAL COMPTE DASHBOARD", technique: "", difficulteWP: "22", export: "", extensions: "", duplication: "17", isTotal: true },
+            
+            // COMPTE - PROFIL
+            { espace: "Compte", sousPartie: "Profil - Identité", fonctionnalite: "Modification nom/prénom", technique: "Supabase update", difficulteWP: "3", export: "Non", extensions: "WooCommerce", duplication: "2" },
+            { espace: "Compte", sousPartie: "Profil - Identité", fonctionnalite: "Upload photo profil", technique: "Supabase Storage", difficulteWP: "5", export: "Non", extensions: "WP User Avatar", duplication: "4" },
+            { espace: "Compte", sousPartie: "Profil - Contact", fonctionnalite: "Modification téléphone", technique: "Supabase update", difficulteWP: "2", export: "Non", extensions: "WooCommerce", duplication: "1" },
+            { espace: "Compte", sousPartie: "Profil - Contact", fonctionnalite: "Préférence contact (email/SMS)", technique: "Supabase update", difficulteWP: "3", export: "Non", extensions: "ACF", duplication: "2" },
+            { espace: "Compte", sousPartie: "Profil - Adresse", fonctionnalite: "Adresse complète", technique: "Supabase update", difficulteWP: "3", export: "Non", extensions: "WooCommerce", duplication: "2" },
+            { espace: "Compte", sousPartie: "Profil - Documents", fonctionnalite: "Upload pièce d'identité", technique: "Supabase Storage", difficulteWP: "6", export: "Non", extensions: "Gravity Forms", duplication: "5" },
+            { espace: "Compte", sousPartie: "Profil - Documents", fonctionnalite: "Statut vérification ID", technique: "Supabase + Admin", difficulteWP: "7", export: "Non", extensions: "Code personnalisé", duplication: "6" },
+            { espace: "Compte", sousPartie: "Profil - Banque", fonctionnalite: "Validation coordonnées bancaires", technique: "Supabase + Stripe", difficulteWP: "8", export: "Non", extensions: "Stripe + Code", duplication: "7" },
+            { espace: "Compte", sousPartie: "Profil - Sécurité", fonctionnalite: "Changement mot de passe", technique: "Supabase Auth", difficulteWP: "4", export: "Non", extensions: "WP natif", duplication: "2" },
+            { espace: "", sousPartie: "", fonctionnalite: "TOTAL COMPTE PROFIL", technique: "", difficulteWP: "41", export: "", extensions: "", duplication: "31", isTotal: true },
+            
+            // COMPTE - NEWSLETTER
+            { espace: "Compte", sousPartie: "Newsletter", fonctionnalite: "Toggle inscription newsletter", technique: "Supabase update", difficulteWP: "3", export: "Non", extensions: "Mailchimp for WP", duplication: "2" },
+            { espace: "Compte", sousPartie: "Newsletter", fonctionnalite: "Choix fréquence", technique: "Supabase update", difficulteWP: "3", export: "Non", extensions: "Mailchimp for WP", duplication: "2" },
+            { espace: "", sousPartie: "", fonctionnalite: "TOTAL COMPTE NEWSLETTER", technique: "", difficulteWP: "6", export: "", extensions: "", duplication: "4", isTotal: true },
+            
+            // COMPTE - ALERTES
+            { espace: "Compte", sousPartie: "Alertes", fonctionnalite: "Création alerte mot-clé", technique: "Supabase insert", difficulteWP: "5", export: "Non", extensions: "Code personnalisé", duplication: "4" },
+            { espace: "Compte", sousPartie: "Alertes", fonctionnalite: "Validation IA du mot-clé", technique: "Edge Function + OpenAI", difficulteWP: "Z", export: "Non", extensions: "Impossible WP standard", duplication: "Z" },
+            { espace: "Compte", sousPartie: "Alertes", fonctionnalite: "Liste alertes actives", technique: "Supabase Query", difficulteWP: "4", export: "Non", extensions: "Code personnalisé", duplication: "3" },
+            { espace: "Compte", sousPartie: "Alertes", fonctionnalite: "Activation/désactivation alerte", technique: "Supabase update", difficulteWP: "3", export: "Non", extensions: "Code personnalisé", duplication: "2" },
+            { espace: "Compte", sousPartie: "Alertes", fonctionnalite: "Suppression alerte", technique: "Supabase delete", difficulteWP: "2", export: "Non", extensions: "Code personnalisé", duplication: "1" },
+            { espace: "Compte", sousPartie: "Alertes", fonctionnalite: "Lots correspondant aux alertes", technique: "Supabase Query complex", difficulteWP: "7", export: "Non", extensions: "Code personnalisé", duplication: "6" },
+            { espace: "", sousPartie: "", fonctionnalite: "TOTAL COMPTE ALERTES", technique: "", difficulteWP: "21+Z", export: "", extensions: "", duplication: "16+Z", isTotal: true },
+            
+            // COMPTE - CE QUE J'AIME (LIA)
+            { espace: "Compte", sousPartie: "Ce que j'aime", fonctionnalite: "Interface conversation IA", technique: "React + Edge Function", difficulteWP: "Z", export: "Non", extensions: "Impossible WP standard", duplication: "Z" },
+            { espace: "Compte", sousPartie: "Ce que j'aime", fonctionnalite: "Reconnaissance vocale", technique: "Web Speech API", difficulteWP: "8", export: "Non", extensions: "Code personnalisé", duplication: "7" },
+            { espace: "Compte", sousPartie: "Ce que j'aime", fonctionnalite: "Synthèse profil de goûts", technique: "Edge Function + OpenAI", difficulteWP: "Z", export: "Non", extensions: "Impossible WP standard", duplication: "Z" },
+            { espace: "Compte", sousPartie: "Ce que j'aime", fonctionnalite: "Nuage de tags préférences", technique: "React Components", difficulteWP: "5", export: "Non", extensions: "Code personnalisé", duplication: "4" },
+            { espace: "Compte", sousPartie: "Ce que j'aime", fonctionnalite: "Suggestions lots IA", technique: "Edge Function + OpenAI", difficulteWP: "Z", export: "Non", extensions: "Impossible WP standard", duplication: "Z" },
+            { espace: "Compte", sousPartie: "Ce que j'aime", fonctionnalite: "Historique conversation", technique: "Supabase JSONB", difficulteWP: "6", export: "Non", extensions: "Code personnalisé", duplication: "5" },
+            { espace: "", sousPartie: "", fonctionnalite: "TOTAL COMPTE CE QUE J'AIME", technique: "", difficulteWP: "19+3Z", export: "", extensions: "", duplication: "16+3Z", isTotal: true },
+            
+            // COMPTE - CENTRES D'INTÉRÊTS
+            { espace: "Compte", sousPartie: "Centres d'intérêts", fonctionnalite: "Sélection spécialités", technique: "Supabase insert/delete", difficulteWP: "4", export: "Non", extensions: "ACF Checkbox", duplication: "3" },
+            { espace: "Compte", sousPartie: "Centres d'intérêts", fonctionnalite: "Grille visuelle spécialités", technique: "CSS Grid + React", difficulteWP: "3", export: "Non", extensions: "Elementor", duplication: "2" },
+            { espace: "Compte", sousPartie: "Centres d'intérêts", fonctionnalite: "Toggle actif/inactif", technique: "React State + Supabase", difficulteWP: "4", export: "Non", extensions: "Code personnalisé", duplication: "3" },
+            { espace: "", sousPartie: "", fonctionnalite: "TOTAL COMPTE CENTRES D'INTÉRÊTS", technique: "", difficulteWP: "11", export: "", extensions: "", duplication: "8", isTotal: true },
+            
+            // COMPTE - FAVORIS
+            { espace: "Compte", sousPartie: "Favoris", fonctionnalite: "Liste lots mémorisés", technique: "Supabase Query JOIN", difficulteWP: "5", export: "Non", extensions: "WooCommerce Wishlist", duplication: "4" },
+            { espace: "Compte", sousPartie: "Favoris", fonctionnalite: "Carte lot avec image et infos", technique: "React Components", difficulteWP: "4", export: "Non", extensions: "ACF + Template", duplication: "3" },
+            { espace: "Compte", sousPartie: "Favoris", fonctionnalite: "Suppression du favori", technique: "Supabase delete", difficulteWP: "3", export: "Non", extensions: "WooCommerce Wishlist", duplication: "2" },
+            { espace: "Compte", sousPartie: "Favoris", fonctionnalite: "Lien vers détail lot", technique: "React Router", difficulteWP: "2", export: "Oui", extensions: "Lien natif", duplication: "1" },
+            { espace: "Compte", sousPartie: "Favoris", fonctionnalite: "État vente (à venir/passée)", technique: "Conditional rendering", difficulteWP: "3", export: "Non", extensions: "Code personnalisé", duplication: "2" },
+            { espace: "", sousPartie: "", fonctionnalite: "TOTAL COMPTE FAVORIS", technique: "", difficulteWP: "17", export: "", extensions: "", duplication: "12", isTotal: true },
+            
+            // COMPTE - ORDRES D'ACHAT
+            { espace: "Compte", sousPartie: "Ordres d'achat", fonctionnalite: "Liste ordres passés", technique: "Supabase Query JOIN", difficulteWP: "5", export: "Non", extensions: "WooCommerce", duplication: "4" },
+            { espace: "Compte", sousPartie: "Ordres d'achat", fonctionnalite: "Détail ordre (lot, montant max)", technique: "React Components", difficulteWP: "4", export: "Non", extensions: "ACF", duplication: "3" },
+            { espace: "Compte", sousPartie: "Ordres d'achat", fonctionnalite: "Modification montant max", technique: "Supabase update", difficulteWP: "4", export: "Non", extensions: "Code personnalisé", duplication: "3" },
+            { espace: "Compte", sousPartie: "Ordres d'achat", fonctionnalite: "Annulation ordre", technique: "Supabase delete", difficulteWP: "3", export: "Non", extensions: "Code personnalisé", duplication: "2" },
+            { espace: "Compte", sousPartie: "Ordres d'achat", fonctionnalite: "Statut ordre (en attente/exécuté)", technique: "Conditional rendering", difficulteWP: "3", export: "Non", extensions: "ACF", duplication: "2" },
+            { espace: "", sousPartie: "", fonctionnalite: "TOTAL COMPTE ORDRES D'ACHAT", technique: "", difficulteWP: "19", export: "", extensions: "", duplication: "14", isTotal: true },
+            
+            // COMPTE - ENCHÈRES TÉLÉPHONE
+            { espace: "Compte", sousPartie: "Enchères téléphone", fonctionnalite: "Liste demandes téléphone", technique: "Supabase Query JOIN", difficulteWP: "5", export: "Non", extensions: "Code personnalisé", duplication: "4" },
+            { espace: "Compte", sousPartie: "Enchères téléphone", fonctionnalite: "Détail (lot, numéro, notes)", technique: "React Components", difficulteWP: "4", export: "Non", extensions: "ACF", duplication: "3" },
+            { espace: "Compte", sousPartie: "Enchères téléphone", fonctionnalite: "Modification numéro", technique: "Supabase update", difficulteWP: "3", export: "Non", extensions: "Code personnalisé", duplication: "2" },
+            { espace: "Compte", sousPartie: "Enchères téléphone", fonctionnalite: "Annulation demande", technique: "Supabase delete", difficulteWP: "3", export: "Non", extensions: "Code personnalisé", duplication: "2" },
+            { espace: "Compte", sousPartie: "Enchères téléphone", fonctionnalite: "Confirmation par l'étude", technique: "Supabase + Admin", difficulteWP: "6", export: "Non", extensions: "Code personnalisé", duplication: "5" },
+            { espace: "", sousPartie: "", fonctionnalite: "TOTAL COMPTE ENCHÈRES TÉLÉPHONE", technique: "", difficulteWP: "21", export: "", extensions: "", duplication: "16", isTotal: true },
+            
+            // COMPTE - ADJUDICATIONS
+            { espace: "Compte", sousPartie: "Adjudications", fonctionnalite: "Liste lots remportés", technique: "Supabase Query complex", difficulteWP: "6", export: "Non", extensions: "WooCommerce", duplication: "5" },
+            { espace: "Compte", sousPartie: "Adjudications", fonctionnalite: "Détail (lot, prix, frais)", technique: "React Components", difficulteWP: "4", export: "Non", extensions: "ACF", duplication: "3" },
+            { espace: "Compte", sousPartie: "Adjudications", fonctionnalite: "Téléchargement bordereau PDF", technique: "Supabase Storage", difficulteWP: "5", export: "Non", extensions: "Code personnalisé", duplication: "4" },
+            { espace: "Compte", sousPartie: "Adjudications", fonctionnalite: "Statut paiement", technique: "Conditional rendering", difficulteWP: "3", export: "Non", extensions: "WooCommerce", duplication: "2" },
+            { espace: "Compte", sousPartie: "Adjudications", fonctionnalite: "Bouton payer", technique: "React Router", difficulteWP: "2", export: "Oui", extensions: "WooCommerce", duplication: "1" },
+            { espace: "", sousPartie: "", fonctionnalite: "TOTAL COMPTE ADJUDICATIONS", technique: "", difficulteWP: "20", export: "", extensions: "", duplication: "15", isTotal: true },
+            
+            // COMPTE - PAIEMENT
+            { espace: "Compte", sousPartie: "Paiement", fonctionnalite: "Récapitulatif à payer", technique: "Supabase Query SUM", difficulteWP: "5", export: "Non", extensions: "WooCommerce", duplication: "4" },
+            { espace: "Compte", sousPartie: "Paiement", fonctionnalite: "Choix méthode paiement", technique: "React State", difficulteWP: "3", export: "Non", extensions: "WooCommerce", duplication: "2" },
+            { espace: "Compte", sousPartie: "Paiement", fonctionnalite: "Paiement carte Stripe", technique: "Stripe Elements", difficulteWP: "7", export: "Non", extensions: "Stripe for WooCommerce", duplication: "5" },
+            { espace: "Compte", sousPartie: "Paiement", fonctionnalite: "Instructions virement", technique: "HTML texte", difficulteWP: "1", export: "Oui", extensions: "Éditeur WP", duplication: "1" },
+            { espace: "Compte", sousPartie: "Paiement", fonctionnalite: "Confirmation paiement", technique: "Supabase update + Stripe webhook", difficulteWP: "8", export: "Non", extensions: "Code personnalisé", duplication: "6" },
+            { espace: "", sousPartie: "", fonctionnalite: "TOTAL COMPTE PAIEMENT", technique: "", difficulteWP: "24", export: "", extensions: "", duplication: "18", isTotal: true },
+            
+            // COMPTE - ENLÈVEMENT
+            { espace: "Compte", sousPartie: "Enlèvement", fonctionnalite: "Liste lots à récupérer", technique: "Supabase Query", difficulteWP: "5", export: "Non", extensions: "WooCommerce", duplication: "4" },
+            { espace: "Compte", sousPartie: "Enlèvement", fonctionnalite: "Prise RDV calendrier", technique: "React Calendar + Supabase", difficulteWP: "7", export: "Non", extensions: "Booking plugin", duplication: "6" },
+            { espace: "Compte", sousPartie: "Enlèvement", fonctionnalite: "Créneaux disponibles", technique: "Supabase Query", difficulteWP: "5", export: "Non", extensions: "Booking plugin", duplication: "4" },
+            { espace: "Compte", sousPartie: "Enlèvement", fonctionnalite: "Confirmation RDV", technique: "Supabase insert", difficulteWP: "4", export: "Non", extensions: "Booking plugin", duplication: "3" },
+            { espace: "Compte", sousPartie: "Enlèvement", fonctionnalite: "Modification/annulation RDV", technique: "Supabase update/delete", difficulteWP: "4", export: "Non", extensions: "Booking plugin", duplication: "3" },
+            { espace: "", sousPartie: "", fonctionnalite: "TOTAL COMPTE ENLÈVEMENT", technique: "", difficulteWP: "25", export: "", extensions: "", duplication: "20", isTotal: true },
+            
+            // COMPTE - VIE PRIVÉE
+            { espace: "Compte", sousPartie: "Vie privée", fonctionnalite: "Gestion consentements RGPD", technique: "Supabase update", difficulteWP: "4", export: "Non", extensions: "Complianz", duplication: "3" },
+            { espace: "Compte", sousPartie: "Vie privée", fonctionnalite: "Toggle par type de consentement", technique: "React State + Supabase", difficulteWP: "4", export: "Non", extensions: "Complianz", duplication: "3" },
+            { espace: "Compte", sousPartie: "Vie privée", fonctionnalite: "Export données personnelles", technique: "Edge Function + Supabase", difficulteWP: "7", export: "Non", extensions: "Code personnalisé", duplication: "6" },
+            { espace: "Compte", sousPartie: "Vie privée", fonctionnalite: "Suppression compte", technique: "Supabase delete + Auth", difficulteWP: "6", export: "Non", extensions: "Code personnalisé", duplication: "5" },
+            { espace: "", sousPartie: "", fonctionnalite: "TOTAL COMPTE VIE PRIVÉE", technique: "", difficulteWP: "21", export: "", extensions: "", duplication: "17", isTotal: true },
+            
+            // EDGE FUNCTIONS (BACKEND)
+            { espace: "Backend", sousPartie: "Edge Functions", fonctionnalite: "taste-interview (dialogue IA)", technique: "Deno + OpenAI API", difficulteWP: "Z", export: "Non", extensions: "Impossible WP standard", duplication: "Z" },
+            { espace: "Backend", sousPartie: "Edge Functions", fonctionnalite: "validate-alert-keyword (validation IA)", technique: "Deno + OpenAI API", difficulteWP: "Z", export: "Non", extensions: "Impossible WP standard", duplication: "Z" },
+            { espace: "Backend", sousPartie: "Edge Functions", fonctionnalite: "synthesize-alerts (matching lots)", technique: "Deno + Supabase", difficulteWP: "8", export: "Non", extensions: "Cron + Code PHP", duplication: "7" },
+            { espace: "Backend", sousPartie: "Edge Functions", fonctionnalite: "enrich-lot-ai (enrichissement IA)", technique: "Deno + OpenAI API", difficulteWP: "Z", export: "Non", extensions: "Impossible WP standard", duplication: "Z" },
+            { espace: "Backend", sousPartie: "Edge Functions", fonctionnalite: "answer-lot-question (Q&A IA)", technique: "Deno + OpenAI API", difficulteWP: "Z", export: "Non", extensions: "Impossible WP standard", duplication: "Z" },
+            { espace: "Backend", sousPartie: "Edge Functions", fonctionnalite: "scrape-interencheres (import données)", technique: "Deno + Puppeteer/fetch", difficulteWP: "8", export: "Non", extensions: "WP All Import Pro", duplication: "7" },
+            { espace: "Backend", sousPartie: "Edge Functions", fonctionnalite: "get-sales-data (API interne)", technique: "Deno + Supabase", difficulteWP: "6", export: "Non", extensions: "REST API WP", duplication: "5" },
+            { espace: "Backend", sousPartie: "Edge Functions", fonctionnalite: "image-proxy (proxy images)", technique: "Deno + fetch", difficulteWP: "5", export: "Non", extensions: "Code personnalisé", duplication: "4" },
+            { espace: "", sousPartie: "", fonctionnalite: "TOTAL BACKEND", technique: "", difficulteWP: "27+4Z", export: "", extensions: "", duplication: "23+4Z", isTotal: true },
+            
+            // GRAND TOTAL
+            { espace: "", sousPartie: "", fonctionnalite: "GRAND TOTAL SITE COMPLET", technique: "", difficulteWP: "~700 + 8Z", export: "", extensions: "", duplication: "~500 + 8Z", isGrandTotal: true }
+        ];
+        
+        function getDifficultyClass(value) {
+            if (value === 'Z' || value.includes('Z')) return 'diff-z';
+            const num = parseInt(value);
+            if (isNaN(num)) return '';
+            if (num >= 10) return 'diff-10';
+            return `diff-${num}`;
+        }
+        
+        function getExportClass(value) {
+            const v = value.toLowerCase();
+            if (v === 'oui') return 'export-oui';
+            if (v === 'non') return 'export-non';
+            if (v === 'nsp') return 'export-nsp';
+            return '';
+        }
+        
+        function renderTable() {
+            const tbody = document.getElementById('tableBody');
+            let html = '';
+            let totalWP = 0;
+            let totalDuplication = 0;
+            let countZ = 0;
+            
+            data.forEach(row => {
+                let rowClass = '';
+                if (row.isTotal) rowClass = 'total-row';
+                if (row.isGrandTotal) rowClass = 'grand-total';
+                
+                const diffClass = getDifficultyClass(row.difficulteWP);
+                const dupClass = getDifficultyClass(row.duplication);
+                const exportClass = getExportClass(row.export);
+                
+                // Count stats
+                if (!row.isTotal && !row.isGrandTotal) {
+                    if (row.difficulteWP.includes('Z')) countZ++;
+                    const wpNum = parseInt(row.difficulteWP);
+                    if (!isNaN(wpNum)) totalWP += wpNum;
+                    const dupNum = parseInt(row.duplication);
+                    if (!isNaN(dupNum)) totalDuplication += dupNum;
+                }
+                
+                html += `<tr class="${rowClass}">
+                    <td>${row.espace}</td>
+                    <td>${row.sousPartie}</td>
+                    <td>${row.fonctionnalite}</td>
+                    <td>${row.technique}</td>
+                    <td class="${diffClass}">${row.difficulteWP}</td>
+                    <td class="${exportClass}">${row.export}</td>
+                    <td>${row.extensions}</td>
+                    <td class="${dupClass}">${row.duplication}</td>
+                </tr>`;
+            });
+            
+            tbody.innerHTML = html;
+            
+            // Stats
+            document.getElementById('stats').innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-value">${data.length - data.filter(d => d.isTotal || d.isGrandTotal).length}</div>
+                    <div class="stat-label">Fonctionnalités</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${totalWP}</div>
+                    <div class="stat-label">Points difficulté WP</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${countZ}</div>
+                    <div class="stat-label">Fonctions impossibles (Z)</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${totalDuplication}</div>
+                    <div class="stat-label">Points duplication enfant</div>
+                </div>
+            `;
+        }
+        
+        function exportToExcel() {
+            const table = document.getElementById('mainTable');
+            const wb = XLSX ? XLSX.utils.table_to_book(table, {sheet: "Fonctionnalités"}) : null;
+            
+            if (wb) {
+                XLSX.writeFile(wb, 'fonctionnalites-site-encheres.xlsx');
+            } else {
+                // Fallback: download as CSV
+                let csv = [];
+                const rows = table.querySelectorAll('tr');
+                rows.forEach(row => {
+                    const cols = row.querySelectorAll('td, th');
+                    const rowData = [];
+                    cols.forEach(col => rowData.push('"' + col.innerText.replace(/"/g, '""') + '"'));
+                    csv.push(rowData.join(';'));
+                });
+                
+                const blob = new Blob([csv.join('\n')], {type: 'text/csv;charset=utf-8;'});
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = 'fonctionnalites-site-encheres.csv';
+                link.click();
+            }
+        }
+        
+        function copyTable() {
+            const table = document.getElementById('mainTable');
+            const range = document.createRange();
+            range.selectNode(table);
+            window.getSelection().removeAllRanges();
+            window.getSelection().addRange(range);
+            document.execCommand('copy');
+            window.getSelection().removeAllRanges();
+            alert('Tableau copié ! Vous pouvez le coller dans Excel.');
+        }
+        
+        // Load SheetJS for Excel export
+        const script = document.createElement('script');
+        script.src = 'https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js';
+        script.onload = renderTable;
+        script.onerror = renderTable;
+        document.head.appendChild(script);
+    </script>
+</body>
+</html>

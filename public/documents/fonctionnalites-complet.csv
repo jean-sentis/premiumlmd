@@ -1,0 +1,93 @@
+Section,Fonctionnalité,Description,Bénéfice,Auto Sync,Auto IA,SEO Natif,SEO 6M,Manuel,Type
+Header/Footer,Logo et branding,Logo cliquable retour accueil variantes thème,Identité,—,—,—,—,✅,Global
+Header/Footer,Navigation principale,Menu déroulant Acheter Vendre Spécialités À propos,Orientation,—,—,✅,—,—,Global
+Header/Footer,Sous-menus avec images,Grille visuelle spécialités avec photos,Découverte,—,—,✅,✅,—,Global
+Header/Footer,Horloge temps réel,Affichage heure locale mise à jour chaque seconde,Repère temporel,—,—,—,—,—,Global
+Header/Footer,Menu mobile responsive,Sheet navigation avec accordéons,Accessibilité mobile,—,—,—,—,—,Global
+Header/Footer,Footer informations,Adresse téléphone email réseaux sociaux,Contact facile,—,—,✅,—,✅,Global
+Accueil,Hero section,Image plein écran accroche et CTA,Première impression,—,—,✅,✅,—,Marketing
+Accueil,Carrousel prochaines ventes,Slider ventes à venir avec SaleCard,Découverte rapide,✅,—,✅,—,—,Marketing
+Accueil,Planning inline,Timeline 7 jours événements colorés,Vision planning,✅,—,✅,—,✅,Gestion
+Accueil,Section spécialités,Grille 8 cartes avec images hover effects,Orientation,—,—,✅,✅,—,Marketing
+Accueil,Témoignages carousel,Avis clients en carrousel rotatif,Confiance,—,—,—,✅,✅,Marketing
+Services Acheteurs,Guide de l'acheteur,Page manifeste pourquoi acheter aux enchères,Pédagogie,—,—,✅,✅,—,Acheteur
+Services Acheteurs,Glossaire des enchères,Définitions accordéon termes du métier,Éducation,—,—,✅,—,—,Acheteur
+Services Acheteurs,Invitation entrée libre,Section incitant à venir en salle gratuit,Démystification,—,—,✅,—,—,Acheteur
+Services Acheteurs,Ventes à venir,Liste prochaines ventes avec filtres,Planification,✅,—,✅,—,—,Acheteur
+Services Acheteurs,Ventes passées chronologiques,Résultats par date avec recherche et filtres,Historique,✅,—,✅,—,—,Acheteur
+Services Acheteurs,Ventes passées par catégorie IA,Navigation par familles d'objets classifiées IA,Recherche ciblée,✅,✅,✅,—,—,IA Exclusive
+Services Acheteurs,Détail d'une vente,Fiche vente infos expositions catalogue lots,Information complète,✅,—,✅,—,—,Acheteur
+Services Acheteurs,Catalogue en ligne HD,Fiches lots photos haute définition zoom galerie,Expertise à distance,✅,—,✅,—,—,Acheteur
+Services Acheteurs,Détail d'un lot,Fiche lot images actions estimations description,Décision éclairée,✅,✅,✅,—,—,Acheteur
+Services Acheteurs,Ordres d'achat en ligne,Dépôt montant maximum confirmation email,Participation sans présence,—,—,—,—,—,Acheteur
+Services Acheteurs,Enchères téléphoniques,Formulaire pour être rappelé pendant vente live,Enchérir en direct,—,—,—,—,—,Acheteur
+Services Acheteurs,Ventes Chrono interface,Compte à rebours temps réel barre sticky guide,Ne rien manquer,✅,—,✅,—,—,Acheteur
+Services Acheteurs,After-Sale invendus,Consultation achat invendus à prix fixe,Seconde chance,✅,—,✅,—,—,Acheteur
+Services Acheteurs,Mémorisation de lots,Bouton cœur sauvegarder avec rappel dates,Organisation,—,—,—,—,—,Acheteur
+Services Acheteurs,Paiement en ligne,Calcul auto frais 25% paiement sécurisé,Simplicité,—,—,—,—,—,Acheteur
+Services Acheteurs,RDV enlèvement,Calendrier créneaux réservation confirmation,Gain de temps,—,—,—,—,✅,Acheteur
+Services Acheteurs,Demande d'informations lot,Formulaire question rapport condition provenance,Réassurance,—,✅,—,—,—,Acheteur
+Services Acheteurs,Inscription Interenchères,Lien direct vers inscription plateforme externe,Accès direct,✅,—,—,—,—,Acheteur
+Services Vendeurs,Guide du vendeur,Page explicative processus estimation mise en vente,Pédagogie,—,—,✅,✅,—,Vendeur
+Services Vendeurs,Estimation en ligne,Formulaire upload photos description dimensions,Contact facile,—,—,✅,—,—,Vendeur
+Services Vendeurs,Journées d'expertise,Calendrier permanences journées spéciales région,Visibilité RDV,—,—,✅,✅,✅,Vendeur
+Services Vendeurs,Expertises itinérantes,Villes avec dates carrés hover couleur,Proximité,—,—,✅,✅,✅,Vendeur
+Services Vendeurs,Inventaire à domicile,Page succession partage déménagement formulaire,Service complet,—,—,✅,✅,—,Vendeur
+Services Vendeurs,Vendre objet similaire,Bouton fiche lot mailto pré-rempli référence,Incitation naturelle,—,—,—,—,—,Vendeur
+Services Vendeurs,Historique prix par catégorie IA,Consultation résultats par famille objets classifiée,Évaluation marché,✅,✅,✅,—,—,IA Exclusive
+Calendrier,Vue calendrier unifié,Affichage ventes expositions expertises code couleur,Vision claire,✅,—,✅,—,✅,Gestion
+Calendrier,Filtres par type,Sélection ventes live chrono expositions expertises,Focus,—,—,—,—,—,Gestion
+Calendrier,Détail événement,Dialog avec infos complètes et liens,Information,✅,—,—,—,—,Gestion
+Espace Client,Authentification,Login inscription reset password session,Sécurité,—,—,—,—,—,Compte
+Espace Client,Tableau de bord,Vue d'ensemble alertes lots ordres adjudications,Vision globale,✅,—,—,—,—,Compte
+Espace Client,Barre de progression,Indicateur complétude profil gamification,Engagement,—,—,—,—,—,Compte
+Espace Client,Gestion des alertes,Alertes mots-clés validation IA activation/désactivation,Ne rien rater,✅,✅,—,—,—,Compte
+Espace Client,Ce que j'aime dialogue Lia,Conversation IA pour cerner préférences goûts,Relation unique,—,✅,—,—,—,IA Exclusive
+Espace Client,Centres d'intérêts,Sélection spécialités newsletter personnalisée,Pertinence,—,—,—,—,—,Compte
+Espace Client,Liste des favoris,Lots mémorisés triés par vente dates statuts,Organisation,✅,—,—,—,—,Compte
+Espace Client,Suggestions Lia,Grille lots suggérés par IA avec validation,Découverte,✅,✅,—,—,—,IA Exclusive
+Espace Client,Historique ordres,Liste ordres déposés lot montant max statut,Suivi,—,—,—,—,—,Compte
+Espace Client,Historique enchères tél.,Demandes enchères téléphoniques confirmation résultat,Traçabilité,—,—,—,—,—,Compte
+Espace Client,Mes adjudications,Lots remportés prix frais statut paiement enlèvement,Gestion achats,✅,—,—,—,—,Compte
+Espace Client,Régler mes achats,Interface paiement bordereaux calcul auto totaux,Paiement facile,—,—,—,—,—,Compte
+Espace Client,Programmer enlèvement,Prise RDV récupérer lots payés créneaux,Autonomie,—,—,—,—,✅,Compte
+Espace Client,Profil 6 étapes,Identité téléphone adresse ID banque sécurité,Complétude,—,—,—,—,—,Compte
+Espace Client,Documents KYC,Upload pièce identité validation RIB statut,Conformité,—,—,—,—,✅,Compte
+Espace Client,Vie privée RGPD,Consentements préférences droit à l'oubli,Contrôle données,—,—,—,—,—,Compte
+Espace Client,Newsletter personnalisée,Choix spécialités fréquence format email/SMS,Pertinence,—,—,—,—,—,Compte
+Intelligence Artificielle,Dialogue Lia conversationnel,IA formelle proactive choix binaires références culturelles,Expérience unique,—,✅,—,—,—,IA Exclusive
+Intelligence Artificielle,Ton Concierge palace,Vouvoiement Monsieur/Madame NOM références adaptées,Luxe,—,✅,—,—,—,IA Exclusive
+Intelligence Artificielle,Suggestions personnalisées lots,Sélection auto lots grille validation amélioration continue,Découverte,✅,✅,—,—,—,IA Exclusive
+Intelligence Artificielle,Analyse IA des lots,Contexte historique biographie créateur observations image,Expertise enrichie,✅,✅,✅,—,—,IA Exclusive
+Intelligence Artificielle,Enrichissement descriptions,Titre vendeur description enrichie dimensions formatées,Qualité catalogue,✅,✅,✅,—,—,IA Exclusive
+Intelligence Artificielle,Validation alertes IA,Évaluation pertinence mots-clés suggestions alternatives,Alertes pertinentes,—,✅,—,—,—,IA Exclusive
+Intelligence Artificielle,Analyse images lots,Identification auto styles périodes matériaux depuis photos,Gain de temps,✅,✅,—,—,—,IA Exclusive
+Intelligence Artificielle,Questions/Réponses lot 24/7,IA répond questions clients sur un lot,Support continu,✅,✅,—,—,—,IA Exclusive
+Intelligence Artificielle,Classification lots par familles,Catégorisation auto voitures sport mobilier XVIIe bijoux etc,Organisation catalogue,✅,✅,✅,—,—,IA Exclusive
+Intelligence Artificielle,Navigation ventes par catégorie,Accès résultats filtrés par famille objets,Recherche efficace,✅,✅,✅,—,—,IA Exclusive
+Gestion Ventes,Pages de vente détaillées,Fiche complète infos conditions expositions catalogue,Info complète,✅,—,✅,—,—,Gestion
+Gestion Ventes,Sync Interenchères,Import auto ventes lots mise à jour résultats,Zéro ressaisie,✅,—,—,—,—,Gestion
+Gestion Ventes,Stockage images HD,Photos téléchargées stockées localement fiabilité,Disponibilité,✅,—,—,—,—,Gestion
+Gestion Ventes,Ventes live,Enchères salle avec ordres enchères tél intégrés,Participation élargie,✅,—,—,—,—,Gestion
+Gestion Ventes,Ventes chrono,Enchères online temporisées compte à rebours,Flexibilité,✅,—,—,—,—,Gestion
+Gestion Ventes,After-sale gestion,Invendus disponibles achat immédiat après vente,Maximiser ventes,✅,—,—,—,—,Gestion
+Communication,Pages spécialités 11,Bijoux Vins Art moderne Mobilier Céramiques Militaria etc,SEO et expertise,—,—,✅,✅,✅,Marketing
+Communication,Aventures d'Enchères,Histoires découvertes trouvailles œuvres redécouvertes,Storytelling,—,—,✅,✅,✅,Marketing
+Communication,La Maison,Présentation histoire valeurs équipe experts,Confiance,—,—,✅,✅,✅,Marketing
+Communication,Région de Talents,Artisans locaux restaurateurs encadreurs joailliers,Ancrage local,—,—,✅,✅,✅,Marketing
+Communication,Page Contact,Formulaire carte plan accès horaires,Accessibilité,—,—,✅,—,✅,Marketing
+Communication,Témoignages clients,Carousel avis clients preuve sociale,Confiance,—,—,—,✅,✅,Marketing
+Administration CRM,Profils clients auto,Données lots mémorisés ordres enchères adjudications,Connaissance client,✅,✅,—,—,—,Admin
+Administration CRM,Détection intérêts,Analyse auto spécialités préférées fourchettes budget,Ciblage,✅,✅,—,—,—,Admin
+Administration CRM,Suivi bordereaux,Paiements attente montants dus statuts relances,Trésorerie,—,—,—,—,—,Admin
+Administration CRM,Suivi enlèvements,Lots attente retrait RDV pris confirmations,Logistique,—,—,—,—,—,Admin
+Administration CRM,Statistiques usage,Visiteurs pages vues lots consultés conversion,Pilotage,✅,—,—,—,—,Admin
+Administration CRM,Multi-tenant architecture,200 sites depuis base unique feature flags branding,Scalabilité,—,—,—,—,—,Admin
+Edge Functions,taste-interview,Dialogue Lia profil de goûts,IA conversationnelle,—,✅,—,—,—,Backend
+Edge Functions,validate-alert-keyword,Validation pertinence mots-clés alertes,IA validation,—,✅,—,—,—,Backend
+Edge Functions,enrich-lot-ai,Enrichissement description lot par IA,IA enrichissement,—,✅,—,—,—,Backend
+Edge Functions,answer-lot-question,Réponse IA questions sur un lot,IA support,—,✅,—,—,—,Backend
+Edge Functions,synthesize-alerts,Synthèse alertes lots correspondants,IA matching,✅,✅,—,—,—,Backend
+Edge Functions,classify-lot-category,Classification IA lot par famille objets,IA classification,✅,✅,—,—,—,Backend
+Edge Functions,scrape-interencheres,Import données Interenchères,Sync externe,✅,—,—,—,—,Backend
+Edge Functions,hydrate-lot-images,Téléchargement stockage images HD,Gestion média,✅,—,—,—,—,Backend

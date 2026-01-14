@@ -1,0 +1,542 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================
+   LOCAL FONTS - 100% autonome, pas de dépendance externe
+   Inter (sans-serif) & Playfair Display (serif)
+   Licences: SIL Open Font License 1.1
+   ============================================ */
+
+/* Inter - Sans-serif moderne */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/inter-400.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/fonts/inter-500.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/fonts/inter-600.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fonts/inter-700.woff2') format('woff2');
+}
+
+/* Playfair Display - Serif élégant pour titres */
+@font-face {
+  font-family: 'Playfair Display';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/playfair-400.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Playfair Display';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/fonts/playfair-500.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Playfair Display';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/fonts/playfair-600.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Playfair Display';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fonts/playfair-700.woff2') format('woff2');
+}
+
+@layer base {
+  :root {
+    /* ============================================
+       THÈME "SIX PAGES" - Lavande, Or & Violet
+       ============================================ */
+    --background: 40 30% 97%;
+    --foreground: 270 25% 20%;
+
+    --card: 40 25% 99%;
+    --card-foreground: 270 25% 20%;
+
+    --popover: 40 25% 99%;
+    --popover-foreground: 270 25% 20%;
+
+    --primary: 270 25% 30%;
+    --primary-foreground: 40 30% 97%;
+
+    --secondary: 270 40% 92%;
+    --secondary-foreground: 270 25% 25%;
+
+    --muted: 270 20% 94%;
+    --muted-foreground: 270 15% 45%;
+
+    --accent: 270 50% 80%;
+    --accent-foreground: 270 25% 20%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 270 20% 85%;
+    --input: 270 20% 85%;
+    --ring: 270 40% 60%;
+
+    --radius: 0px;
+
+    /* Custom shadows - teintes lavande */
+    --shadow-card: 6px 8px 20px hsla(270, 40%, 50%, 0.12);
+    --shadow-card-hover: 10px 14px 35px hsla(270, 40%, 50%, 0.20);
+    --shadow-subtle: 3px 5px 15px hsla(270, 40%, 50%, 0.10);
+
+    /* Brand colors - Six Pages (lavande, or ambré, violet profond) */
+    --brand-primary: 270 25% 30%;
+    --brand-primary-foreground: 40 30% 97%;
+    --brand-secondary: 42 70% 52%;
+    --brand-accent: 270 50% 75%;
+    
+    /* Palette étendue - Déclinaisons du violet/lavande */
+    --brand-blue-900: 270 30% 20%;
+    --brand-blue-800: 270 28% 25%;
+    --brand-blue-700: 270 25% 32%;
+    --brand-blue-600: 270 22% 40%;
+    --brand-blue-500: 270 30% 50%;
+    --brand-blue-400: 270 40% 60%;
+    --brand-blue-300: 270 45% 72%;
+    --brand-blue-200: 270 50% 85%;
+    --brand-blue-100: 270 45% 94%;
+    
+    /* Demi-violet - Violet nuit élégant */
+    --brand-demi-blue: 270 35% 42%;
+    --brand-demi-blue-light: 270 30% 52%;
+    --brand-demi-blue-dark: 270 40% 32%;
+    
+    /* Palette étendue - Déclinaisons du doré (conservé) */
+    --brand-gold: 42 70% 52%;
+    --brand-gold-foreground: 0 0% 10%;
+    --brand-gold-900: 42 60% 25%;
+    --brand-gold-800: 42 55% 35%;
+    --brand-gold-700: 42 52% 44%;
+    --brand-gold-600: 42 65% 50%;
+    --brand-gold-500: 42 70% 58%;
+    --brand-gold-400: 42 75% 68%;
+    --brand-gold-300: 42 80% 78%;
+    --brand-gold-200: 42 85% 88%;
+    --brand-gold-100: 42 90% 95%;
+    
+    /* Couleurs complémentaires */
+    --brand-ivory: 40 30% 97%;
+    --brand-ivory-warm: 38 28% 94%;
+    --brand-charcoal: 270 20% 22%;
+    --brand-slate: 270 15% 45%;
+    --brand-slate-light: 270 12% 55%;
+    
+    /* Fond muséal - teintes lavande douces */
+    --brand-museum: 270 20% 94%;
+    --brand-museum-warm: 270 18% 91%;
+    --brand-parchment: 40 25% 95%;
+    
+    /* Gris violacé profond - pour les cartouches */
+    --brand-gray-blue: 270 30% 42%;
+    --brand-gray-blue-deep: 270 35% 35%;
+    --brand-gray-blue-deeper: 270 40% 28%;
+    
+    /* Turquoise conservé - frise chronologique */
+    --brand-turquoise: 180 60% 75%;
+    --brand-turquoise-light: 180 55% 85%;
+    --brand-turquoise-dark: 180 65% 45%;
+
+    /* Lavande - accent sous-menus */
+    --brand-orange: 270 50% 65%;
+
+    /* Vert sauge doux - sous-menu Vendre */
+    --brand-green: 145 35% 50%;
+
+    /* Layout - tailles fixes (images menu Spécialités : 64px max) */
+    --specialites-menu-image-size: 64px;
+
+    /* Layout - offsets */
+    --header-offset: 6px;
+
+    --sidebar-background: 40 25% 98%;
+    --sidebar-foreground: 270 20% 30%;
+    --sidebar-primary: 270 25% 25%;
+    --sidebar-primary-foreground: 40 25% 98%;
+    --sidebar-accent: 270 30% 94%;
+    --sidebar-accent-foreground: 270 25% 20%;
+    --sidebar-border: 270 15% 88%;
+    --sidebar-ring: 270 30% 60%;
+  }
+
+  .dark {
+    /* Mode sombre - Violet profond */
+    --background: 270 25% 10%;
+    --foreground: 40 25% 95%;
+
+    --card: 270 22% 12%;
+    --card-foreground: 40 25% 95%;
+
+    --popover: 270 22% 12%;
+    --popover-foreground: 40 25% 95%;
+
+    --primary: 40 25% 95%;
+    --primary-foreground: 270 25% 15%;
+
+    --secondary: 270 20% 18%;
+    --secondary-foreground: 40 25% 95%;
+
+    --muted: 270 18% 18%;
+    --muted-foreground: 270 15% 60%;
+
+    --accent: 270 35% 25%;
+    --accent-foreground: 40 25% 95%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 40 25% 95%;
+
+    --border: 270 18% 22%;
+    --input: 270 18% 22%;
+    --ring: 270 35% 55%;
+
+    --shadow-card: 6px 8px 20px hsla(270, 50%, 80%, 0.12);
+    --shadow-card-hover: 10px 14px 35px hsla(270, 50%, 80%, 0.18);
+    --shadow-subtle: 3px 5px 15px hsla(270, 50%, 80%, 0.10);
+
+    /* Brand colors - Six Pages dark mode */
+    --brand-primary: 270 25% 30%;
+    --brand-primary-foreground: 40 30% 97%;
+    --brand-secondary: 42 65% 50%;
+    --brand-accent: 270 45% 65%;
+    
+    /* Palette étendue - Déclinaisons du violet */
+    --brand-blue-900: 270 30% 15%;
+    --brand-blue-800: 270 28% 20%;
+    --brand-blue-700: 270 25% 28%;
+    --brand-blue-600: 270 22% 35%;
+    --brand-blue-500: 270 30% 45%;
+    --brand-blue-400: 270 40% 55%;
+    --brand-blue-300: 270 45% 68%;
+    --brand-blue-200: 270 50% 80%;
+    --brand-blue-100: 270 45% 92%;
+    
+    /* Palette étendue - Déclinaisons du doré */
+    --brand-gold-900: 42 60% 25%;
+    --brand-gold-800: 42 55% 35%;
+    --brand-gold-700: 42 52% 44%;
+    --brand-gold-600: 42 60% 48%;
+    --brand-gold-500: 42 65% 55%;
+    --brand-gold-400: 42 70% 65%;
+    --brand-gold-300: 42 75% 75%;
+    --brand-gold-200: 42 80% 85%;
+    --brand-gold-100: 42 85% 92%;
+
+    /* Couleurs complémentaires */
+    --brand-ivory: 40 25% 92%;
+    --brand-charcoal: 270 25% 18%;
+    --brand-slate: 270 18% 40%;
+
+    /* Lavande - sous-menu Spécialités */
+    --brand-orange: 270 45% 60%;
+
+    /* Layout - tailles fixes */
+    --specialites-menu-image-size: 64px;
+
+    /* Layout - offsets */
+    --header-offset: 6px;
+
+    --sidebar-background: 270 22% 12%;
+    --sidebar-foreground: 40 20% 92%;
+    --sidebar-primary: 270 30% 50%;
+    --sidebar-primary-foreground: 40 25% 98%;
+    --sidebar-accent: 270 25% 18%;
+    --sidebar-accent-foreground: 40 20% 92%;
+    --sidebar-border: 270 18% 20%;
+    --sidebar-ring: 270 35% 55%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    background-color: hsl(40 30% 97%);
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    max-width: 1440px;
+    margin: 0 auto;
+    font-size: 16px;
+    line-height: 1.6;
+  }
+
+  /* ============================================
+     TYPESCALE COHÉRENTE - Accessible & Lisible
+     Mobile-first avec breakpoints desktop
+     ============================================ */
+
+  /* H1 - Titre principal de page */
+  h1 {
+    @apply font-serif font-semibold tracking-tight;
+    font-size: 1.75rem;      /* 28px mobile */
+    line-height: 1.2;
+  }
+  @media (min-width: 768px) {
+    h1 {
+      font-size: 2.25rem;    /* 36px desktop */
+    }
+  }
+
+  /* H2 - Sections principales */
+  h2 {
+    @apply font-serif font-semibold;
+    font-size: 1.375rem;     /* 22px mobile */
+    line-height: 1.3;
+  }
+  @media (min-width: 768px) {
+    h2 {
+      font-size: 1.625rem;   /* 26px desktop */
+    }
+  }
+
+  /* H3 - Sous-sections */
+  h3 {
+    @apply font-serif font-medium;
+    font-size: 1.125rem;     /* 18px mobile */
+    line-height: 1.4;
+  }
+  @media (min-width: 768px) {
+    h3 {
+      font-size: 1.25rem;    /* 20px desktop */
+    }
+  }
+
+  /* H4 - Petits titres */
+  h4 {
+    @apply font-sans font-semibold;
+    font-size: 1rem;         /* 16px mobile */
+    line-height: 1.4;
+  }
+  @media (min-width: 768px) {
+    h4 {
+      font-size: 1.125rem;   /* 18px desktop */
+    }
+  }
+
+  /* H5/H6 - Labels et légendes */
+  h5, h6 {
+    @apply font-sans font-medium uppercase tracking-wider;
+    font-size: 0.875rem;     /* 14px */
+    line-height: 1.5;
+  }
+
+  /* Paragraphes - Accessibilité WCAG */
+  p {
+    font-size: 1rem;         /* 16px minimum pour accessibilité */
+    line-height: 1.6;
+  }
+
+  /* Small text - jamais en dessous de 14px */
+  small, .text-sm {
+    font-size: 0.875rem;     /* 14px minimum */
+    line-height: 1.5;
+  }
+
+  /* Liens - contraste suffisant */
+  a {
+    @apply transition-colors;
+  }
+}
+
+@layer components {
+  /* =================================================================
+     OMBRES RELIEF COLORÉES PAR SPÉCIALITÉ
+     Effet angle en L dans le coin bas-gauche avec ombre projetée
+     ================================================================= */
+  
+  /* Base pour toutes les cartes avec ombre */
+  [class*="card-shadow"] {
+    position: relative;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    overflow: visible;
+  }
+  
+
+  /* Ombre par défaut (neutre) - teinte lavande douce */
+  .card-shadow {
+    box-shadow: -5px 6px 10px -3px hsl(270 40% 50% / 0.18);
+  }
+  .card-shadow:hover {
+    transform: translate(2px, -2px);
+    box-shadow: -6px 8px 12px -3px hsl(270 40% 50% / 0.26);
+  }
+
+  /* Bijoux & Montres - Or ambré chaud */
+  .card-shadow-gold {
+    box-shadow: -5px 6px 10px -3px hsl(42 80% 50% / 0.40);
+  }
+  .card-shadow-gold:hover {
+    transform: translate(2px, -2px);
+    box-shadow: -6px 8px 12px -3px hsl(42 80% 50% / 0.50);
+  }
+
+  /* Art Moderne - Violet profond */
+  .card-shadow-blue {
+    box-shadow: -5px 6px 10px -3px hsl(270 50% 45% / 0.38);
+  }
+  .card-shadow-blue:hover {
+    transform: translate(2px, -2px);
+    box-shadow: -6px 8px 12px -3px hsl(270 50% 45% / 0.48);
+  }
+
+  /* Véhicules de collection - Vert Jaguar - style wine: angles 42px à -14px, avec ombre d'angle */
+  .card-shadow-jaguar {
+    box-shadow: -5px 6px 10px -3px hsl(160 80% 30% / 0.40);
+  }
+  .card-shadow-jaguar:hover {
+    transform: translate(2px, -2px);
+    box-shadow: -6px 8px 12px -3px hsl(160 80% 30% / 0.50);
+  }
+
+  /* Vins & Spiritueux - Pourpre/lie de vin - angles 42px à -14px, avec ombre d'angle */
+  .card-shadow-wine {
+    box-shadow: -5px 6px 10px -3px hsl(340 70% 40% / 0.40);
+  }
+  .card-shadow-wine:hover {
+    transform: translate(2px, -2px);
+    box-shadow: -6px 8px 12px -3px hsl(340 70% 40% / 0.50);
+  }
+
+  /* Mobilier & Objets d'art - Vert émeraude - angles 42px à -14px, avec ombre d'angle */
+  .card-shadow-emerald {
+    box-shadow: -5px 6px 10px -3px hsl(150 70% 35% / 0.40);
+  }
+  .card-shadow-emerald:hover {
+    transform: translate(2px, -2px);
+    box-shadow: -6px 8px 12px -3px hsl(150 70% 35% / 0.50);
+  }
+
+  /* Collections - Orange cuivre - angles 42px à -14px, avec ombre d'angle */
+  .card-shadow-copper {
+    box-shadow: -5px 6px 10px -3px hsl(25 85% 45% / 0.40);
+  }
+  .card-shadow-copper:hover {
+    transform: translate(2px, -2px);
+    box-shadow: -6px 8px 12px -3px hsl(25 85% 45% / 0.50);
+  }
+
+  /* Militaria - Vert kaki - angles 42px à -14px, avec ombre d'angle */
+  .card-shadow-kaki {
+    box-shadow: -5px 6px 10px -3px hsl(80 50% 30% / 0.40);
+  }
+  .card-shadow-kaki:hover {
+    transform: translate(2px, -2px);
+    box-shadow: -6px 8px 12px -3px hsl(80 50% 30% / 0.50);
+  }
+
+  /* Argenterie - Argenté/gris métallique - angles 42px à -14px, avec ombre d'angle */
+  .card-shadow-silver {
+    box-shadow: -5px 6px 10px -3px hsl(210 20% 45% / 0.40);
+  }
+  .card-shadow-silver:hover {
+    transform: translate(2px, -2px);
+    box-shadow: -6px 8px 12px -3px hsl(210 20% 45% / 0.50);
+  }
+
+  /* Mode & Textile - Rose élégant (plus fin) - angles 42px à -14px, avec ombre d'angle */
+  .card-shadow-rose {
+    /* Ombre principale: bas-gauche uniquement (encore plus discrète) */
+    box-shadow: -4px 5px 8px -3px hsl(340 75% 50% / 0.22);
+  }
+  .card-shadow-rose:hover {
+    transform: translate(2px, -2px);
+    box-shadow: -5px 7px 10px -3px hsl(340 75% 50% / 0.28);
+  }
+
+  .shadow-subtle {
+    box-shadow: var(--shadow-subtle);
+  }
+
+  /* Section title - H2 avec ornements dorés */
+  .section-title {
+    @apply relative flex items-center justify-center gap-4 font-serif font-semibold tracking-wide uppercase;
+    font-size: 1.125rem;      /* 18px mobile */
+    line-height: 1.4;
+  }
+  @media (min-width: 768px) {
+    .section-title {
+      font-size: 1.25rem;     /* 20px desktop */
+    }
+  }
+
+  /* Frame title - H1 dans un cadre doré (hero pages) */
+  .frame-title {
+    @apply inline-block relative px-8 md:px-12 py-5 md:py-7 font-serif font-semibold;
+    font-size: 1.5rem;        /* 24px mobile */
+    line-height: 1.3;
+    border: 2px solid hsl(var(--brand-secondary));
+    box-shadow: 
+      inset 0 0 0 3px hsl(var(--background)),
+      inset 0 0 0 5px hsl(var(--brand-secondary) / 0.5);
+    color: hsl(var(--foreground));
+    background: hsl(var(--background));
+  }
+  @media (min-width: 768px) {
+    .frame-title {
+      font-size: 1.875rem;    /* 30px desktop */
+    }
+  }
+
+  .section-title::before,
+  .section-title::after {
+    content: '';
+    @apply flex-1 h-px;
+    background: hsl(var(--brand-secondary));
+  }
+
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Timeline cartouche - ombre portée comme les cartes (sans contour visible) */
+  .timeline-cartouche-shadow {
+    position: relative;
+    border: none !important;
+    box-shadow: -5px 6px 10px -3px hsl(var(--foreground) / 0.15);
+  }
+  .timeline-cartouche-shadow:hover {
+    box-shadow: -6px 8px 12px -3px hsl(var(--foreground) / 0.22);
+  }
+}
