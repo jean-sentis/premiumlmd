@@ -573,7 +573,7 @@ const EstimationEnLigne = () => {
           <div className="max-w-[1440px] mx-auto px-4">
             <div className="bg-brand-primary text-brand-primary-foreground p-6 md:p-10 text-center card-shadow max-w-5xl mx-auto">
             <h2 className="font-serif text-lg md:text-xl font-light mb-6">
-              Préférez un contact direct ?
+              Vous préférez un contact direct ?
             </h2>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link 
