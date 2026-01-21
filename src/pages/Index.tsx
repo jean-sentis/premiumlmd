@@ -258,7 +258,7 @@ const Index = () => {
           <h1 className="font-serif text-3xl md:text-5xl font-light tracking-wide">
             Douze pages <span className="italic">&</span> associés
           </h1>
-          <div className="h-1" />
+          <div className="h-10" />
           <p className="font-sans text-sm md:text-base tracking-widest uppercase text-muted-foreground">
             L'hôtel des ventes d'Ajaccio
           </p>
