@@ -613,7 +613,7 @@ const Index = () => {
                               to={`/vente/${liveSale.id}`}
                               className={`relative ${shadowClass} mb-4 group`}
                             >
-                              <div className="aspect-[3/4] w-40 md:w-44 bg-muted overflow-hidden">
+                              <div className="aspect-[3/4] w-52 md:w-56 bg-muted overflow-hidden">
                                 <img 
                                   src={liveSale.cover_image_url || '/placeholder.svg'} 
                                   alt={liveSale.title}
@@ -657,7 +657,7 @@ const Index = () => {
                   {/* Colonne - Découvrir l'hôtel des ventes */}
                   <div className="flex flex-col items-center text-center">
                     <div className="relative mb-4 shadow-lg">
-                      <div className="aspect-[3/4] w-40 md:w-44 bg-muted overflow-hidden">
+                      <div className="aspect-[3/4] w-52 md:w-56 bg-muted overflow-hidden">
                         <img 
                           src={hotelDesVentesEquipe} 
                           alt="L'équipe de l'hôtel des ventes"
