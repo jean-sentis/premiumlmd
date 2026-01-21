@@ -166,8 +166,8 @@ const LotCard = ({
         )}
         
         {/* Image avec padding interne style cadre */}
-        <div className="p-3">
-          <div className="relative aspect-square overflow-hidden bg-[#fafafa]">
+          <div className="p-3">
+          <div className="relative aspect-square overflow-hidden bg-muted/30">
             {displayImage ? (
               <img
                 src={displayImage}
@@ -177,9 +177,12 @@ const LotCard = ({
                 loading="lazy"
               />
             ) : (
-              <div className="w-full h-full flex items-center justify-center">
-                <span className="font-serif text-2xl text-muted-foreground/20 italic">
+              <div className="w-full h-full flex flex-col items-center justify-center text-center px-4">
+                <span className="font-serif text-2xl text-muted-foreground/40 italic">
                   Lot {lotNumber}
+                </span>
+                <span className="mt-2 text-[11px] tracking-wide text-muted-foreground">
+                  Photo à venir
                 </span>
               </div>
             )}
