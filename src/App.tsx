@@ -9,6 +9,7 @@ import { PlanningProvider } from "@/contexts/PlanningContext";
 import { AuthProvider } from "@/hooks/useAuth";
 import ScrollToTop from "./components/ScrollToTop";
 import FloatingPlanningButton from "./components/FloatingPlanningButton";
+import DemoRdvOverlay from "./components/DemoRdvOverlay";
 // PlanningPanel supprimé - remplacé par InlinePlanningSlot dans chaque page
 import Index from "./pages/Index";
 import Vendre from "./pages/Vendre";
@@ -90,6 +91,11 @@ const App = () => (
               <PlanningProvider>
                 <ScrollToTop />
                 <FloatingPlanningButton />
+                {/* Overlay de blocage demo RDV - s'applique à toutes les pages */}
+                <DemoRdvOverlay 
+                  rdvUrl="https://app.cal.eu/votre-lien" 
+                  ctaText="Prenons rendez-vous pour une démo accompagnée"
+                />
                 {/* InlinePlanningSlot est maintenant intégré dans chaque page */}
               <Routes>
                 <Route path="/" element={<Index />} />
