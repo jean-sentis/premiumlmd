@@ -93,7 +93,7 @@ const App = () => (
                 <FloatingPlanningButton />
                 {/* Overlay de blocage demo RDV - s'applique à toutes les pages */}
                 <DemoRdvOverlay 
-                  rdvUrl="https://app.cal.eu/votre-lien" 
+                  rdvUrl="https://app.cal.eu/le-marteau-digital/30min?user=le-marteau-digital&overlayCalendar=true" 
                   ctaText="Prenons rendez-vous pour une démo accompagnée"
                 />
                 {/* InlinePlanningSlot est maintenant intégré dans chaque page */}
