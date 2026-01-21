@@ -271,39 +271,40 @@ const Index = () => {
         {/* Espaceur 45px */}
         <div className="h-[45px]" />
 
-        {/* Hero Section - 1440×600px */}
-        <section className="w-full bg-white overflow-hidden relative">
-          {/* Cadre noir au-dessus de tout */}
-          <div className="absolute inset-0 pointer-events-none z-20" style={{ border: "15px solid black" }}></div>
-          {/* Lien voir la vente */}
-          <Link 
-            to="/vente/367ce7dd-fe30-4ce9-a8e5-2fb2f871481e" 
-            className="absolute z-30 block" 
-            style={{ bottom: "60px", left: "calc(50% - 210px)" }}
-          >
-            <div className="border border-black px-4 py-3 bg-white/80 hover:bg-black transition-colors cursor-pointer group">
-              <p className="font-serif uppercase tracking-wider text-black group-hover:text-white text-center transition-colors" style={{ fontSize: "14px" }}>
-                voir
-              </p>
-              <p className="font-serif uppercase tracking-wider text-black group-hover:text-white text-center transition-colors" style={{ fontSize: "14px" }}>
-                la vente
-              </p>
+        {/* Hero Section - 1330×550px */}
+        <section className="w-full flex justify-center">
+          <div className="relative bg-white overflow-hidden" style={{ maxWidth: "1330px", width: "100%", height: "550px" }}>
+            {/* Cadre noir au-dessus de tout */}
+            <div className="absolute inset-0 pointer-events-none z-20" style={{ border: "15px solid black" }}></div>
+            {/* Lien voir la vente */}
+            <Link 
+              to="/vente/367ce7dd-fe30-4ce9-a8e5-2fb2f871481e" 
+              className="absolute z-30 block" 
+              style={{ bottom: "60px", left: "calc(50% - 210px)" }}
+            >
+              <div className="border border-black px-4 py-3 bg-white/80 hover:bg-black transition-colors cursor-pointer group">
+                <p className="font-serif uppercase tracking-wider text-black group-hover:text-white text-center transition-colors" style={{ fontSize: "14px" }}>
+                  voir
+                </p>
+                <p className="font-serif uppercase tracking-wider text-black group-hover:text-white text-center transition-colors" style={{ fontSize: "14px" }}>
+                  la vente
+                </p>
+              </div>
+            </Link>
+            <div className="absolute inset-0 flex items-start justify-start z-10" style={{ marginTop: "130px", marginLeft: "465px" }}>
+              <div className="text-left">
+                <p className="font-serif text-2xl md:text-3xl lg:text-4xl font-light tracking-wide text-black">
+                  Vente de la collection
+                </p>
+                <p className="font-serif text-2xl md:text-3xl lg:text-4xl font-light tracking-wide text-black" style={{ marginTop: "8px" }}>
+                  de Madame X
+                </p>
+                <p className="font-serif text-xl md:text-2xl lg:text-3xl font-light tracking-wide text-black" style={{ marginTop: "22px" }}>
+                  27 février - 14 h
+                </p>
+              </div>
             </div>
-          </Link>
-          <div className="absolute inset-0 flex items-start justify-start z-10" style={{ marginTop: "140px", marginLeft: "500px" }}>
-            <div className="text-left">
-              <p className="font-serif text-2xl md:text-3xl lg:text-4xl font-light tracking-wide text-black">
-                Vente de la collection
-              </p>
-              <p className="font-serif text-2xl md:text-3xl lg:text-4xl font-light tracking-wide text-black" style={{ marginTop: "8px" }}>
-                de Madame X
-              </p>
-              <p className="font-serif text-xl md:text-2xl lg:text-3xl font-light tracking-wide text-black" style={{ marginTop: "24px" }}>
-                27 février - 14 h
-              </p>
-            </div>
-          </div>
-          <div className="mx-auto flex justify-between items-end relative" style={{ maxWidth: "1330px", height: "550px", paddingRight: "0" }}>
+            <div className="w-full h-full flex justify-between items-end relative">
             {/* Groupe gauche : vidéo + céramique verticale */}
             <div className="flex items-end h-full">
               <iframe
@@ -347,6 +348,7 @@ const Index = () => {
                 alt="Sculpture"
                 className="h-full w-auto object-contain"
               />
+            </div>
             </div>
           </div>
         </section>
