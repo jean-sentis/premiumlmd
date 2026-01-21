@@ -270,7 +270,7 @@ const Index = () => {
 
         {/* Hero Section - 1440×600px */}
         <section className="w-full bg-white overflow-hidden relative" style={{ border: "5px solid black" }}>
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="absolute inset-0 flex items-center justify-center z-10">
             <p className="font-serif text-xl md:text-2xl font-light tracking-wide text-black">
               27 février, vente de la collection de Madame X
             </p>
