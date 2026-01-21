@@ -330,7 +330,7 @@ const VentesAVenir = () => {
       title: "Liquidation SARL Menuiserie du Sud",
       sale_date: new Date(getDemoNow().getTime() + 12 * 24 * 60 * 60 * 1000).toISOString(), // +12 jours
       lot_count: 87,
-      cover_image_url: null,
+      cover_image_url: "/images/sales/judiciaire-menuiserie.jpg",
       sale_url: "#",
       sale_type: "judiciaire",
       specialty: "Matériel professionnel",
