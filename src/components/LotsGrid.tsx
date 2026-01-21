@@ -1,8 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, Search, SlidersHorizontal } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
+import { Button } from "@/components/ui/button";
 import LotCard from "./LotCard";
 import { pickBestInterencheresImages } from "@/lib/interencheres-images";
 
@@ -28,63 +29,84 @@ const LotsGrid = ({ saleId, saleTitle, specialty }: LotsGridProps) => {
   const [lots, setLots] = useState<Lot[]>([]);
   const [filteredLots, setFilteredLots] = useState<Lot[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000]);
   const [maxPrice, setMaxPrice] = useState(10000);
   const [showFilters, setShowFilters] = useState(false);
 
-  useEffect(() => {
-    const fetchLots = async () => {
-      console.log('[LotsGrid] Fetching lots for sale:', saleId);
-      setIsLoading(true);
+  const fetchLots = useCallback(async (opts?: { silent?: boolean }) => {
+    const silent = !!opts?.silent;
+    console.log("[LotsGrid] Fetching lots for sale:", saleId);
 
-      const { data, error } = await supabase
-        .from('interencheres_lots')
-        .select('*')
-        .eq('sale_id', saleId)
-        .order('lot_number', { ascending: true });
+    if (!silent) setIsLoading(true);
+    if (silent) setIsRefreshing(true);
 
-      console.log('[LotsGrid] Fetch result:', { count: data?.length, error });
+    const { data, error } = await supabase
+      .from("interencheres_lots")
+      .select("*")
+      .eq("sale_id", saleId)
+      .order("lot_number", { ascending: true });
 
-      if (error) {
-        console.error('Error fetching lots:', error);
-      } else if (data) {
-        // Parse images JSON and cast to proper types
-        const parsedLots: Lot[] = data.map(lot => {
-          const rawImages = Array.isArray(lot.images) ? (lot.images as string[]) : [];
-          const images = pickBestInterencheresImages(rawImages, 12);
+    console.log("[LotsGrid] Fetch result:", { count: data?.length, error });
 
-          return {
-            id: lot.id,
-            lot_number: lot.lot_number,
-            title: lot.title,
-            description: lot.description,
-            estimate_low: lot.estimate_low,
-            estimate_high: lot.estimate_high,
-            images,
-            dimensions: lot.dimensions,
-            lot_url: lot.lot_url,
-          };
-        });
-        setLots(parsedLots);
-        setFilteredLots(parsedLots);
+    if (error) {
+      console.error("Error fetching lots:", error);
+    } else if (data) {
+      // Parse images JSON and cast to proper types
+      const parsedLots: Lot[] = data.map((lot) => {
+        const rawImages = Array.isArray(lot.images) ? (lot.images as string[]) : [];
+        const images = pickBestInterencheresImages(rawImages, 12);
 
-        // Calculate max price for slider
-        const prices = parsedLots
-          .map(l => l.estimate_high || l.estimate_low || 0)
-          .filter(p => p > 0);
-        if (prices.length > 0) {
-          const max = Math.max(...prices);
-          setMaxPrice(max);
-          setPriceRange([0, max]);
-        }
+        return {
+          id: lot.id,
+          lot_number: lot.lot_number,
+          title: lot.title,
+          description: lot.description,
+          estimate_low: lot.estimate_low,
+          estimate_high: lot.estimate_high,
+          images,
+          dimensions: lot.dimensions,
+          lot_url: lot.lot_url,
+        };
+      });
+
+      setLots(parsedLots);
+      setFilteredLots(parsedLots);
+
+      // Calculate max price for slider
+      const prices = parsedLots
+        .map((l) => l.estimate_high || l.estimate_low || 0)
+        .filter((p) => p > 0);
+      if (prices.length > 0) {
+        const max = Math.max(...prices);
+        setMaxPrice(max);
+        setPriceRange([0, max]);
       }
+    }
 
-      setIsLoading(false);
-    };
-
-    fetchLots();
+    if (!silent) setIsLoading(false);
+    if (silent) setIsRefreshing(false);
   }, [saleId]);
+
+  useEffect(() => {
+    fetchLots();
+  }, [fetchLots]);
+
+  // Auto-refresh: useful when admin updates lots/images while user is on the sale page.
+  useEffect(() => {
+    const onFocus = () => fetchLots({ silent: true });
+    window.addEventListener("focus", onFocus);
+
+    const interval = window.setInterval(() => {
+      fetchLots({ silent: true });
+    }, 15000);
+
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      window.clearInterval(interval);
+    };
+  }, [fetchLots]);
 
   // Filter lots based on search and price
   useEffect(() => {
@@ -177,6 +199,18 @@ const LotsGrid = ({ saleId, saleTitle, specialty }: LotsGridProps) => {
             <SlidersHorizontal className="w-4 h-4" />
             <span className="text-sm">Filtres</span>
           </button>
+
+          {/* Refresh */}
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => fetchLots({ silent: true })}
+            disabled={isRefreshing}
+            className="gap-2"
+          >
+            {isRefreshing ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+            Rafraîchir
+          </Button>
         </div>
         
         {/* Price filter */}
