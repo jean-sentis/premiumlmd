@@ -263,125 +263,42 @@ const Index = () => {
           </p>
         </section>
 
-        {/* Hero Gallery - Vrais lots cliquables */}
-        <section className="w-full py-8 md:py-12">
-          <div className="container max-w-6xl">
-            {/* Grille galerie élégante */}
-            {galleryLots.length >= 6 ? (
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
-                {/* Lot principal - grande taille */}
-                <Link 
-                  to={`/vente/${galleryLots[0].sale_id}/lot/${galleryLots[0].id}`}
-                  className="col-span-2 row-span-2 block relative group"
-                >
-                  <div className="relative overflow-hidden bg-background aspect-[4/3] md:aspect-[3/2]">
-                    <img 
-                      src={galleryLots[0].images[0]} 
-                      alt={galleryLots[0].title}
-                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
-                    />
-                    {/* Overlay au hover */}
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300" />
-                  </div>
-                  {/* Cartel */}
-                  <div className="mt-3 px-1">
-                    <p className="font-serif text-base md:text-lg text-foreground line-clamp-2 group-hover:text-brand-gold transition-colors">
-                      {galleryLots[0].title}
+        {/* Hero Full-Width - Un seul visuel d'impact */}
+        <section className="w-full">
+          {/* Image pleine largeur avec lien vers le lot */}
+          <Link 
+            to={galleryLots.length > 0 ? `/vente/${galleryLots[0].sale_id}/lot/${galleryLots[0].id}` : "/acheter/ventes-a-venir"}
+            className="block relative group cursor-pointer"
+          >
+            {/* Container full-width sans limite */}
+            <div className="relative w-full aspect-[21/9] md:aspect-[3/1] overflow-hidden bg-muted">
+              <img 
+                src={galleryLots.length > 0 ? galleryLots[0].images[0] : "/images/sales/667692-lot-aizpiri.jpg"} 
+                alt={galleryLots.length > 0 ? galleryLots[0].title : "Œuvre à la une"}
+                className="w-full h-full object-cover object-center transition-transform duration-1000 ease-out group-hover:scale-[1.02]"
+              />
+              {/* Overlay subtil au survol */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              
+              {/* Cartel discret en bas à gauche */}
+              <div className="absolute bottom-0 left-0 right-0 p-6 md:p-10 bg-gradient-to-t from-black/60 to-transparent">
+                <div className="max-w-4xl">
+                  <p className="font-serif text-white text-xl md:text-3xl lg:text-4xl font-light leading-tight drop-shadow-lg line-clamp-2">
+                    {galleryLots.length > 0 ? galleryLots[0].title : "Collection Art Moderne & Contemporain"}
+                  </p>
+                  {galleryLots.length > 0 && formatPrice(galleryLots[0].estimate_low, galleryLots[0].estimate_high) && (
+                    <p className="text-white/80 text-sm md:text-base mt-2 font-light tracking-wide">
+                      Estimation {formatPrice(galleryLots[0].estimate_low, galleryLots[0].estimate_high)}
                     </p>
-                    {formatPrice(galleryLots[0].estimate_low, galleryLots[0].estimate_high) && (
-                      <p className="text-sm text-muted-foreground mt-1">
-                        Est. {formatPrice(galleryLots[0].estimate_low, galleryLots[0].estimate_high)}
-                      </p>
-                    )}
-                  </div>
-                </Link>
-
-                {/* Lots secondaires */}
-                {galleryLots.slice(1, 6).map((lot, index) => (
-                  <Link 
-                    key={lot.id}
-                    to={`/vente/${lot.sale_id}/lot/${lot.id}`}
-                    className="block relative group"
-                  >
-                    <div className="relative overflow-hidden bg-background aspect-square">
-                      <img 
-                        src={lot.images[0]} 
-                        alt={lot.title}
-                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
-                      />
-                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300" />
-                    </div>
-                    {/* Cartel compact */}
-                    <div className="mt-2 px-1">
-                      <p className="font-serif text-sm text-foreground line-clamp-2 group-hover:text-brand-gold transition-colors">
-                        {lot.title}
-                      </p>
-                      {formatPrice(lot.estimate_low, lot.estimate_high) && (
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                          Est. {formatPrice(lot.estimate_low, lot.estimate_high)}
-                        </p>
-                      )}
-                    </div>
-                  </Link>
-                ))}
+                  )}
+                  <span className="inline-flex items-center gap-2 text-white/70 text-xs md:text-sm uppercase tracking-widest mt-4 group-hover:text-white transition-colors">
+                    Voir ce lot
+                    <ChevronRight className="h-3 w-3 transition-transform group-hover:translate-x-1" />
+                  </span>
+                </div>
               </div>
-            ) : (
-              // Fallback avec images statiques si pas assez de lots
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
-                <Link 
-                  to="/specialites/art-moderne"
-                  className="col-span-2 row-span-2 block relative group"
-                >
-                  <div className="relative overflow-hidden bg-background aspect-[4/3] md:aspect-[3/2]">
-                    <img 
-                      src="/images/sales/667692-lot-aizpiri.jpg" 
-                      alt="Art Moderne"
-                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
-                    />
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300" />
-                  </div>
-                  <div className="mt-3 px-1">
-                    <p className="font-serif text-base md:text-lg text-foreground group-hover:text-brand-gold transition-colors">
-                      Art Moderne & Contemporain
-                    </p>
-                  </div>
-                </Link>
-                {[
-                  { img: "/images/sales/668645-montre.jpg", title: "Bijoux & Montres", link: "/specialites/bijoux-montres" },
-                  { img: "/images/sales/668871-poster-pecrus.jpg", title: "Vins & Spiritueux", link: "/specialites/vins-spiritueux" },
-                  { img: "/images/sales/669871-bouddha.jpg", title: "Arts d'Asie", link: "/specialites/collections" },
-                  { img: "/images/sales/667941-vierge.jpg", title: "Objets d'Art", link: "/specialites/mobilier-objets-art" },
-                ].map((item, i) => (
-                  <Link key={i} to={item.link} className="block relative group">
-                    <div className="relative overflow-hidden bg-background aspect-square">
-                      <img 
-                        src={item.img} 
-                        alt={item.title}
-                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
-                      />
-                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300" />
-                    </div>
-                    <div className="mt-2 px-1">
-                      <p className="font-serif text-sm text-foreground group-hover:text-brand-gold transition-colors">
-                        {item.title}
-                      </p>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            )}
-            
-            {/* Lien vers le catalogue */}
-            <div className="text-center mt-8">
-              <Link 
-                to="/acheter/ventes-a-venir" 
-                className="inline-flex items-center gap-2 text-xs tracking-widest uppercase text-muted-foreground hover:text-foreground transition-colors group"
-              >
-                <span>Voir toutes les ventes</span>
-                <ChevronRight className="h-3 w-3 transition-transform group-hover:translate-x-1" />
-              </Link>
             </div>
-          </div>
+          </Link>
         </section>
 
         {/* Slot inline pour le planning - après la vidéo (scroll ajusté pour éviter le masquage par le header) */}
