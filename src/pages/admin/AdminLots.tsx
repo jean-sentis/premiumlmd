@@ -1,13 +1,12 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { Upload, Image, Trash2, Loader2, Check, AlertCircle, ArrowLeft } from 'lucide-react';
+import { Upload, Image, Trash2, Loader2, AlertCircle, ArrowLeft, GripVertical, X } from 'lucide-react';
 
 interface Sale {
   id: string;
@@ -19,7 +18,7 @@ interface Lot {
   id: string;
   lot_number: number;
   title: string;
-  images: string[] | null;
+  images: string[];
 }
 
 const ALLOWED_EMAILS = ['admin@example.com']; // À personnaliser
@@ -34,9 +33,11 @@ export default function AdminLots() {
   const [loadingSales, setLoadingSales] = useState(true);
   const [loadingLots, setLoadingLots] = useState(false);
   const [uploadingLotId, setUploadingLotId] = useState<string | null>(null);
-  const [uploadProgress, setUploadProgress] = useState<Record<string, number>>({});
+  const [uploadQueue, setUploadQueue] = useState<{lotId: string, total: number, done: number}[]>([]);
+  const [dragOverLotId, setDragOverLotId] = useState<string | null>(null);
+  const [draggingImage, setDraggingImage] = useState<{lotId: string, index: number} | null>(null);
 
-  // Vérification simple d'accès (à renforcer avec un vrai système de rôles)
+  // Vérification simple d'accès
   const isAdmin = user?.email && (ALLOWED_EMAILS.includes(user.email) || user.email.endsWith('@lovable.dev'));
 
   // Charger les ventes
@@ -62,7 +63,7 @@ export default function AdminLots() {
     }
   }, [isAdmin]);
 
-  // Charger les lots quand une vente est sélectionnée
+  // Charger les lots
   useEffect(() => {
     if (!selectedSaleId) {
       setLots([]);
@@ -81,7 +82,6 @@ export default function AdminLots() {
         console.error('Error fetching lots:', error);
         toast.error('Erreur lors du chargement des lots');
       } else {
-        // Cast images as string[] since they're stored as jsonb array
         const lotsWithImages = (data || []).map(lot => ({
           ...lot,
           images: (lot.images as string[] | null) || []
@@ -94,72 +94,109 @@ export default function AdminLots() {
     fetchLots();
   }, [selectedSaleId]);
 
-  // Upload d'une image
-  const handleImageUpload = useCallback(async (lotId: string, file: File) => {
-    if (!file.type.startsWith('image/')) {
-      toast.error('Le fichier doit être une image');
+  // Upload multiple images
+  const handleMultipleImageUpload = useCallback(async (lotId: string, files: FileList | File[]) => {
+    const fileArray = Array.from(files).filter(f => f.type.startsWith('image/'));
+    
+    if (fileArray.length === 0) {
+      toast.error('Aucune image valide sélectionnée');
       return;
     }
 
-    if (file.size > 20 * 1024 * 1024) {
-      toast.error('L\'image ne doit pas dépasser 20 Mo');
+    const oversized = fileArray.filter(f => f.size > 20 * 1024 * 1024);
+    if (oversized.length > 0) {
+      toast.error(`${oversized.length} fichier(s) dépassent 20 Mo`);
       return;
     }
 
     setUploadingLotId(lotId);
-    setUploadProgress(prev => ({ ...prev, [lotId]: 0 }));
+    setUploadQueue(prev => [...prev, { lotId, total: fileArray.length, done: 0 }]);
 
-    try {
-      // Générer un nom de fichier unique
-      const ext = file.name.split('.').pop() || 'jpg';
-      const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${ext}`;
-      const storagePath = `${selectedSaleId}/${lotId}/${fileName}`;
+    const lot = lots.find(l => l.id === lotId);
+    const currentImages = [...(lot?.images || [])];
+    let successCount = 0;
 
-      // Upload vers le storage
-      const { error: uploadError } = await supabase.storage
-        .from('sale-images')
-        .upload(storagePath, file, {
-          cacheControl: '3600',
-          upsert: false,
-        });
+    for (let i = 0; i < fileArray.length; i++) {
+      const file = fileArray[i];
+      
+      try {
+        const ext = file.name.split('.').pop() || 'jpg';
+        const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${ext}`;
+        const storagePath = `${selectedSaleId}/${lotId}/${fileName}`;
 
-      if (uploadError) throw uploadError;
+        const { error: uploadError } = await supabase.storage
+          .from('sale-images')
+          .upload(storagePath, file, {
+            cacheControl: '3600',
+            upsert: false,
+          });
 
-      // Construire l'URL publique
-      const { data: { publicUrl } } = supabase.storage
-        .from('sale-images')
-        .getPublicUrl(storagePath);
+        if (uploadError) throw uploadError;
 
-      // Mettre à jour le lot avec la nouvelle image
-      const lot = lots.find(l => l.id === lotId);
-      const currentImages = lot?.images || [];
-      const newImages = [...currentImages, publicUrl];
+        const { data: { publicUrl } } = supabase.storage
+          .from('sale-images')
+          .getPublicUrl(storagePath);
 
+        currentImages.push(publicUrl);
+        successCount++;
+
+        setUploadQueue(prev => prev.map(q => 
+          q.lotId === lotId ? { ...q, done: i + 1 } : q
+        ));
+      } catch (error) {
+        console.error('Upload error:', error);
+      }
+    }
+
+    // Sauvegarder toutes les images
+    if (successCount > 0) {
       const { error: updateError } = await supabase
         .from('interencheres_lots')
-        .update({ images: newImages })
+        .update({ images: currentImages })
         .eq('id', lotId);
 
-      if (updateError) throw updateError;
-
-      // Mettre à jour l'état local
-      setLots(prev => prev.map(l => 
-        l.id === lotId ? { ...l, images: newImages } : l
-      ));
-
-      toast.success('Image uploadée avec succès');
-    } catch (error) {
-      console.error('Upload error:', error);
-      toast.error('Erreur lors de l\'upload');
-    } finally {
-      setUploadingLotId(null);
-      setUploadProgress(prev => {
-        const newProgress = { ...prev };
-        delete newProgress[lotId];
-        return newProgress;
-      });
+      if (updateError) {
+        toast.error('Erreur lors de la sauvegarde');
+      } else {
+        setLots(prev => prev.map(l => 
+          l.id === lotId ? { ...l, images: currentImages } : l
+        ));
+        toast.success(`${successCount} image(s) uploadée(s)`);
+      }
     }
+
+    setUploadingLotId(null);
+    setUploadQueue(prev => prev.filter(q => q.lotId !== lotId));
   }, [selectedSaleId, lots]);
+
+  // Réordonner les images (drag & drop)
+  const handleImageReorder = useCallback(async (lotId: string, fromIndex: number, toIndex: number) => {
+    const lot = lots.find(l => l.id === lotId);
+    if (!lot || fromIndex === toIndex) return;
+
+    const newImages = [...lot.images];
+    const [moved] = newImages.splice(fromIndex, 1);
+    newImages.splice(toIndex, 0, moved);
+
+    // Update local state immediately
+    setLots(prev => prev.map(l => 
+      l.id === lotId ? { ...l, images: newImages } : l
+    ));
+
+    // Save to database
+    const { error } = await supabase
+      .from('interencheres_lots')
+      .update({ images: newImages })
+      .eq('id', lotId);
+
+    if (error) {
+      toast.error('Erreur lors de la réorganisation');
+      // Revert on error
+      setLots(prev => prev.map(l => 
+        l.id === lotId ? { ...l, images: lot.images } : l
+      ));
+    }
+  }, [lots]);
 
   // Supprimer une image
   const handleDeleteImage = useCallback(async (lotId: string, imageUrl: string) => {
@@ -167,15 +204,13 @@ export default function AdminLots() {
     if (!lot) return;
 
     try {
-      // Extraire le chemin du storage de l'URL
       const urlParts = imageUrl.split('/sale-images/');
       if (urlParts.length === 2) {
         const storagePath = urlParts[1];
         await supabase.storage.from('sale-images').remove([storagePath]);
       }
 
-      // Mettre à jour le lot
-      const newImages = (lot.images || []).filter(img => img !== imageUrl);
+      const newImages = lot.images.filter(img => img !== imageUrl);
       const { error } = await supabase
         .from('interencheres_lots')
         .update({ images: newImages })
@@ -194,7 +229,55 @@ export default function AdminLots() {
     }
   }, [lots]);
 
-  // État de chargement auth
+  // Drag handlers pour la zone de drop
+  const handleDragOver = useCallback((e: React.DragEvent, lotId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!draggingImage) {
+      setDragOverLotId(lotId);
+    }
+  }, [draggingImage]);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOverLotId(null);
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent, lotId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragOverLotId(null);
+
+    if (draggingImage) {
+      // C'est un réordonnancement interne
+      return;
+    }
+
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+      handleMultipleImageUpload(lotId, files);
+    }
+  }, [draggingImage, handleMultipleImageUpload]);
+
+  // Drag handlers pour le réordonnancement
+  const handleImageDragStart = useCallback((e: React.DragEvent, lotId: string, index: number) => {
+    setDraggingImage({ lotId, index });
+    e.dataTransfer.effectAllowed = 'move';
+  }, []);
+
+  const handleImageDragEnd = useCallback(() => {
+    setDraggingImage(null);
+  }, []);
+
+  const handleImageDragOver = useCallback((e: React.DragEvent, lotId: string, targetIndex: number) => {
+    e.preventDefault();
+    if (draggingImage && draggingImage.lotId === lotId && draggingImage.index !== targetIndex) {
+      handleImageReorder(lotId, draggingImage.index, targetIndex);
+      setDraggingImage({ lotId, index: targetIndex });
+    }
+  }, [draggingImage, handleImageReorder]);
+
+  // États d'interface
   if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -203,7 +286,6 @@ export default function AdminLots() {
     );
   }
 
-  // Non connecté
   if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
@@ -223,7 +305,6 @@ export default function AdminLots() {
     );
   }
 
-  // Non admin
   if (!isAdmin) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
@@ -246,6 +327,12 @@ export default function AdminLots() {
     );
   }
 
+  const getUploadProgress = (lotId: string) => {
+    const queue = uploadQueue.find(q => q.lotId === lotId);
+    if (!queue) return null;
+    return { done: queue.done, total: queue.total };
+  };
+
   return (
     <div className="min-h-screen bg-background p-4 md:p-8">
       <div className="max-w-6xl mx-auto space-y-6">
@@ -257,7 +344,7 @@ export default function AdminLots() {
           <div>
             <h1 className="text-2xl font-bold">Admin - Gestion des images</h1>
             <p className="text-muted-foreground">
-              Uploadez des photos pour chaque lot (max 20 Mo/image)
+              Glissez-déposez vos photos (max 20 Mo/image) • Réorganisez par drag & drop
             </p>
           </div>
         </div>
@@ -298,72 +385,121 @@ export default function AdminLots() {
                 </CardContent>
               </Card>
             ) : (
-              lots.map(lot => (
-                <Card key={lot.id}>
-                  <CardContent className="p-4">
-                    <div className="flex flex-col md:flex-row gap-4">
-                      {/* Infos lot */}
-                      <div className="flex-shrink-0 w-full md:w-64">
-                        <h3 className="font-semibold">
-                          Lot {lot.lot_number}
-                        </h3>
-                        <p className="text-sm text-muted-foreground line-clamp-2">
-                          {lot.title}
-                        </p>
-                      </div>
+              lots.map(lot => {
+                const progress = getUploadProgress(lot.id);
+                const isDragOver = dragOverLotId === lot.id;
+                
+                return (
+                  <Card 
+                    key={lot.id}
+                    className={`transition-colors ${isDragOver ? 'ring-2 ring-primary bg-primary/5' : ''}`}
+                  >
+                    <CardContent className="p-4">
+                      <div className="flex flex-col md:flex-row gap-4">
+                        {/* Infos lot */}
+                        <div className="flex-shrink-0 w-full md:w-48">
+                          <h3 className="font-semibold">
+                            Lot {lot.lot_number}
+                          </h3>
+                          <p className="text-sm text-muted-foreground line-clamp-2">
+                            {lot.title}
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {lot.images.length} image(s)
+                          </p>
+                        </div>
 
-                      {/* Images existantes */}
-                      <div className="flex-1">
-                        <div className="flex flex-wrap gap-2 mb-3">
-                          {(lot.images || []).map((img, idx) => (
-                            <div key={idx} className="relative group">
-                              <img
-                                src={img}
-                                alt={`Image ${idx + 1}`}
-                                className="h-20 w-20 object-cover rounded border"
-                                onError={(e) => {
-                                  (e.target as HTMLImageElement).src = '/placeholder.svg';
+                        {/* Zone de drop + images */}
+                        <div 
+                          className="flex-1"
+                          onDragOver={(e) => handleDragOver(e, lot.id)}
+                          onDragLeave={handleDragLeave}
+                          onDrop={(e) => handleDrop(e, lot.id)}
+                        >
+                          {/* Images existantes avec drag & drop */}
+                          <div className="flex flex-wrap gap-2 mb-3 min-h-[80px]">
+                            {lot.images.map((img, idx) => (
+                              <div 
+                                key={`${img}-${idx}`}
+                                draggable
+                                onDragStart={(e) => handleImageDragStart(e, lot.id, idx)}
+                                onDragEnd={handleImageDragEnd}
+                                onDragOver={(e) => handleImageDragOver(e, lot.id, idx)}
+                                className={`relative group cursor-move ${
+                                  draggingImage?.lotId === lot.id && draggingImage?.index === idx 
+                                    ? 'opacity-50' 
+                                    : ''
+                                }`}
+                              >
+                                <div className="absolute top-0 left-0 bg-black/60 text-white text-xs px-1 rounded-br z-10">
+                                  <GripVertical className="h-3 w-3 inline" /> {idx + 1}
+                                </div>
+                                <img
+                                  src={img}
+                                  alt={`Image ${idx + 1}`}
+                                  className="h-20 w-20 object-cover rounded border hover:ring-2 hover:ring-primary transition-all"
+                                  onError={(e) => {
+                                    (e.target as HTMLImageElement).src = '/placeholder.svg';
+                                  }}
+                                />
+                                <button
+                                  onClick={() => handleDeleteImage(lot.id, img)}
+                                  className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+                                >
+                                  <X className="h-3 w-3" />
+                                </button>
+                              </div>
+                            ))}
+                            
+                            {/* Zone de drop visuelle */}
+                            <label 
+                              className={`h-20 min-w-[80px] px-4 border-2 border-dashed rounded flex flex-col items-center justify-center cursor-pointer transition-colors ${
+                                isDragOver 
+                                  ? 'border-primary bg-primary/10' 
+                                  : 'border-muted-foreground/30 hover:border-primary/50 hover:bg-muted/50'
+                              }`}
+                            >
+                              <Upload className="h-5 w-5 text-muted-foreground" />
+                              <span className="text-xs text-muted-foreground mt-1">
+                                {progress ? `${progress.done}/${progress.total}` : 'Ajouter'}
+                              </span>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                multiple
+                                className="hidden"
+                                disabled={uploadingLotId === lot.id}
+                                onChange={(e) => {
+                                  if (e.target.files && e.target.files.length > 0) {
+                                    handleMultipleImageUpload(lot.id, e.target.files);
+                                    e.target.value = '';
+                                  }
                                 }}
                               />
-                              <button
-                                onClick={() => handleDeleteImage(lot.id, img)}
-                                className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                              >
-                                <Trash2 className="h-3 w-3" />
-                              </button>
-                            </div>
-                          ))}
-                          {(!lot.images || lot.images.length === 0) && (
-                            <div className="h-20 w-20 border-2 border-dashed rounded flex items-center justify-center text-muted-foreground">
-                              <Image className="h-6 w-6" />
-                            </div>
-                          )}
-                        </div>
+                            </label>
+                          </div>
 
-                        {/* Upload */}
-                        <div className="flex items-center gap-2">
-                          <Input
-                            type="file"
-                            accept="image/*"
-                            disabled={uploadingLotId === lot.id}
-                            onChange={(e) => {
-                              const file = e.target.files?.[0];
-                              if (file) {
-                                handleImageUpload(lot.id, file);
-                                e.target.value = '';
-                              }
-                            }}
-                            className="flex-1"
-                          />
-                          {uploadingLotId === lot.id && (
-                            <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                          {/* Progress bar */}
+                          {progress && (
+                            <div className="flex items-center gap-2">
+                              <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                              <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
+                                <div 
+                                  className="h-full bg-primary transition-all duration-300"
+                                  style={{ width: `${(progress.done / progress.total) * 100}%` }}
+                                />
+                              </div>
+                              <span className="text-xs text-muted-foreground">
+                                {progress.done}/{progress.total}
+                              </span>
+                            </div>
                           )}
                         </div>
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))
+                    </CardContent>
+                  </Card>
+                );
+              })
             )}
           </div>
         )}
