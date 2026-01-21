@@ -109,32 +109,32 @@
 
     --radius: 0px;
 
-    /* Custom shadows - teintes lavande */
-    --shadow-card: 6px 8px 20px hsla(270, 40%, 50%, 0.12);
-    --shadow-card-hover: 10px 14px 35px hsla(270, 40%, 50%, 0.20);
-    --shadow-subtle: 3px 5px 15px hsla(270, 40%, 50%, 0.10);
+    /* Custom shadows - teintes neutres */
+    --shadow-card: 6px 8px 20px hsla(0, 0%, 0%, 0.08);
+    --shadow-card-hover: 10px 14px 35px hsla(0, 0%, 0%, 0.15);
+    --shadow-subtle: 3px 5px 15px hsla(0, 0%, 0%, 0.06);
 
-    /* Brand colors - Six Pages (lavande, or ambré, violet profond) */
-    --brand-primary: 270 25% 30%;
-    --brand-primary-foreground: 40 30% 97%;
+    /* Brand colors - Noir & Blanc avec or */
+    --brand-primary: 0 0% 10%;
+    --brand-primary-foreground: 0 0% 100%;
     --brand-secondary: 42 70% 52%;
-    --brand-accent: 270 50% 75%;
+    --brand-accent: 0 0% 30%;
     
-    /* Palette étendue - Déclinaisons du violet/lavande */
-    --brand-blue-900: 270 30% 20%;
-    --brand-blue-800: 270 28% 25%;
-    --brand-blue-700: 270 25% 32%;
-    --brand-blue-600: 270 22% 40%;
-    --brand-blue-500: 270 30% 50%;
-    --brand-blue-400: 270 40% 60%;
-    --brand-blue-300: 270 45% 72%;
-    --brand-blue-200: 270 50% 85%;
-    --brand-blue-100: 270 45% 94%;
+    /* Palette étendue - Déclinaisons du gris */
+    --brand-blue-900: 0 0% 10%;
+    --brand-blue-800: 0 0% 15%;
+    --brand-blue-700: 0 0% 20%;
+    --brand-blue-600: 0 0% 30%;
+    --brand-blue-500: 0 0% 40%;
+    --brand-blue-400: 0 0% 50%;
+    --brand-blue-300: 0 0% 65%;
+    --brand-blue-200: 0 0% 80%;
+    --brand-blue-100: 0 0% 95%;
     
-    /* Demi-violet - Violet nuit élégant */
-    --brand-demi-blue: 270 35% 42%;
-    --brand-demi-blue-light: 270 30% 52%;
-    --brand-demi-blue-dark: 270 40% 32%;
+    /* Gris profond - élégant */
+    --brand-demi-blue: 0 0% 25%;
+    --brand-demi-blue-light: 0 0% 35%;
+    --brand-demi-blue-dark: 0 0% 18%;
     
     /* Palette étendue - Déclinaisons du doré (conservé) */
     --brand-gold: 42 70% 52%;
@@ -150,29 +150,29 @@
     --brand-gold-100: 42 90% 95%;
     
     /* Couleurs complémentaires */
-    --brand-ivory: 40 30% 97%;
-    --brand-ivory-warm: 38 28% 94%;
-    --brand-charcoal: 270 20% 22%;
-    --brand-slate: 270 15% 45%;
-    --brand-slate-light: 270 12% 55%;
+    --brand-ivory: 0 0% 98%;
+    --brand-ivory-warm: 0 0% 96%;
+    --brand-charcoal: 0 0% 15%;
+    --brand-slate: 0 0% 45%;
+    --brand-slate-light: 0 0% 55%;
     
-    /* Fond muséal - teintes lavande douces */
-    --brand-museum: 270 20% 94%;
-    --brand-museum-warm: 270 18% 91%;
-    --brand-parchment: 40 25% 95%;
+    /* Fond muséal - teintes neutres */
+    --brand-museum: 0 0% 96%;
+    --brand-museum-warm: 0 0% 94%;
+    --brand-parchment: 0 0% 97%;
     
-    /* Gris violacé profond - pour les cartouches */
-    --brand-gray-blue: 270 30% 42%;
-    --brand-gray-blue-deep: 270 35% 35%;
-    --brand-gray-blue-deeper: 270 40% 28%;
+    /* Gris profond - pour les cartouches */
+    --brand-gray-blue: 0 0% 25%;
+    --brand-gray-blue-deep: 0 0% 20%;
+    --brand-gray-blue-deeper: 0 0% 15%;
     
     /* Turquoise conservé - frise chronologique */
     --brand-turquoise: 180 60% 75%;
     --brand-turquoise-light: 180 55% 85%;
     --brand-turquoise-dark: 180 65% 45%;
 
-    /* Lavande - accent sous-menus */
-    --brand-orange: 270 50% 65%;
+    /* Accent sous-menus - gris */
+    --brand-orange: 0 0% 50%;
 
     /* Vert sauge doux - sous-menu Vendre */
     --brand-green: 145 35% 50%;
@@ -183,14 +183,14 @@
     /* Layout - offsets */
     --header-offset: 6px;
 
-    --sidebar-background: 40 25% 98%;
-    --sidebar-foreground: 270 20% 30%;
-    --sidebar-primary: 270 25% 25%;
-    --sidebar-primary-foreground: 40 25% 98%;
-    --sidebar-accent: 270 30% 94%;
-    --sidebar-accent-foreground: 270 25% 20%;
-    --sidebar-border: 270 15% 88%;
-    --sidebar-ring: 270 30% 60%;
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 0 0% 20%;
+    --sidebar-primary: 0 0% 15%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 0 0% 95%;
+    --sidebar-accent-foreground: 0 0% 15%;
+    --sidebar-border: 0 0% 90%;
+    --sidebar-ring: 0 0% 40%;
   }
 
   .dark {
