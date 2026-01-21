@@ -270,10 +270,18 @@ const Index = () => {
 
         {/* Hero Section - 1440×600px */}
         <section className="w-full bg-white overflow-hidden relative" style={{ border: "5px solid black" }}>
-          <div className="absolute inset-0 flex items-center justify-center z-10">
-            <p className="font-serif text-xl md:text-2xl font-light tracking-wide text-black">
-              27 février, vente de la collection de Madame X
-            </p>
+          <div className="absolute inset-0 flex items-center justify-center z-10" style={{ marginTop: "-70px" }}>
+            <div className="text-center">
+              <p className="font-serif text-3xl md:text-4xl lg:text-5xl font-light tracking-wide text-black">
+                Vente de la collection
+              </p>
+              <p className="font-serif text-3xl md:text-4xl lg:text-5xl font-light tracking-wide text-black">
+                de Madame X
+              </p>
+              <p className="font-serif text-3xl md:text-4xl lg:text-5xl font-light tracking-wide text-black mt-2">
+                27 février - 14 h
+              </p>
+            </div>
           </div>
           <div className="mx-auto flex justify-between items-end relative" style={{ maxWidth: "1430px", height: "590px", paddingRight: "0" }}>
             {/* Groupe gauche : vidéo + céramique verticale */}
