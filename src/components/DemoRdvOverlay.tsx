@@ -45,6 +45,16 @@ const DemoRdvOverlay = ({
     return () => window.removeEventListener("scroll", handleScroll);
   }, [isDemoMode, isVisible]);
 
+  // Bloquer complètement le scroll quand l'overlay est visible
+  useEffect(() => {
+    if (isVisible) {
+      document.body.style.overflow = "hidden";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isVisible]);
+
   if (isDemoMode) return null;
 
   const handleCtaClick = () => {
