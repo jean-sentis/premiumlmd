@@ -293,7 +293,7 @@ const Index = () => {
               </div>
             </div>
             {/* Groupe droite : céramiques empilées + sculpture */}
-            <div className="flex items-end h-full" style={{ marginRight: "0" }}>
+            <div className="flex items-end h-full" style={{ marginRight: "-25px" }}>
               {/* Colonne céramiques empilées */}
               <div className="flex flex-col items-end h-full" style={{ marginRight: "5px" }}>
                 <img 
@@ -314,7 +314,6 @@ const Index = () => {
                 src={heroSculpture}
                 alt="Sculpture"
                 className="h-full w-auto object-contain"
-                style={{ marginRight: "-20px" }}
               />
             </div>
           </div>
