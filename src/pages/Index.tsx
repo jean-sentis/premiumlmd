@@ -303,7 +303,7 @@ const Index = () => {
               </p>
             </div>
           </div>
-          <div className="mx-auto flex justify-between items-end relative" style={{ maxWidth: "1430px", height: "590px", paddingRight: "0" }}>
+          <div className="mx-auto flex justify-between items-end relative" style={{ maxWidth: "1330px", height: "550px", paddingRight: "0" }}>
             {/* Groupe gauche : vidéo + céramique verticale */}
             <div className="flex items-end h-full">
               <iframe
