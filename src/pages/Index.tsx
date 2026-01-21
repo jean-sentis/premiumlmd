@@ -276,7 +276,7 @@ const Index = () => {
           <Link 
             to="/vente/367ce7dd-fe30-4ce9-a8e5-2fb2f871481e" 
             className="absolute z-30 block" 
-            style={{ bottom: "60px", left: "calc(50% - 204px)" }}
+            style={{ bottom: "60px", left: "calc(50% - 210px)" }}
           >
             <div className="border border-black px-4 py-3 bg-white/80 hover:bg-white transition-colors cursor-pointer">
               <p className="font-serif uppercase tracking-wider text-black text-center" style={{ fontSize: "14px" }}>
