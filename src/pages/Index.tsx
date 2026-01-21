@@ -269,8 +269,13 @@ const Index = () => {
         </section>
 
         {/* Hero Section - 1440×600px */}
-        <section className="w-full bg-white overflow-hidden" style={{ border: "5px solid black" }}>
-          <div className="mx-auto flex justify-between items-end" style={{ maxWidth: "1430px", height: "590px", paddingRight: "0" }}>
+        <section className="w-full bg-white overflow-hidden relative" style={{ border: "5px solid black" }}>
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <p className="font-serif text-xl md:text-2xl font-light tracking-wide text-black">
+              27 février, vente de la collection de Madame X
+            </p>
+          </div>
+          <div className="mx-auto flex justify-between items-end relative" style={{ maxWidth: "1430px", height: "590px", paddingRight: "0" }}>
             {/* Groupe gauche : vidéo + céramique verticale */}
             <div className="flex items-end h-full">
               <iframe
