@@ -194,55 +194,55 @@
   }
 
   .dark {
-    /* Mode sombre - Violet profond */
-    --background: 270 25% 10%;
-    --foreground: 40 25% 95%;
+    /* Mode sombre - Noir profond */
+    --background: 0 0% 8%;
+    --foreground: 0 0% 95%;
 
-    --card: 270 22% 12%;
-    --card-foreground: 40 25% 95%;
+    --card: 0 0% 10%;
+    --card-foreground: 0 0% 95%;
 
-    --popover: 270 22% 12%;
-    --popover-foreground: 40 25% 95%;
+    --popover: 0 0% 10%;
+    --popover-foreground: 0 0% 95%;
 
-    --primary: 40 25% 95%;
-    --primary-foreground: 270 25% 15%;
+    --primary: 0 0% 95%;
+    --primary-foreground: 0 0% 10%;
 
-    --secondary: 270 20% 18%;
-    --secondary-foreground: 40 25% 95%;
+    --secondary: 0 0% 15%;
+    --secondary-foreground: 0 0% 95%;
 
-    --muted: 270 18% 18%;
-    --muted-foreground: 270 15% 60%;
+    --muted: 0 0% 15%;
+    --muted-foreground: 0 0% 60%;
 
-    --accent: 270 35% 25%;
-    --accent-foreground: 40 25% 95%;
+    --accent: 0 0% 20%;
+    --accent-foreground: 0 0% 95%;
 
     --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 40 25% 95%;
+    --destructive-foreground: 0 0% 95%;
 
-    --border: 270 18% 22%;
-    --input: 270 18% 22%;
-    --ring: 270 35% 55%;
+    --border: 0 0% 18%;
+    --input: 0 0% 18%;
+    --ring: 0 0% 50%;
 
-    --shadow-card: 6px 8px 20px hsla(270, 50%, 80%, 0.12);
-    --shadow-card-hover: 10px 14px 35px hsla(270, 50%, 80%, 0.18);
-    --shadow-subtle: 3px 5px 15px hsla(270, 50%, 80%, 0.10);
+    --shadow-card: 6px 8px 20px hsla(0, 0%, 0%, 0.25);
+    --shadow-card-hover: 10px 14px 35px hsla(0, 0%, 0%, 0.35);
+    --shadow-subtle: 3px 5px 15px hsla(0, 0%, 0%, 0.20);
 
-    /* Brand colors - Six Pages dark mode */
-    --brand-primary: 270 25% 30%;
-    --brand-primary-foreground: 40 30% 97%;
+    /* Brand colors - Noir & Blanc dark mode */
+    --brand-primary: 0 0% 20%;
+    --brand-primary-foreground: 0 0% 95%;
     --brand-secondary: 42 65% 50%;
-    --brand-accent: 270 45% 65%;
+    --brand-accent: 0 0% 50%;
     
-    /* Palette étendue - Déclinaisons du violet */
-    --brand-blue-900: 270 30% 15%;
-    --brand-blue-800: 270 28% 20%;
-    --brand-blue-700: 270 25% 28%;
-    --brand-blue-600: 270 22% 35%;
-    --brand-blue-500: 270 30% 45%;
-    --brand-blue-400: 270 40% 55%;
-    --brand-blue-300: 270 45% 68%;
-    --brand-blue-200: 270 50% 80%;
-    --brand-blue-100: 270 45% 92%;
+    /* Palette étendue - Déclinaisons du gris */
+    --brand-blue-900: 0 0% 8%;
+    --brand-blue-800: 0 0% 12%;
+    --brand-blue-700: 0 0% 18%;
+    --brand-blue-600: 0 0% 25%;
+    --brand-blue-500: 0 0% 35%;
+    --brand-blue-400: 0 0% 45%;
+    --brand-blue-300: 0 0% 60%;
+    --brand-blue-200: 0 0% 75%;
+    --brand-blue-100: 0 0% 90%;
     
     /* Palette étendue - Déclinaisons du doré */
     --brand-gold-900: 42 60% 25%;
@@ -256,12 +256,12 @@
     --brand-gold-100: 42 85% 92%;
 
     /* Couleurs complémentaires */
-    --brand-ivory: 40 25% 92%;
-    --brand-charcoal: 270 25% 18%;
-    --brand-slate: 270 18% 40%;
+    --brand-ivory: 0 0% 90%;
+    --brand-charcoal: 0 0% 12%;
+    --brand-slate: 0 0% 40%;
 
-    /* Lavande - sous-menu Spécialités */
-    --brand-orange: 270 45% 60%;
+    /* Accent sous-menus - gris */
+    --brand-orange: 0 0% 50%;
 
     /* Layout - tailles fixes */
     --specialites-menu-image-size: 64px;
@@ -269,14 +269,14 @@
     /* Layout - offsets */
     --header-offset: 6px;
 
-    --sidebar-background: 270 22% 12%;
-    --sidebar-foreground: 40 20% 92%;
-    --sidebar-primary: 270 30% 50%;
-    --sidebar-primary-foreground: 40 25% 98%;
-    --sidebar-accent: 270 25% 18%;
-    --sidebar-accent-foreground: 40 20% 92%;
-    --sidebar-border: 270 18% 20%;
-    --sidebar-ring: 270 35% 55%;
+    --sidebar-background: 0 0% 10%;
+    --sidebar-foreground: 0 0% 90%;
+    --sidebar-primary: 0 0% 40%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 0 0% 15%;
+    --sidebar-accent-foreground: 0 0% 90%;
+    --sidebar-border: 0 0% 18%;
+    --sidebar-ring: 0 0% 50%;
   }
 }
 
