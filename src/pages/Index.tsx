@@ -34,6 +34,16 @@ interface Sale {
   specialty: string | null;
 }
 
+interface GalleryLot {
+  id: string;
+  title: string;
+  images: string[];
+  estimate_low: number | null;
+  estimate_high: number | null;
+  adjudication_price: number | null;
+  sale_id: string;
+}
+
 // Mapping spécialité → classe d'ombre
 const getSpecialtyShadowClass = (specialty?: string | null): string => {
   if (!specialty) return "card-shadow";
@@ -77,6 +87,7 @@ const DEMO_DATE = new Date('2026-01-03T00:00:00');
 const Index = () => {
   const [sales, setSales] = useState<Sale[]>([]);
   const [isLoadingSales, setIsLoadingSales] = useState(true);
+  const [galleryLots, setGalleryLots] = useState<GalleryLot[]>([]);
   const [selectedResult, setSelectedResult] = useState<{
     title: string;
     artist?: string;
@@ -109,11 +120,52 @@ const Index = () => {
     return () => clearInterval(interval);
   }, [scrollCarousel]);
 
+  // Fetch gallery lots with local images
+  useEffect(() => {
+    const fetchGalleryLots = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('interencheres_lots')
+          .select('id, title, images, estimate_low, estimate_high, adjudication_price, sale_id')
+          .not('images', 'is', null)
+          .limit(50);
+
+        if (error) {
+          console.error('Error fetching gallery lots:', error);
+          return;
+        }
+
+        // Filter lots with local images (starting with /images/)
+        const lotsWithLocalImages = (data || [])
+          .map(lot => {
+            const rawImages = Array.isArray(lot.images) ? lot.images : [];
+            const stringImages = rawImages.filter((img): img is string => typeof img === 'string');
+            const localImages = stringImages.filter(img => img.startsWith('/images/'));
+            return {
+              id: lot.id,
+              title: lot.title,
+              estimate_low: lot.estimate_low,
+              estimate_high: lot.estimate_high,
+              adjudication_price: lot.adjudication_price,
+              sale_id: lot.sale_id || '',
+              images: localImages.length > 0 ? localImages : stringImages
+            } as GalleryLot;
+          })
+          .filter(lot => lot.images.length > 0 && lot.images[0].startsWith('/images/'));
+
+        setGalleryLots(lotsWithLocalImages.slice(0, 6));
+      } catch (err) {
+        console.error('Error:', err);
+      }
+    };
+
+    fetchGalleryLots();
+  }, []);
+
   useEffect(() => {
     const fetchSales = async () => {
       setIsLoadingSales(true);
       try {
-        // Récupérer spécifiquement la prochaine vente "live" (en salle avec enchères en ligne)
         const { data, error } = await supabase
           .from('interencheres_sales')
           .select('id, title, sale_date, lot_count, cover_image_url, sale_url, sale_type, specialty')
@@ -136,6 +188,16 @@ const Index = () => {
 
     fetchSales();
   }, []);
+
+  // Helper to format price
+  const formatPrice = (low: number | null, high: number | null) => {
+    if (low && high) {
+      return `${low.toLocaleString('fr-FR')} – ${high.toLocaleString('fr-FR')} €`;
+    }
+    if (low) return `${low.toLocaleString('fr-FR')} €`;
+    if (high) return `${high.toLocaleString('fr-FR')} €`;
+    return null;
+  };
 
   const topResults = [
     {
@@ -201,144 +263,121 @@ const Index = () => {
           </p>
         </section>
 
-        {/* Hero Gallery - Disposition musée asymétrique raffinée */}
-        <section className="w-full py-6 md:py-10">
+        {/* Hero Gallery - Vrais lots cliquables */}
+        <section className="w-full py-8 md:py-12">
           <div className="container max-w-6xl">
-            {/* Grille musée - disposition salon style XIXe */}
-            <div className="relative">
-              {/* Fond mur de galerie subtil */}
-              <div className="absolute inset-0 -m-4 md:-m-6 bg-gradient-to-b from-muted/20 via-muted/40 to-muted/20 rounded-sm" />
-              
-              <div className="relative grid grid-cols-12 gap-2 md:gap-3 p-4 md:p-6">
-                {/* Colonne gauche - Grande œuvre maîtresse */}
-                <div className="col-span-12 md:col-span-7 space-y-2 md:space-y-3">
-                  {/* Tableau principal - Art Moderne */}
-                  <Link 
-                    to="/specialites/art-moderne" 
-                    className="block relative group"
-                  >
-                    <div className="relative overflow-hidden bg-background shadow-[0_4px_20px_rgba(0,0,0,0.15)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.4)]">
-                      {/* Cadre doré subtil */}
-                      <div className="absolute inset-0 border-[3px] border-brand-gold/30 pointer-events-none z-10" />
-                      <div className="absolute inset-[3px] border border-brand-gold/20 pointer-events-none z-10" />
-                      
-                      <div className="aspect-[4/3] overflow-hidden">
-                        <img 
-                          src="/images/sales/667692-lot-aizpiri.jpg" 
-                          alt="Paul Aizpiri - Peinture moderne" 
-                          className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-[1.02]"
-                        />
-                      </div>
-                    </div>
-                    {/* Cartel musée */}
-                    <div className="mt-2 text-center">
-                      <p className="font-serif text-sm md:text-base text-foreground">Art Moderne & Contemporain</p>
-                      <p className="text-xs text-muted-foreground">École de Paris · Expressionnisme · Art Brut</p>
-                    </div>
-                  </Link>
-                </div>
-                
-                {/* Colonne droite - Accrochage vertical */}
-                <div className="col-span-12 md:col-span-5 space-y-2 md:space-y-3">
-                  {/* Bijoux - format paysage */}
-                  <Link 
-                    to="/specialites/bijoux-montres" 
-                    className="block relative group"
-                  >
-                    <div className="relative overflow-hidden bg-background shadow-[0_3px_15px_rgba(0,0,0,0.12)] dark:shadow-[0_3px_15px_rgba(0,0,0,0.35)]">
-                      <div className="absolute inset-0 border-2 border-brand-gold/25 pointer-events-none z-10" />
-                      
-                      <div className="aspect-[16/9] overflow-hidden">
-                        <img 
-                          src="/images/sales/668645-montre.jpg" 
-                          alt="Montre de luxe - Haute horlogerie" 
-                          className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-[1.02]"
-                        />
-                      </div>
-                    </div>
-                    <div className="mt-1.5 text-center">
-                      <p className="font-serif text-xs md:text-sm text-foreground">Bijoux & Montres</p>
-                      <p className="text-[10px] text-muted-foreground hidden md:block">Haute joaillerie · Horlogerie de prestige</p>
-                    </div>
-                  </Link>
-                  
-                  {/* Deux petits tableaux côte à côte */}
-                  <div className="grid grid-cols-2 gap-2 md:gap-3">
-                    {/* Vins */}
-                    <Link 
-                      to="/specialites/vins-spiritueux" 
-                      className="block relative group"
-                    >
-                      <div className="relative overflow-hidden bg-background shadow-[0_2px_10px_rgba(0,0,0,0.10)] dark:shadow-[0_2px_10px_rgba(0,0,0,0.30)]">
-                        <div className="absolute inset-0 border border-brand-gold/20 pointer-events-none z-10" />
-                        
-                        <div className="aspect-square overflow-hidden">
-                          <img 
-                            src="/images/sales/668871-poster-pecrus.jpg" 
-                            alt="Pétrus - Grand cru" 
-                            className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-[1.02]"
-                          />
-                        </div>
-                      </div>
-                      <div className="mt-1 text-center">
-                        <p className="font-serif text-[10px] md:text-xs text-foreground">Vins & Spiritueux</p>
-                      </div>
-                    </Link>
-                    
-                    {/* Arts d'Asie */}
-                    <Link 
-                      to="/specialites/collections" 
-                      className="block relative group"
-                    >
-                      <div className="relative overflow-hidden bg-background shadow-[0_2px_10px_rgba(0,0,0,0.10)] dark:shadow-[0_2px_10px_rgba(0,0,0,0.30)]">
-                        <div className="absolute inset-0 border border-brand-gold/20 pointer-events-none z-10" />
-                        
-                        <div className="aspect-square overflow-hidden">
-                          <img 
-                            src="/images/sales/669871-bouddha.jpg" 
-                            alt="Bouddha - Arts d'Asie" 
-                            className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-[1.02]"
-                          />
-                        </div>
-                      </div>
-                      <div className="mt-1 text-center">
-                        <p className="font-serif text-[10px] md:text-xs text-foreground">Arts d'Asie</p>
-                      </div>
-                    </Link>
+            {/* Grille galerie élégante */}
+            {galleryLots.length >= 6 ? (
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
+                {/* Lot principal - grande taille */}
+                <Link 
+                  to={`/vente/${galleryLots[0].sale_id}/lot/${galleryLots[0].id}`}
+                  className="col-span-2 row-span-2 block relative group"
+                >
+                  <div className="relative overflow-hidden bg-background aspect-[4/3] md:aspect-[3/2]">
+                    <img 
+                      src={galleryLots[0].images[0]} 
+                      alt={galleryLots[0].title}
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
+                    />
+                    {/* Overlay au hover */}
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300" />
                   </div>
-                  
-                  {/* Mobilier - format paysage */}
+                  {/* Cartel */}
+                  <div className="mt-3 px-1">
+                    <p className="font-serif text-base md:text-lg text-foreground line-clamp-2 group-hover:text-brand-gold transition-colors">
+                      {galleryLots[0].title}
+                    </p>
+                    {formatPrice(galleryLots[0].estimate_low, galleryLots[0].estimate_high) && (
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Est. {formatPrice(galleryLots[0].estimate_low, galleryLots[0].estimate_high)}
+                      </p>
+                    )}
+                  </div>
+                </Link>
+
+                {/* Lots secondaires */}
+                {galleryLots.slice(1, 6).map((lot, index) => (
                   <Link 
-                    to="/specialites/mobilier-objets-art" 
+                    key={lot.id}
+                    to={`/vente/${lot.sale_id}/lot/${lot.id}`}
                     className="block relative group"
                   >
-                    <div className="relative overflow-hidden bg-background shadow-[0_3px_15px_rgba(0,0,0,0.12)] dark:shadow-[0_3px_15px_rgba(0,0,0,0.35)]">
-                      <div className="absolute inset-0 border-2 border-brand-gold/25 pointer-events-none z-10" />
-                      
-                      <div className="aspect-[16/10] overflow-hidden">
-                        <img 
-                          src="/images/sales/667941-vierge.jpg" 
-                          alt="Vierge à l'enfant - Objet d'art" 
-                          className="w-full h-full object-cover object-top transition-transform duration-1000 group-hover:scale-[1.02]"
-                        />
-                      </div>
+                    <div className="relative overflow-hidden bg-background aspect-square">
+                      <img 
+                        src={lot.images[0]} 
+                        alt={lot.title}
+                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
+                      />
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300" />
                     </div>
-                    <div className="mt-1.5 text-center">
-                      <p className="font-serif text-xs md:text-sm text-foreground">Mobilier & Objets d'Art</p>
-                      <p className="text-[10px] text-muted-foreground hidden md:block">XVIIe · XVIIIe · XIXe siècles</p>
+                    {/* Cartel compact */}
+                    <div className="mt-2 px-1">
+                      <p className="font-serif text-sm text-foreground line-clamp-2 group-hover:text-brand-gold transition-colors">
+                        {lot.title}
+                      </p>
+                      {formatPrice(lot.estimate_low, lot.estimate_high) && (
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          Est. {formatPrice(lot.estimate_low, lot.estimate_high)}
+                        </p>
+                      )}
                     </div>
                   </Link>
-                </div>
+                ))}
               </div>
-            </div>
+            ) : (
+              // Fallback avec images statiques si pas assez de lots
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
+                <Link 
+                  to="/specialites/art-moderne"
+                  className="col-span-2 row-span-2 block relative group"
+                >
+                  <div className="relative overflow-hidden bg-background aspect-[4/3] md:aspect-[3/2]">
+                    <img 
+                      src="/images/sales/667692-lot-aizpiri.jpg" 
+                      alt="Art Moderne"
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
+                    />
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300" />
+                  </div>
+                  <div className="mt-3 px-1">
+                    <p className="font-serif text-base md:text-lg text-foreground group-hover:text-brand-gold transition-colors">
+                      Art Moderne & Contemporain
+                    </p>
+                  </div>
+                </Link>
+                {[
+                  { img: "/images/sales/668645-montre.jpg", title: "Bijoux & Montres", link: "/specialites/bijoux-montres" },
+                  { img: "/images/sales/668871-poster-pecrus.jpg", title: "Vins & Spiritueux", link: "/specialites/vins-spiritueux" },
+                  { img: "/images/sales/669871-bouddha.jpg", title: "Arts d'Asie", link: "/specialites/collections" },
+                  { img: "/images/sales/667941-vierge.jpg", title: "Objets d'Art", link: "/specialites/mobilier-objets-art" },
+                ].map((item, i) => (
+                  <Link key={i} to={item.link} className="block relative group">
+                    <div className="relative overflow-hidden bg-background aspect-square">
+                      <img 
+                        src={item.img} 
+                        alt={item.title}
+                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
+                      />
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300" />
+                    </div>
+                    <div className="mt-2 px-1">
+                      <p className="font-serif text-sm text-foreground group-hover:text-brand-gold transition-colors">
+                        {item.title}
+                      </p>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
             
-            {/* Lien vers toutes les spécialités */}
+            {/* Lien vers le catalogue */}
             <div className="text-center mt-8">
               <Link 
-                to="/specialites" 
+                to="/acheter/ventes-a-venir" 
                 className="inline-flex items-center gap-2 text-xs tracking-widest uppercase text-muted-foreground hover:text-foreground transition-colors group"
               >
-                <span>Toutes nos spécialités</span>
+                <span>Voir toutes les ventes</span>
                 <ChevronRight className="h-3 w-3 transition-transform group-hover:translate-x-1" />
               </Link>
             </div>
