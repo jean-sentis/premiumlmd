@@ -126,7 +126,9 @@ Explique-moi de quoi il s'agit et, si un créateur est mentionné, parle-moi de 
     const analysis: AnalysisResult = JSON.parse(toolCall.function.arguments);
     console.log('Analysis result:', analysis);
 
-    // Analyse des images si demandé - UNIQUEMENT depuis Supabase Storage
+    // Analyse des images si demandé
+    // Sources acceptées : URLs Supabase Storage OU URLs externes (Interenchères, etc.)
+    // Les chemins locaux (/images/...) ne sont PAS accessibles depuis l'edge function
     let imageAnalysis = null;
     
     if (analyze_images && lot.images && lot.images.length > 0) {
@@ -134,14 +136,18 @@ Explique-moi de quoi il s'agit et, si un créateur est mentionné, parle-moi de 
       
       let imageUrl = lot.images[0];
       
-      // Vérifier si c'est une URL Supabase Storage (seule source acceptée)
+      // Déterminer le type d'URL
       const isSupabaseStorageUrl = imageUrl.includes('supabase.co/storage') || imageUrl.includes(supabaseUrl);
+      const isExternalUrl = imageUrl.startsWith('http://') || imageUrl.startsWith('https://');
+      const isLocalPath = imageUrl.startsWith('/');
       
-      if (!isSupabaseStorageUrl) {
-        console.log(`Image is not from Supabase Storage: ${imageUrl}`);
-        imageAnalysis = "⚠️ L'image n'est pas stockée dans le cloud Supabase. Utilisez la fonction d'upload pour migrer les images vers le storage.";
-      } else {
-        console.log(`Image URL from Supabase Storage: ${imageUrl}`);
+      if (isLocalPath) {
+        // Les chemins locaux ne sont pas accessibles depuis l'edge function
+        console.log(`Image is a local path (not accessible): ${imageUrl}`);
+        imageAnalysis = "⚠️ L'image est stockée localement dans le projet. Pour activer l'analyse visuelle, uploadez l'image vers le storage cloud ou utilisez une URL externe (Interenchères).";
+      } else if (isSupabaseStorageUrl || isExternalUrl) {
+        // URL accessible - on peut analyser
+        console.log(`Image URL accessible for vision: ${imageUrl}`);
         
         const imagePrompt = `Décris précisément cet objet d'art ou antiquité visible sur la photo.
       
@@ -179,8 +185,10 @@ Sois précis et factuel, comme un commissaire-priseur décrivant un lot. 3-4 phr
         } else {
           const errorText = await visionResponse.text();
           console.error('Vision API error:', visionResponse.status, errorText);
-          imageAnalysis = "⚠️ Erreur lors de l'analyse de l'image par l'IA Vision.";
+          imageAnalysis = "⚠️ Erreur lors de l'analyse de l'image par l'IA Vision. L'image n'est peut-être pas accessible publiquement.";
         }
+      } else {
+        imageAnalysis = "⚠️ Format d'URL d'image non reconnu.";
       }
     }
 
