@@ -270,15 +270,15 @@ const Index = () => {
 
         {/* Hero Section - 1440×600px */}
         <section className="w-full bg-white overflow-hidden relative" style={{ border: "5px solid black" }}>
-          <div className="absolute inset-0 flex items-start justify-start z-10" style={{ marginTop: "80px", marginLeft: "520px" }}>
+          <div className="absolute inset-0 flex items-start justify-start z-10" style={{ marginTop: "80px", marginLeft: "500px" }}>
             <div className="text-left">
               <p className="font-serif text-2xl md:text-3xl lg:text-4xl font-light tracking-wide text-black">
                 Vente de la collection
               </p>
-              <p className="font-serif text-2xl md:text-3xl lg:text-4xl font-light tracking-wide text-black">
+              <p className="font-serif text-2xl md:text-3xl lg:text-4xl font-light tracking-wide text-black" style={{ marginTop: "8px" }}>
                 de Madame X
               </p>
-              <p className="font-serif text-2xl md:text-3xl lg:text-4xl font-light tracking-wide text-black mt-2">
+              <p className="font-serif text-xl md:text-2xl lg:text-3xl font-light tracking-wide text-black" style={{ marginTop: "24px" }}>
                 27 février - 14 h
               </p>
             </div>
