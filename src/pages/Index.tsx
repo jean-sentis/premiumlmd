@@ -253,8 +253,8 @@ const Index = () => {
       {/* Main Content */}
       <main className="relative bg-background">
 
-        {/* Titre principal - NON sticky sur la home (exception) */}
-        <section className="pt-0 pb-[10px] mt-0 text-center container mx-auto">
+        {/* Titre principal avec espacement généreux */}
+        <section className="pt-8 md:pt-12 pb-6 md:pb-8 text-center container mx-auto">
           <h1 className="font-serif text-3xl md:text-5xl font-light tracking-wide mb-1">
             Douze pages <span className="italic">&</span> associés
           </h1>
@@ -263,36 +263,29 @@ const Index = () => {
           </p>
         </section>
 
-        {/* Hero Full-Width - Un seul visuel d'impact */}
+        {/* Hero Full-Width - Image d'impact */}
         <section className="w-full">
-          {/* Image pleine largeur avec lien vers le lot */}
           <Link 
             to={galleryLots.length > 0 ? `/vente/${galleryLots[0].sale_id}/lot/${galleryLots[0].id}` : "/acheter/ventes-a-venir"}
             className="block relative group cursor-pointer"
           >
-            {/* Container full-width sans limite */}
-            <div className="relative w-full aspect-[21/9] md:aspect-[3/1] overflow-hidden bg-muted">
+            <div className="relative w-full aspect-[16/9] md:aspect-[21/9] overflow-hidden bg-muted">
               <img 
-                src={galleryLots.length > 0 ? galleryLots[0].images[0] : "/images/sales/2025-11-08-art-moderne.jpg"} 
-                alt={galleryLots.length > 0 ? galleryLots[0].title : "Œuvre à la une"}
+                src="/images/sales/2024-06-22-prestige-sculpture.jpg"
+                alt="Sculpture de prestige"
                 className="w-full h-full object-cover object-center transition-transform duration-1000 ease-out group-hover:scale-[1.02]"
               />
-              {/* Overlay subtil au survol */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              {/* Overlay subtil permanent en bas */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
               
               {/* Cartel discret en bas à gauche */}
-              <div className="absolute bottom-0 left-0 right-0 p-6 md:p-10 bg-gradient-to-t from-black/60 to-transparent">
+              <div className="absolute bottom-0 left-0 right-0 p-6 md:p-10">
                 <div className="max-w-4xl">
-                  <p className="font-serif text-white text-xl md:text-3xl lg:text-4xl font-light leading-tight drop-shadow-lg line-clamp-2">
-                    {galleryLots.length > 0 ? galleryLots[0].title : "Collection Art Moderne & Contemporain"}
+                  <p className="font-serif text-white text-xl md:text-3xl lg:text-4xl font-light leading-tight drop-shadow-lg">
+                    Ventes de prestige
                   </p>
-                  {galleryLots.length > 0 && formatPrice(galleryLots[0].estimate_low, galleryLots[0].estimate_high) && (
-                    <p className="text-white/80 text-sm md:text-base mt-2 font-light tracking-wide">
-                      Estimation {formatPrice(galleryLots[0].estimate_low, galleryLots[0].estimate_high)}
-                    </p>
-                  )}
-                  <span className="inline-flex items-center gap-2 text-white/70 text-xs md:text-sm uppercase tracking-widest mt-4 group-hover:text-white transition-colors">
-                    Voir ce lot
+                  <span className="inline-flex items-center gap-2 text-white/80 text-xs md:text-sm uppercase tracking-widest mt-3 group-hover:text-white transition-colors">
+                    Découvrir le catalogue
                     <ChevronRight className="h-3 w-3 transition-transform group-hover:translate-x-1" />
                   </span>
                 </div>
