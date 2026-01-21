@@ -45,15 +45,25 @@ const DemoRdvOverlay = ({
     return () => window.removeEventListener("scroll", handleScroll);
   }, [isDemoMode, isVisible]);
 
+  // Réinitialiser la visibilité si on passe en mode demo
+  useEffect(() => {
+    if (isDemoMode) {
+      setIsVisible(false);
+      setHasNavigated(false);
+    }
+  }, [isDemoMode]);
+
   // Bloquer complètement le scroll quand l'overlay est visible
   useEffect(() => {
-    if (isVisible) {
+    if (isVisible && !isDemoMode) {
       document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
     }
     return () => {
       document.body.style.overflow = "";
     };
-  }, [isVisible]);
+  }, [isVisible, isDemoMode]);
 
   if (isDemoMode) return null;
 
