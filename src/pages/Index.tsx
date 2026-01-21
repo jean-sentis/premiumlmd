@@ -278,11 +278,11 @@ const Index = () => {
             className="absolute z-30 block" 
             style={{ bottom: "60px", left: "calc(50% - 210px)" }}
           >
-            <div className="border border-black px-4 py-3 bg-white/80 hover:bg-white transition-colors cursor-pointer">
-              <p className="font-serif uppercase tracking-wider text-black text-center" style={{ fontSize: "14px" }}>
+            <div className="border border-black px-4 py-3 bg-white/80 hover:bg-black transition-colors cursor-pointer group">
+              <p className="font-serif uppercase tracking-wider text-black group-hover:text-white text-center transition-colors" style={{ fontSize: "14px" }}>
                 voir
               </p>
-              <p className="font-serif uppercase tracking-wider text-black text-center" style={{ fontSize: "14px" }}>
+              <p className="font-serif uppercase tracking-wider text-black group-hover:text-white text-center transition-colors" style={{ fontSize: "14px" }}>
                 la vente
               </p>
             </div>
