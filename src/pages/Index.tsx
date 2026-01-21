@@ -263,35 +263,45 @@ const Index = () => {
           </p>
         </section>
 
-        {/* Hero Full-Width - Image d'impact */}
-        <section className="w-full">
-          <Link 
-            to={galleryLots.length > 0 ? `/vente/${galleryLots[0].sale_id}/lot/${galleryLots[0].id}` : "/acheter/ventes-a-venir"}
-            className="block relative group cursor-pointer"
-          >
-            <div className="relative w-full h-[52vh] md:h-[68vh] overflow-hidden bg-muted">
-              <img 
-                src="/images/sales/2024-06-22-prestige-sculpture.jpg"
-                alt="Sculpture de prestige"
-                className="w-full h-full object-contain object-center"
-              />
-              {/* Overlay subtil permanent en bas */}
-              <div className="absolute inset-0 bg-gradient-to-t from-foreground/60 via-transparent to-transparent" />
-              
-              {/* Cartel discret en bas à gauche */}
-              <div className="absolute bottom-0 left-0 right-0 p-6 md:p-10">
-                <div className="max-w-4xl">
-                  <p className="font-serif text-background text-xl md:text-3xl lg:text-4xl font-light leading-tight drop-shadow-lg">
-                    Ventes de prestige
-                  </p>
-                  <span className="inline-flex items-center gap-2 text-background/80 text-xs md:text-sm uppercase tracking-widest mt-3 group-hover:text-background transition-colors">
-                    Découvrir le catalogue
-                    <ChevronRight className="h-3 w-3 transition-transform group-hover:translate-x-1" />
-                  </span>
-                </div>
+        {/* Hero Full-Width - Layout 4:3 avec image à droite */}
+        <section className="w-full bg-muted">
+          <div className="container max-w-7xl">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-0">
+              {/* Texte à gauche */}
+              <div className="flex flex-col justify-center p-8 md:p-12 lg:p-16 order-2 md:order-1">
+                <p className="text-xs tracking-widest uppercase text-muted-foreground mb-4">
+                  Vente de prestige
+                </p>
+                <h2 className="font-serif text-2xl md:text-4xl lg:text-5xl font-light leading-tight text-foreground mb-6">
+                  Sculpture contemporaine
+                </h2>
+                <p className="text-muted-foreground text-sm md:text-base leading-relaxed mb-8 max-w-md">
+                  Découvrez notre sélection d'œuvres exceptionnelles lors de nos prochaines ventes aux enchères.
+                </p>
+                <Link 
+                  to="/acheter/ventes-a-venir"
+                  className="inline-flex items-center gap-2 text-sm font-medium text-foreground hover:text-brand-gold transition-colors group w-fit"
+                >
+                  Voir le catalogue
+                  <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                </Link>
               </div>
+              
+              {/* Image à droite - format 4:3 */}
+              <Link 
+                to="/acheter/ventes-a-venir"
+                className="block relative group cursor-pointer order-1 md:order-2"
+              >
+                <div className="relative aspect-[4/3] overflow-hidden">
+                  <img 
+                    src="/images/sales/2024-06-22-prestige-sculpture.jpg"
+                    alt="Sculpture de prestige"
+                    className="w-full h-full object-contain object-center bg-muted transition-transform duration-700 group-hover:scale-[1.02]"
+                  />
+                </div>
+              </Link>
             </div>
-          </Link>
+          </div>
         </section>
 
         {/* Slot inline pour le planning - après la vidéo (scroll ajusté pour éviter le masquage par le header) */}
