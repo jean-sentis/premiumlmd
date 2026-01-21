@@ -18,6 +18,7 @@ import recordTinguelySculpture from "@/assets/record-tinguely-sculpture.png";
 import recordCesarCompression from "@/assets/record-cesar-compression.png";
 import heroSculpture from "@/assets/hero-sculpture.jpg";
 import heroCeramique from "@/assets/hero-ceramique.png";
+import heroCeramiqueVerticale from "@/assets/hero-ceramique-verticale.jpg";
 import {
   Dialog,
   DialogContent,
@@ -269,14 +270,22 @@ const Index = () => {
         {/* Hero Section - 1440×600px */}
         <section className="w-full bg-black">
           <div className="mx-auto flex justify-between items-end" style={{ maxWidth: "1440px", height: "600px" }}>
-            {/* Vidéo Vimeo tout à gauche */}
-            <iframe
-              src="https://player.vimeo.com/video/1078927258?autoplay=1&loop=1&muted=1&background=1"
-              className="h-full border-0 self-stretch"
-              style={{ width: "auto", aspectRatio: "9/16" }}
-              allow="autoplay; fullscreen"
-              title="Vidéo enchères"
-            />
+            {/* Groupe gauche : vidéo + céramique verticale */}
+            <div className="flex items-end h-full">
+              <iframe
+                src="https://player.vimeo.com/video/1078927258?autoplay=1&loop=1&muted=1&background=1"
+                className="h-full border-0"
+                style={{ width: "auto", aspectRatio: "9/16" }}
+                allow="autoplay; fullscreen"
+                title="Vidéo enchères"
+              />
+              <img 
+                src={heroCeramiqueVerticale}
+                alt="Céramique verticale"
+                className="h-full w-auto object-contain"
+                style={{ marginLeft: "5px" }}
+              />
+            </div>
             {/* Groupe droite : céramique + sculpture */}
             <div className="flex items-end h-full">
               <img 
