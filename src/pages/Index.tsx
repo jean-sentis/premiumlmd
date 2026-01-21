@@ -268,27 +268,29 @@ const Index = () => {
 
         {/* Hero Section - 1440×600px */}
         <section className="w-full bg-black">
-          <div className="mx-auto flex justify-end items-end" style={{ maxWidth: "1440px", height: "600px" }}>
-            {/* Vidéo Vimeo à gauche */}
+          <div className="mx-auto flex justify-between items-end" style={{ maxWidth: "1440px", height: "600px" }}>
+            {/* Vidéo Vimeo tout à gauche */}
             <iframe
               src="https://player.vimeo.com/video/1078927258?autoplay=1&loop=1&muted=1&background=1"
-              className="h-full border-0"
-              style={{ width: "auto", aspectRatio: "9/16", marginRight: "5px" }}
+              className="h-full border-0 self-stretch"
+              style={{ width: "auto", aspectRatio: "9/16" }}
               allow="autoplay; fullscreen"
               title="Vidéo enchères"
             />
-            {/* Céramique avec 5px d'espacement */}
-            <img 
-              src={heroCeramique}
-              alt="Céramique"
-              className="object-contain self-end"
-              style={{ height: "216px", width: "auto", marginRight: "5px", marginBottom: "60px" }}
-            />
-            <img 
-              src={heroSculpture}
-              alt="Sculpture"
-              className="h-full w-auto object-contain"
-            />
+            {/* Groupe droite : céramique + sculpture */}
+            <div className="flex items-end h-full">
+              <img 
+                src={heroCeramique}
+                alt="Céramique"
+                className="object-contain"
+                style={{ height: "216px", width: "auto", marginRight: "5px", marginBottom: "60px" }}
+              />
+              <img 
+                src={heroSculpture}
+                alt="Sculpture"
+                className="h-full w-auto object-contain"
+              />
+            </div>
           </div>
         </section>
 
