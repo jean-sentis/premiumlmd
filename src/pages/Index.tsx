@@ -283,7 +283,7 @@ const Index = () => {
                 src={heroCeramiqueVerticale}
                 alt="Céramique verticale"
                 className="h-full w-auto object-contain"
-                style={{ marginLeft: "-50px" }}
+                style={{ marginLeft: "5px" }}
               />
             </div>
             {/* Groupe droite : céramique + sculpture */}
