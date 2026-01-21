@@ -291,18 +291,18 @@ const Index = () => {
                 />
               </div>
             </div>
-            {/* Groupe droite : céramique positionnée en haut à gauche de la sculpture */}
-            <div className="relative h-full">
+            {/* Groupe droite : céramique + sculpture */}
+            <div className="flex items-end h-full">
+              <img 
+                src={heroCeramique}
+                alt="Céramique"
+                className="object-contain"
+                style={{ height: "216px", width: "auto", marginRight: "5px", marginBottom: "60px" }}
+              />
               <img 
                 src={heroSculpture}
                 alt="Sculpture"
                 className="h-full w-auto object-contain"
-              />
-              <img 
-                src={heroCeramique}
-                alt="Céramique"
-                className="absolute object-contain"
-                style={{ height: "216px", width: "auto", top: "0", right: "100%", marginRight: "5px" }}
               />
             </div>
           </div>
