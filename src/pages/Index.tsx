@@ -19,6 +19,7 @@ import recordCesarCompression from "@/assets/record-cesar-compression.png";
 import heroSculpture from "@/assets/hero-sculpture.jpg";
 import heroCeramique from "@/assets/hero-ceramique.png";
 import heroCeramiqueVerticale from "@/assets/hero-ceramique-verticale.jpg";
+import heroCeramiqueClaire from "@/assets/hero-ceramique-claire.jpg";
 import {
   Dialog,
   DialogContent,
@@ -291,14 +292,23 @@ const Index = () => {
                 />
               </div>
             </div>
-            {/* Groupe droite : céramique + sculpture */}
+            {/* Groupe droite : céramiques empilées + sculpture */}
             <div className="flex items-end h-full">
-              <img 
-                src={heroCeramique}
-                alt="Céramique"
-                className="object-contain"
-                style={{ height: "216px", width: "auto", marginRight: "5px", marginBottom: "60px" }}
-              />
+              {/* Colonne céramiques empilées */}
+              <div className="flex flex-col items-end justify-end h-full" style={{ marginRight: "5px" }}>
+                <img 
+                  src={heroCeramiqueClaire}
+                  alt="Céramique fond clair"
+                  className="object-contain"
+                  style={{ height: "160px", width: "auto", marginBottom: "5px" }}
+                />
+                <img 
+                  src={heroCeramique}
+                  alt="Céramique"
+                  className="object-contain"
+                  style={{ height: "216px", width: "auto" }}
+                />
+              </div>
               <img 
                 src={heroSculpture}
                 alt="Sculpture"
