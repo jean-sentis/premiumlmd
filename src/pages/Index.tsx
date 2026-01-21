@@ -273,7 +273,7 @@ const Index = () => {
             {/* Container full-width sans limite */}
             <div className="relative w-full aspect-[21/9] md:aspect-[3/1] overflow-hidden bg-muted">
               <img 
-                src={galleryLots.length > 0 ? galleryLots[0].images[0] : "/images/sales/667692-lot-aizpiri.jpg"} 
+                src={galleryLots.length > 0 ? galleryLots[0].images[0] : "/images/sales/2025-11-08-art-moderne.jpg"} 
                 alt={galleryLots.length > 0 ? galleryLots[0].title : "Œuvre à la une"}
                 className="w-full h-full object-cover object-center transition-transform duration-1000 ease-out group-hover:scale-[1.02]"
               />
