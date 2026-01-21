@@ -74,6 +74,7 @@ import ExportOffres from "./pages/ExportOffres";
 import ExportWordPress from "./pages/ExportWordPress";
 import ExportAdaptation from "./pages/ExportAdaptation";
 import OffresCommerciales from "./pages/OffresCommerciales";
+import AdminLots from "./pages/admin/AdminLots";
 
 const queryClient = new QueryClient();
 
@@ -162,6 +163,9 @@ const App = () => (
                 <Route path="/export-wordpress" element={<ExportWordPress />} />
                 <Route path="/export-adaptation" element={<ExportAdaptation />} />
                 <Route path="/offres" element={<OffresCommerciales />} />
+                
+                {/* Admin */}
+                <Route path="/admin/lots" element={<AdminLots />} />
                 
                 <Route path="*" element={<NotFound />} />
               </Routes>
