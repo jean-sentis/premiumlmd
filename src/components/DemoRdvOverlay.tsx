@@ -1,12 +1,15 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Calendar } from "lucide-react";
 
 interface DemoRdvOverlayProps {
-  rdvUrl?: string;  // URL Cal.com, Calendly, Amelia, etc.
-  ctaText?: string; // Texte du bouton
+  rdvUrl?: string;
+  ctaText?: string;
 }
+
+const DEMO_STORAGE_KEY = "lmd_demo_mode";
+const DEMO_GLOBAL_KEY = "__LMD_DEMO_MODE__";
 
 const DemoRdvOverlay = ({
   rdvUrl = "https://app.cal.eu/votre-lien",
@@ -14,64 +17,39 @@ const DemoRdvOverlay = ({
 }: DemoRdvOverlayProps) => {
   const location = useLocation();
   const [isVisible, setIsVisible] = useState(false);
-  const [hasNavigated, setHasNavigated] = useState(false);
-  const [initialPath] = useState(location.pathname);
 
-  // Bypass si ?demo=true dans l'URL (vérifie aussi le parent pour les iframes)
-  const isDemoMode = useMemo(() => {
-    // Vérifier l'URL courante (react-router)
-    const routerDemo = new URLSearchParams(location.search).get("demo") === "true";
-    // Vérifier l'URL du navigateur directement
-    const windowDemo = new URLSearchParams(window.location.search).get("demo") === "true";
-    // Vérifier l'URL parente (si accessible, même origine)
-    let parentDemo = false;
-    try {
-      if (window.parent && window.parent !== window) {
-        parentDemo = new URLSearchParams(window.parent.location.search).get("demo") === "true";
-      }
-    } catch (e) {
-      // Cross-origin, ignorer
+  // Bypass "mode démo": persiste même si le paramètre disparaît lors d'une navigation SPA
+  const isDemoMode = (() => {
+    const urlHasDemo = new URLSearchParams(location.search).get("demo") === "true";
+
+    if (urlHasDemo) {
+      try { (window as any)[DEMO_GLOBAL_KEY] = true; } catch (e) {}
+      try { sessionStorage.setItem(DEMO_STORAGE_KEY, "true"); } catch (e) {}
+      return true;
     }
-    
-    const result = routerDemo || windowDemo || parentDemo;
-    console.log("DemoRdvOverlay - isDemoMode:", result, { routerDemo, windowDemo, parentDemo, search: location.search, windowSearch: window.location.search });
-    return result;
-  }, [location.search]);
 
-  // Détecter un changement de page (navigation)
-  useEffect(() => {
-    if (isDemoMode) return;
-    
-    // Si on change de page par rapport à la page initiale, déclencher l'overlay
-    if (location.pathname !== initialPath && !hasNavigated) {
-      setHasNavigated(true);
-      setIsVisible(true);
-    }
-  }, [location.pathname, initialPath, isDemoMode, hasNavigated]);
+    try { if ((window as any)[DEMO_GLOBAL_KEY] === true) return true; } catch (e) {}
+    try { return sessionStorage.getItem(DEMO_STORAGE_KEY) === "true"; } catch (e) { return false; }
+  })();
 
-  // Déclencher après 2500px de scroll
+  // Détecter le scroll pour déclencher l'overlay
   useEffect(() => {
     if (isDemoMode || isVisible) return;
 
     const handleScroll = () => {
-      if (window.scrollY > 2500) {
+      const isHomePage = location.pathname === "/";
+      const triggerPoint = isHomePage ? 4800 : 200;
+      
+      if (window.scrollY > triggerPoint) {
         setIsVisible(true);
       }
     };
 
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
-  }, [isDemoMode, isVisible]);
+  }, [location.pathname, isDemoMode, isVisible]);
 
-  // Réinitialiser la visibilité si on passe en mode demo
-  useEffect(() => {
-    if (isDemoMode) {
-      setIsVisible(false);
-      setHasNavigated(false);
-    }
-  }, [isDemoMode]);
-
-  // Bloquer complètement le scroll quand l'overlay est visible
+  // Bloquer le scroll quand l'overlay est visible
   useEffect(() => {
     if (isVisible && !isDemoMode) {
       document.body.style.overflow = "hidden";
@@ -83,10 +61,10 @@ const DemoRdvOverlay = ({
     };
   }, [isVisible, isDemoMode]);
 
+  // Ne pas rendre en mode démo
   if (isDemoMode) return null;
 
   const handleCtaClick = () => {
-    // Ouvre le RDV mais NE débloque PAS le site
     window.open(rdvUrl, "_blank", "noopener,noreferrer");
   };
 
@@ -94,10 +72,12 @@ const DemoRdvOverlay = ({
     <AnimatePresence>
       {isVisible && (
         <>
-          {/* Fond blur bloquant */}
+          {/* Fond blur plein écran */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
             className="fixed inset-0 z-[199] backdrop-blur-md bg-black/40"
           />
           
@@ -105,14 +85,17 @@ const DemoRdvOverlay = ({
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            transition={{ duration: 0.4, ease: "easeOut" }}
             className="fixed inset-0 z-[200] flex items-center justify-center p-4"
           >
-            <div className="bg-black text-white p-6 shadow-2xl border-2 border-brand-gold max-w-[348px] w-full">
+            <div className="bg-black text-white p-8 shadow-2xl border-2 border-brand-gold max-w-md w-full">
               <div className="flex flex-col items-center text-center gap-6">
                 <Calendar className="w-10 h-10 text-brand-gold" />
+                
                 <button
                   onClick={handleCtaClick}
-                  className="w-full border-2 border-brand-gold bg-black text-white px-6 py-4 font-serif text-lg hover:border-white transition-colors"
+                  className="w-full border-2 border-brand-gold bg-brand-gold text-black px-6 py-4 font-serif text-lg tracking-wide hover:bg-transparent hover:text-brand-gold transition-colors font-medium"
                 >
                   {ctaText}
                 </button>
