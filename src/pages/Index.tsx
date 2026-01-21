@@ -263,43 +263,71 @@ const Index = () => {
           </p>
         </section>
 
-        {/* Hero Full-Width - Layout 4:3 avec image à droite */}
-        <section className="w-full bg-muted">
-          <div className="container max-w-7xl">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-0">
-              {/* Texte à gauche */}
-              <div className="flex flex-col justify-center p-8 md:p-12 lg:p-16 order-2 md:order-1">
-                <p className="text-xs tracking-widest uppercase text-muted-foreground mb-4">
-                  Vente de prestige
-                </p>
-                <h2 className="font-serif text-2xl md:text-4xl lg:text-5xl font-light leading-tight text-foreground mb-6">
-                  Sculpture contemporaine
-                </h2>
-                <p className="text-muted-foreground text-sm md:text-base leading-relaxed mb-8 max-w-md">
-                  Découvrez notre sélection d'œuvres exceptionnelles lors de nos prochaines ventes aux enchères.
-                </p>
-                <Link 
-                  to="/acheter/ventes-a-venir"
-                  className="inline-flex items-center gap-2 text-sm font-medium text-foreground hover:text-brand-gold transition-colors group w-fit"
-                >
-                  Voir le catalogue
-                  <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-                </Link>
-              </div>
-              
-              {/* Image à droite - format 4:3 */}
-              <Link 
-                to="/acheter/ventes-a-venir"
-                className="block relative group cursor-pointer order-1 md:order-2"
-              >
-                <div className="relative aspect-[4/3] overflow-hidden">
+        {/* Hero Gallery Museum Grid - 1440×600px */}
+        <section className="w-full bg-[#1a1a1a]">
+          <div className="mx-auto" style={{ maxWidth: "1440px", height: "600px" }}>
+            <div className="relative w-full h-full p-6">
+              {/* Grille asymétrique style accrochage musée */}
+              <div className="absolute inset-6 grid grid-cols-12 grid-rows-6 gap-4">
+                
+                {/* Grande image principale - gauche */}
+                <div className="col-span-5 row-span-6 relative group cursor-pointer overflow-hidden">
                   <img 
                     src="/images/sales/2024-06-22-prestige-sculpture.jpg"
                     alt="Sculpture de prestige"
-                    className="w-full h-full object-contain object-center bg-muted transition-transform duration-700 group-hover:scale-[1.02]"
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                   />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                 </div>
-              </Link>
+
+                {/* Colonne centrale - 2 images empilées */}
+                <div className="col-span-4 row-span-3 relative group cursor-pointer overflow-hidden">
+                  <img 
+                    src="/images/sales/2025-11-08-art-moderne.jpg"
+                    alt="Art Moderne"
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                </div>
+                
+                <div className="col-span-4 row-span-3 relative group cursor-pointer overflow-hidden">
+                  <img 
+                    src="/images/sales/2025-10-18-bijoux-montres.jpg"
+                    alt="Bijoux et Montres"
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                </div>
+
+                {/* Colonne droite - 3 petites images */}
+                <div className="col-span-3 row-span-2 relative group cursor-pointer overflow-hidden">
+                  <img 
+                    src="/images/sales/2025-07-10-vins.jpg"
+                    alt="Vins"
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                </div>
+                
+                <div className="col-span-3 row-span-2 relative group cursor-pointer overflow-hidden">
+                  <img 
+                    src="/images/sales/2025-11-22-automobiles.jpg"
+                    alt="Automobiles"
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                </div>
+                
+                <div className="col-span-3 row-span-2 relative group cursor-pointer overflow-hidden">
+                  <img 
+                    src="/images/sales/2024-09-21-prestige-commode.jpg"
+                    alt="Mobilier"
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                </div>
+
+              </div>
             </div>
           </div>
         </section>
