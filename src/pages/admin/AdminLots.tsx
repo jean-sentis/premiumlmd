@@ -355,174 +355,128 @@ export default function AdminLots() {
   };
 
   return (
-    <div className="min-h-screen bg-background p-4 md:p-8">
-      <div className="max-w-6xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <div>
-            <h1 className="text-2xl font-bold">Admin - Gestion des images</h1>
-            <p className="text-muted-foreground">
-              Glissez-déposez vos photos (max 20 Mo/image) • Réorganisez par drag & drop
-            </p>
+    <div className="min-h-screen bg-background p-4 md:p-6">
+      <div className="max-w-5xl mx-auto space-y-4">
+        {/* Header compact */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <h1 className="text-xl font-semibold">Upload images lots</h1>
           </div>
+          
+          {/* Sélecteur de vente inline */}
+          <Select value={selectedSaleId} onValueChange={setSelectedSaleId}>
+            <SelectTrigger className="w-80">
+              <SelectValue placeholder={loadingSales ? "Chargement..." : "Choisir une vente"} />
+            </SelectTrigger>
+            <SelectContent className="max-h-80">
+              {sales.map(sale => (
+                <SelectItem key={sale.id} value={sale.id}>
+                  <span className="truncate">{sale.title}</span>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
-        {/* Sélection de vente */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Sélectionner une vente</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Select value={selectedSaleId} onValueChange={setSelectedSaleId}>
-              <SelectTrigger className="w-full md:w-96">
-                <SelectValue placeholder={loadingSales ? "Chargement..." : "Choisir une vente"} />
-              </SelectTrigger>
-              <SelectContent>
-                {sales.map(sale => (
-                  <SelectItem key={sale.id} value={sale.id}>
-                    {sale.title}
-                    {sale.sale_date && ` - ${new Date(sale.sale_date).toLocaleDateString('fr-FR')}`}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </CardContent>
-        </Card>
+        {/* Liste des lots - compacte */}
+        {!selectedSaleId ? (
+          <div className="text-center py-12 text-muted-foreground">
+            ← Sélectionnez une vente pour afficher ses lots
+          </div>
+        ) : loadingLots ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-6 w-6 animate-spin text-primary" />
+          </div>
+        ) : lots.length === 0 ? (
+          <div className="text-center py-12 text-muted-foreground">
+            Aucun lot dans cette vente
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {/* Stats rapides */}
+            <div className="text-sm text-muted-foreground mb-4">
+              {lots.length} lots • {lots.filter(l => l.images.length > 0).length} avec images
+            </div>
+            
+            {lots.map(lot => {
+              const progress = getUploadProgress(lot.id);
+              const isDragOver = dragOverLotId === lot.id;
+              
+              return (
+                <div 
+                  key={lot.id}
+                  className={`border rounded-lg p-3 transition-colors ${isDragOver ? 'ring-2 ring-primary bg-primary/5' : 'bg-card'}`}
+                  onDragOver={handleDragOver}
+                  onDragEnter={(e) => handleDragEnter(e, lot.id)}
+                  onDragLeave={(e) => handleDragLeave(e, lot.id)}
+                  onDrop={(e) => handleDrop(e, lot.id)}
+                >
+                  <div className="flex items-start gap-3">
+                    {/* Numéro lot */}
+                    <div className="flex-shrink-0 w-12 h-12 bg-muted rounded flex items-center justify-center font-mono font-bold text-lg">
+                      {lot.lot_number}
+                    </div>
 
-        {/* Liste des lots */}
-        {selectedSaleId && (
-          <div className="space-y-4">
-            {loadingLots ? (
-              <div className="flex items-center justify-center py-12">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              </div>
-            ) : lots.length === 0 ? (
-              <Card>
-                <CardContent className="py-12 text-center text-muted-foreground">
-                  Aucun lot dans cette vente
-                </CardContent>
-              </Card>
-            ) : (
-              lots.map(lot => {
-                const progress = getUploadProgress(lot.id);
-                const isDragOver = dragOverLotId === lot.id;
-                
-                return (
-                  <Card 
-                    key={lot.id}
-                    className={`transition-colors ${isDragOver ? 'ring-2 ring-primary bg-primary/5' : ''}`}
-                  >
-                    <CardContent className="p-4">
-                      <div className="flex flex-col md:flex-row gap-4">
-                        {/* Infos lot */}
-                        <div className="flex-shrink-0 w-full md:w-48">
-                          <h3 className="font-semibold">
-                            Lot {lot.lot_number}
-                          </h3>
-                          <p className="text-sm text-muted-foreground line-clamp-2">
-                            {lot.title}
-                          </p>
-                          <p className="text-xs text-muted-foreground mt-1">
-                            {lot.images.length} image(s)
-                          </p>
-                        </div>
-
-                        {/* Zone de drop + images */}
-                        <div 
-                          className="flex-1"
-                          onDragOver={handleDragOver}
-                          onDragEnter={(e) => handleDragEnter(e, lot.id)}
-                          onDragLeave={(e) => handleDragLeave(e, lot.id)}
-                          onDrop={(e) => handleDrop(e, lot.id)}
-                        >
-                          {/* Images existantes avec drag & drop */}
-                          <div className="flex flex-wrap gap-2 mb-3 min-h-[80px]">
-                            {lot.images.map((img, idx) => (
-                              <div 
-                                key={`${img}-${idx}`}
-                                draggable
-                                onDragStart={(e) => handleImageDragStart(e, lot.id, idx)}
-                                onDragEnd={handleImageDragEnd}
-                                onDragOver={(e) => handleImageDragOver(e, lot.id, idx)}
-                                className={`relative group cursor-move ${
-                                  draggingImage?.lotId === lot.id && draggingImage?.index === idx 
-                                    ? 'opacity-50' 
-                                    : ''
-                                }`}
-                              >
-                                <div className="absolute top-0 left-0 bg-black/60 text-white text-xs px-1 rounded-br z-10">
-                                  <GripVertical className="h-3 w-3 inline" /> {idx + 1}
-                                </div>
-                                <img
-                                  src={img}
-                                  alt={`Image ${idx + 1}`}
-                                  className="h-20 w-20 object-cover rounded border hover:ring-2 hover:ring-primary transition-all"
-                                  onError={(e) => {
-                                    (e.target as HTMLImageElement).src = '/placeholder.svg';
-                                  }}
-                                />
-                                <button
-                                  onClick={() => handleDeleteImage(lot.id, img)}
-                                  className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
-                                >
-                                  <X className="h-3 w-3" />
-                                </button>
-                              </div>
-                            ))}
-                            
-                            {/* Zone de drop visuelle */}
-                            <label 
-                              className={`h-20 min-w-[80px] px-4 border-2 border-dashed rounded flex flex-col items-center justify-center cursor-pointer transition-colors ${
-                                isDragOver 
-                                  ? 'border-primary bg-primary/10' 
-                                  : 'border-muted-foreground/30 hover:border-primary/50 hover:bg-muted/50'
-                              }`}
+                    {/* Titre + images */}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate mb-2">{lot.title}</p>
+                      
+                      {/* Images en ligne */}
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        {lot.images.map((img, idx) => (
+                          <div 
+                            key={`${img}-${idx}`}
+                            draggable
+                            onDragStart={(e) => handleImageDragStart(e, lot.id, idx)}
+                            onDragEnd={handleImageDragEnd}
+                            onDragOver={(e) => handleImageDragOver(e, lot.id, idx)}
+                            className={`relative group cursor-move ${
+                              draggingImage?.lotId === lot.id && draggingImage?.index === idx ? 'opacity-50' : ''
+                            }`}
+                          >
+                            <img
+                              src={img}
+                              alt={`${idx + 1}`}
+                              className="h-12 w-12 object-cover rounded border"
+                              onError={(e) => { (e.target as HTMLImageElement).src = '/placeholder.svg'; }}
+                            />
+                            <button
+                              onClick={() => handleDeleteImage(lot.id, img)}
+                              className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
                             >
-                              <Upload className="h-5 w-5 text-muted-foreground" />
-                              <span className="text-xs text-muted-foreground mt-1">
-                                {progress ? `${progress.done}/${progress.total}` : 'Ajouter'}
-                              </span>
-                              <input
-                                type="file"
-                                accept="image/*"
-                                multiple
-                                className="hidden"
-                                disabled={uploadingLotId === lot.id}
-                                onChange={(e) => {
-                                  if (e.target.files && e.target.files.length > 0) {
-                                    handleMultipleImageUpload(lot.id, e.target.files);
-                                    e.target.value = '';
-                                  }
-                                }}
-                              />
-                            </label>
+                              <X className="h-2.5 w-2.5" />
+                            </button>
                           </div>
-
-                          {/* Progress bar */}
-                          {progress && (
-                            <div className="flex items-center gap-2">
-                              <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                              <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
-                                <div 
-                                  className="h-full bg-primary transition-all duration-300"
-                                  style={{ width: `${(progress.done / progress.total) * 100}%` }}
-                                />
-                              </div>
-                              <span className="text-xs text-muted-foreground">
-                                {progress.done}/{progress.total}
-                              </span>
-                            </div>
+                        ))}
+                        
+                        {/* Bouton upload compact */}
+                        <label className={`h-12 w-12 border-2 border-dashed rounded flex items-center justify-center cursor-pointer transition-colors ${
+                          isDragOver ? 'border-primary bg-primary/10' : 'border-muted-foreground/30 hover:border-primary'
+                        }`}>
+                          {progress ? (
+                            <span className="text-xs">{progress.done}/{progress.total}</span>
+                          ) : uploadingLotId === lot.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Upload className="h-4 w-4 text-muted-foreground" />
                           )}
-                        </div>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            multiple
+                            className="hidden"
+                            onChange={(e) => e.target.files && handleMultipleImageUpload(lot.id, e.target.files)}
+                          />
+                        </label>
                       </div>
-                    </CardContent>
-                  </Card>
-                );
-              })
-            )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
