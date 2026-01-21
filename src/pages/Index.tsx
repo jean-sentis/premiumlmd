@@ -255,9 +255,10 @@ const Index = () => {
 
         {/* Titre principal avec espacement généreux */}
         <section className="pt-8 md:pt-12 pb-6 md:pb-8 text-center container mx-auto">
-          <h1 className="font-serif text-3xl md:text-5xl font-light tracking-wide mb-1">
+          <h1 className="font-serif text-3xl md:text-5xl font-light tracking-wide">
             Douze pages <span className="italic">&</span> associés
           </h1>
+          <div className="h-1" />
           <p className="font-sans text-sm md:text-base tracking-widest uppercase text-muted-foreground">
             L'hôtel des ventes d'Ajaccio
           </p>
