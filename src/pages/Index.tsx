@@ -273,7 +273,7 @@ const Index = () => {
           {/* Cadre noir au-dessus de tout */}
           <div className="absolute inset-0 pointer-events-none z-20" style={{ border: "15px solid black" }}></div>
           {/* Lien voir la vente */}
-          <div className="absolute z-10" style={{ bottom: "60px", left: "calc(50% - 80px)" }}>
+          <div className="absolute z-30" style={{ bottom: "60px", left: "calc(50% - 200px)" }}>
             <p className="font-serif uppercase tracking-wider text-black" style={{ fontSize: "14px" }}>
               voir la vente
             </p>
