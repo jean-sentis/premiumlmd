@@ -79,7 +79,7 @@ const DemoRdvOverlay = ({
             animate={{ opacity: 1, scale: 1 }}
             className="fixed inset-0 z-[200] flex items-center justify-center p-4"
           >
-            <div className="bg-black text-white p-8 shadow-2xl border-2 border-brand-gold max-w-md w-full">
+            <div className="bg-black text-white p-6 shadow-2xl border-2 border-brand-gold max-w-[348px] w-full">
               <div className="flex flex-col items-center text-center gap-6">
                 <Calendar className="w-10 h-10 text-brand-gold" />
                 <button
