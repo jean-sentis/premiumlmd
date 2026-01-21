@@ -4,7 +4,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { toast } from 'sonner';
-import { Upload, Loader2, AlertCircle, ArrowLeft, FileSpreadsheet, X, Play, Image as ImageIcon } from 'lucide-react';
+import { Upload, Loader2, AlertCircle, ArrowLeft, FileSpreadsheet, X, Play, Image as ImageIcon, RefreshCw } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import * as ExcelJS from 'exceljs';
 
@@ -303,6 +303,112 @@ export default function AdminLots() {
     toast.success('Import terminé');
   };
 
+  // Compresser les images d'une vente existante
+  const [isCompressing, setIsCompressing] = useState(false);
+  
+  const handleCompressExistingImages = async () => {
+    const saleId = prompt("ID de la vente à compresser (ex: 367ce7dd-fe30-4ce9-a8e5-2fb2f871481e):");
+    if (!saleId) return;
+    
+    setIsCompressing(true);
+    toast.info("Compression en cours...");
+    
+    try {
+      // Récupérer tous les lots avec images
+      const { data: lots, error } = await supabase
+        .from('interencheres_lots')
+        .select('id, lot_number, images')
+        .eq('sale_id', saleId);
+      
+      if (error) throw error;
+      
+      const lotsWithImages = (lots || []).filter(l => {
+        const imgs = l.images as string[] | null;
+        return imgs && imgs.length > 0;
+      });
+      
+      let processed = 0;
+      let totalSaved = 0;
+      
+      for (const lot of lotsWithImages) {
+        const images = lot.images as string[];
+        const newImages: string[] = [];
+        
+        for (const imageUrl of images) {
+          try {
+            // Skip already compressed
+            if (imageUrl.includes('-cmp.jpg')) {
+              newImages.push(imageUrl);
+              continue;
+            }
+            
+            // Télécharger l'image
+            const response = await fetch(imageUrl);
+            if (!response.ok) {
+              newImages.push(imageUrl);
+              continue;
+            }
+            
+            const blob = await response.blob();
+            const originalSize = blob.size;
+            
+            // Compresser côté client
+            const file = new File([blob], 'temp.jpg', { type: blob.type });
+            const compressedFile = await compressImage(file, 1200, 0.75);
+            const compressedSize = compressedFile.size;
+            
+            // Upload la version compressée
+            const urlParts = imageUrl.split('/');
+            const originalName = urlParts[urlParts.length - 1];
+            const baseName = originalName.replace(/\.[^.]+$/, '');
+            const newName = `${baseName}-cmp.jpg`;
+            
+            const { error: uploadError } = await supabase.storage
+              .from('sale-images')
+              .upload(newName, compressedFile, { upsert: true });
+            
+            if (uploadError) {
+              console.error('Upload error:', uploadError);
+              newImages.push(imageUrl);
+              continue;
+            }
+            
+            // Récupérer l'URL publique
+            const { data: { publicUrl } } = supabase.storage
+              .from('sale-images')
+              .getPublicUrl(newName);
+            
+            newImages.push(publicUrl);
+            totalSaved += originalSize - compressedSize;
+            processed++;
+            
+            console.log(`[compress] Lot ${lot.lot_number}: ${Math.round(originalSize/1024)}KB → ${Math.round(compressedSize/1024)}KB`);
+            
+          } catch (imgError) {
+            console.error('Image error:', imgError);
+            newImages.push(imageUrl);
+          }
+        }
+        
+        // Mettre à jour le lot avec les nouvelles URLs
+        if (newImages.some(img => img.includes('-cmp.jpg'))) {
+          await supabase
+            .from('interencheres_lots')
+            .update({ images: newImages })
+            .eq('id', lot.id);
+        }
+      }
+      
+      toast.success(`${processed} images compressées, ${Math.round(totalSaved/1024)}KB économisés`);
+      
+    } catch (err) {
+      console.error('Compression error:', err);
+      toast.error('Erreur lors de la compression');
+    } finally {
+      setIsCompressing(false);
+    }
+  };
+
   const getFileIcon = (file: File) => {
     if (file.type.startsWith('image/')) {
       return <ImageIcon className="h-5 w-5 text-blue-500 flex-shrink-0" />;
@@ -375,6 +481,16 @@ export default function AdminLots() {
                 Tout effacer
               </Button>
             )}
+            <Button 
+              variant="secondary" 
+              size="sm" 
+              onClick={handleCompressExistingImages}
+              disabled={isCompressing}
+              className="gap-2"
+            >
+              {isCompressing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+              Compresser vente
+            </Button>
           </div>
         </div>
 
