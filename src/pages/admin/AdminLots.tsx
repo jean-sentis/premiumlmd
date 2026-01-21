@@ -45,8 +45,9 @@ export default function AdminLots() {
       const { data, error } = await supabase
         .from('interencheres_sales')
         .select('id, title, sale_date')
-        .order('sale_date', { ascending: false })
-        .limit(50);
+        // On trie par date de création pour voir immédiatement les ventes nouvellement importées
+        .order('created_at', { ascending: false })
+        .limit(200);
 
       if (error) {
         console.error('Error fetching sales:', error);
