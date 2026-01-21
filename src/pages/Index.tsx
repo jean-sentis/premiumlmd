@@ -269,7 +269,15 @@ const Index = () => {
         {/* Hero Section - 1440×600px */}
         <section className="w-full bg-black">
           <div className="mx-auto flex justify-end items-end" style={{ maxWidth: "1440px", height: "600px" }}>
-            {/* Céramique à gauche avec 5px d'espacement */}
+            {/* Vidéo Vimeo à gauche */}
+            <iframe
+              src="https://player.vimeo.com/video/1078927258?autoplay=1&loop=1&muted=1&background=1"
+              className="h-full border-0"
+              style={{ width: "auto", aspectRatio: "9/16", marginRight: "5px" }}
+              allow="autoplay; fullscreen"
+              title="Vidéo enchères"
+            />
+            {/* Céramique avec 5px d'espacement */}
             <img 
               src={heroCeramique}
               alt="Céramique"
@@ -280,15 +288,6 @@ const Index = () => {
               src={heroSculpture}
               alt="Sculpture"
               className="h-full w-auto object-contain"
-              style={{ marginRight: "5px" }}
-            />
-            {/* Vidéo Vimeo à droite */}
-            <iframe
-              src="https://player.vimeo.com/video/1078927258?autoplay=1&loop=1&muted=1&background=1"
-              className="h-full border-0"
-              style={{ width: "auto", aspectRatio: "9/16" }}
-              allow="autoplay; fullscreen"
-              title="Vidéo enchères"
             />
           </div>
         </section>
