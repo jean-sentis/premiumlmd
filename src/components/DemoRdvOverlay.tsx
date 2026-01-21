@@ -14,27 +14,36 @@ const DemoRdvOverlay = ({
 }: DemoRdvOverlayProps) => {
   const location = useLocation();
   const [isVisible, setIsVisible] = useState(false);
+  const [hasNavigated, setHasNavigated] = useState(false);
+  const [initialPath] = useState(location.pathname);
 
   // Bypass si ?demo=true dans l'URL
   const isDemoMode = new URLSearchParams(location.search).get("demo") === "true";
 
+  // Détecter un changement de page (navigation)
   useEffect(() => {
     if (isDemoMode) return;
+    
+    // Si on change de page par rapport à la page initiale, déclencher l'overlay
+    if (location.pathname !== initialPath && !hasNavigated) {
+      setHasNavigated(true);
+      setIsVisible(true);
+    }
+  }, [location.pathname, initialPath, isDemoMode, hasNavigated]);
+
+  // Déclencher après 2500px de scroll
+  useEffect(() => {
+    if (isDemoMode || isVisible) return;
 
     const handleScroll = () => {
-      const isHomePage = location.pathname === "/";
-      // Homepage : déclencher après 4800px (ajuster selon votre hero)
-      // Autres pages : déclencher après 200px
-      const triggerPoint = isHomePage ? 4800 : 200;
-      
-      if (window.scrollY > triggerPoint) {
+      if (window.scrollY > 2500) {
         setIsVisible(true);
       }
     };
 
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
-  }, [location.pathname, isDemoMode]);
+  }, [isDemoMode, isVisible]);
 
   if (isDemoMode) return null;
 
