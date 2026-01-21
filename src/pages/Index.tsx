@@ -292,30 +292,29 @@ const Index = () => {
                 />
               </div>
             </div>
-            {/* Groupe droite : céramiques empilées + sculpture */}
-            <div className="flex items-end h-full" style={{ marginRight: "0" }}>
-              {/* Colonne céramiques empilées */}
-              <div className="flex flex-col items-end h-full" style={{ marginRight: "5px" }}>
+            {/* Groupe droite : céramiques + sculpture */}
+            <div className="relative h-full flex items-end">
+              {/* Céramique horizontale en bas à gauche */}
+              <img 
+                src={heroCeramique}
+                alt="Céramique"
+                className="object-contain"
+                style={{ height: "216px", width: "auto", marginRight: "5px" }}
+              />
+              {/* Groupe céramique claire + sculpture décalé de 25px à droite */}
+              <div className="flex items-start h-full" style={{ marginRight: "-25px" }}>
                 <img 
                   src={heroCeramiqueClaire}
                   alt="Céramique fond clair"
                   className="object-contain"
-                  style={{ height: "360px", width: "auto" }}
+                  style={{ height: "360px", width: "auto", marginRight: "5px" }}
                 />
-                <div className="flex-1" />
                 <img 
-                  src={heroCeramique}
-                  alt="Céramique"
-                  className="object-contain"
-                  style={{ height: "216px", width: "auto" }}
+                  src={heroSculpture}
+                  alt="Sculpture"
+                  className="h-full w-auto object-contain"
                 />
               </div>
-              <img 
-                src={heroSculpture}
-                alt="Sculpture"
-                className="h-full w-auto object-contain"
-                style={{ marginRight: "-20px" }}
-              />
             </div>
           </div>
         </section>
