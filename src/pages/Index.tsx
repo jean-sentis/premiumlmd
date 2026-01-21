@@ -16,6 +16,7 @@ import hotelDesVentesEquipe from "@/assets/hotel-des-ventes-equipe.png";
 import recordJaguarXK120 from "@/assets/record-jaguar-xk120.png";
 import recordTinguelySculpture from "@/assets/record-tinguely-sculpture.png";
 import recordCesarCompression from "@/assets/record-cesar-compression.png";
+import heroSculpture from "@/assets/hero-sculpture.jpg";
 import {
   Dialog,
   DialogContent,
@@ -264,72 +265,14 @@ const Index = () => {
           </p>
         </section>
 
-        {/* Hero Gallery Museum Grid - 1440×600px */}
-        <section className="w-full bg-[#1a1a1a]">
-          <div className="mx-auto" style={{ maxWidth: "1440px", height: "600px" }}>
-            <div className="relative w-full h-full p-6">
-              {/* Grille asymétrique style accrochage musée */}
-              <div className="absolute inset-6 grid grid-cols-12 grid-rows-6 gap-4">
-                
-                {/* Grande image principale - gauche */}
-                <div className="col-span-5 row-span-6 relative group cursor-pointer overflow-hidden">
-                  <img 
-                    src="/images/sales/2024-06-22-prestige-sculpture.jpg"
-                    alt="Sculpture de prestige"
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                </div>
-
-                {/* Colonne centrale - 2 images empilées */}
-                <div className="col-span-4 row-span-3 relative group cursor-pointer overflow-hidden">
-                  <img 
-                    src="/images/sales/2025-11-08-art-moderne.jpg"
-                    alt="Art Moderne"
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                </div>
-                
-                <div className="col-span-4 row-span-3 relative group cursor-pointer overflow-hidden">
-                  <img 
-                    src="/images/sales/2025-10-18-bijoux-montres.jpg"
-                    alt="Bijoux et Montres"
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                </div>
-
-                {/* Colonne droite - 3 petites images */}
-                <div className="col-span-3 row-span-2 relative group cursor-pointer overflow-hidden">
-                  <img 
-                    src="/images/sales/2025-07-10-vins.jpg"
-                    alt="Vins"
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                </div>
-                
-                <div className="col-span-3 row-span-2 relative group cursor-pointer overflow-hidden">
-                  <img 
-                    src="/images/sales/2025-11-22-automobiles.jpg"
-                    alt="Automobiles"
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                </div>
-                
-                <div className="col-span-3 row-span-2 relative group cursor-pointer overflow-hidden">
-                  <img 
-                    src="/images/sales/2024-09-21-prestige-commode.jpg"
-                    alt="Mobilier"
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                </div>
-
-              </div>
-            </div>
+        {/* Hero Section - 1440×600px */}
+        <section className="w-full bg-black">
+          <div className="mx-auto flex justify-end" style={{ maxWidth: "1440px", height: "600px" }}>
+            <img 
+              src={heroSculpture}
+              alt="Sculpture"
+              className="h-full w-auto object-contain"
+            />
           </div>
         </section>
 
