@@ -55,6 +55,7 @@ const decodeHtmlEntities = (text: string): string => {
 interface Sale {
   id: string;
   title: string;
+  updated_at?: string;
   sale_date: string | null;
   sale_type: string | null;
   location: string | null;
@@ -99,6 +100,11 @@ const VenteDetail = () => {
   const [imageError, setImageError] = useState(false);
   const [upcomingExpertises, setUpcomingExpertises] = useState<UpcomingExpertise[]>([]);
 
+  // If the cover URL changes (or we refetch the sale), allow the image to try again.
+  useEffect(() => {
+    setImageError(false);
+  }, [sale?.cover_image_url]);
+
   useEffect(() => {
     const fetchSale = async () => {
       if (!slug) {
@@ -119,6 +125,7 @@ const VenteDetail = () => {
           setNotFound(true);
         } else if (data) {
           setSale(data);
+          console.log('[VenteDetail] cover_image_url:', data.cover_image_url);
 
           const { data: expos } = await supabase
             .from('interencheres_expositions')
@@ -215,8 +222,9 @@ const VenteDetail = () => {
   // Get cover image - use stored image or fallback (with cache buster)
   const getCoverImage = () => {
     if (imageError || !sale.cover_image_url) return fallbackImage;
-    // Add cache buster based on updated_at or current timestamp
-    const cacheBuster = `?v=${Date.now()}`;
+    // Cache buster based on the sale's updated_at when available
+    const v = sale.updated_at ? new Date(sale.updated_at).getTime() : Date.now();
+    const cacheBuster = `?v=${v}`;
     return `${sale.cover_image_url}${cacheBuster}`;
   };
 
@@ -299,7 +307,10 @@ const VenteDetail = () => {
                         src={getCoverImage()} 
                         alt={decodedTitle}
                         className="w-full h-full object-cover"
-                        onError={() => setImageError(true)}
+                        onError={() => {
+                          console.error('[VenteDetail] Cover image failed to load:', getCoverImage());
+                          setImageError(true);
+                        }}
                       />
                     </div>
                   </div>
