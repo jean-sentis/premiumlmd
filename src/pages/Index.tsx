@@ -273,11 +273,20 @@ const Index = () => {
           {/* Cadre noir au-dessus de tout */}
           <div className="absolute inset-0 pointer-events-none z-20" style={{ border: "15px solid black" }}></div>
           {/* Lien voir la vente */}
-          <div className="absolute z-30" style={{ bottom: "60px", left: "calc(50% - 200px)" }}>
-            <p className="font-serif uppercase tracking-wider text-black" style={{ fontSize: "14px" }}>
-              voir la vente
-            </p>
-          </div>
+          <Link 
+            to="/vente/367ce7dd-fe30-4ce9-a8e5-2fb2f871481e" 
+            className="absolute z-30 block" 
+            style={{ bottom: "60px", left: "calc(50% - 200px)" }}
+          >
+            <div className="border border-black px-4 py-3 bg-white/80 hover:bg-white transition-colors cursor-pointer">
+              <p className="font-serif uppercase tracking-wider text-black text-center" style={{ fontSize: "14px" }}>
+                voir
+              </p>
+              <p className="font-serif uppercase tracking-wider text-black text-center" style={{ fontSize: "14px" }}>
+                la vente
+              </p>
+            </div>
+          </Link>
           <div className="absolute inset-0 flex items-start justify-start z-10" style={{ marginTop: "140px", marginLeft: "500px" }}>
             <div className="text-left">
               <p className="font-serif text-2xl md:text-3xl lg:text-4xl font-light tracking-wide text-black">
