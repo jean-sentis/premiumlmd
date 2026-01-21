@@ -275,18 +275,30 @@ const VentesAVenir = () => {
   }, [sales, selectedSpecialty]);
 
   // Catégoriser les ventes filtrées
+  // Règle : moins de 4 lots ET date à plus de 2 semaines = vente en préparation
   const categorizeSales = () => {
     const liveSales: Sale[] = [];
     const roomOnlySales: Sale[] = [];
     const chronoSales: Sale[] = [];
     const preparationSales: Sale[] = [];
+    const now = getDemoNow();
+    const twoWeeksFromNow = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
 
     filteredSales.forEach(sale => {
       const saleType = (sale.sale_type || "").toLowerCase();
       const status = (sale.status || "").toLowerCase();
+      const lotCount = sale.lot_count ?? 0;
+      const saleDate = sale.sale_date ? parseISO(sale.sale_date) : null;
       
-      // Vente en préparation
-      if (status.includes("préparation") || status.includes("preparation")) {
+      // Vérifier si c'est une vente en préparation :
+      // - statut explicite "préparation" OU
+      // - moins de 4 lots ET date à plus de 2 semaines
+      const isInPreparation = 
+        status.includes("préparation") || 
+        status.includes("preparation") ||
+        (lotCount < 4 && saleDate && saleDate > twoWeeksFromNow);
+      
+      if (isInPreparation) {
         preparationSales.push(sale);
       }
       // Vente chrono (online only)
