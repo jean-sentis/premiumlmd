@@ -21,7 +21,7 @@ interface Lot {
   images: string[];
 }
 
-const ALLOWED_EMAILS = ['admin@example.com']; // À personnaliser
+const ALLOWED_EMAILS = ['js@caspevi.com', 'admin@example.com'];
 
 export default function AdminLots() {
   const { user, loading: authLoading } = useAuth();
