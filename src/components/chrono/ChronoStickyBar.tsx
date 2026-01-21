@@ -59,7 +59,7 @@ const ChronoStickyBar = ({
         isVisible ? "opacity-100" : "opacity-0 pointer-events-none"
       }`}
       style={{
-        top: 'calc(var(--header-sticky-top, var(--header-main-height, 145px)) - 15px)',
+        top: 'calc(var(--header-sticky-top, var(--header-main-height, 145px)) - 18px)',
         backgroundColor: 'hsl(var(--background))',
       }}
     >
