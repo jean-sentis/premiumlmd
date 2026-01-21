@@ -17,6 +17,7 @@ import recordJaguarXK120 from "@/assets/record-jaguar-xk120.png";
 import recordTinguelySculpture from "@/assets/record-tinguely-sculpture.png";
 import recordCesarCompression from "@/assets/record-cesar-compression.png";
 import heroSculpture from "@/assets/hero-sculpture.jpg";
+import heroCeramique from "@/assets/hero-ceramique.png";
 import {
   Dialog,
   DialogContent,
@@ -267,11 +268,18 @@ const Index = () => {
 
         {/* Hero Section - 1440×600px */}
         <section className="w-full bg-black">
-          <div className="mx-auto flex justify-end" style={{ maxWidth: "1440px", height: "600px" }}>
+          <div className="mx-auto flex justify-end relative" style={{ maxWidth: "1440px", height: "600px" }}>
             <img 
               src={heroSculpture}
               alt="Sculpture"
               className="h-full w-auto object-contain"
+            />
+            {/* Céramique en bas à gauche avec 5px d'espacement */}
+            <img 
+              src={heroCeramique}
+              alt="Céramique"
+              className="absolute object-contain"
+              style={{ left: "5px", bottom: "5px", height: "180px", width: "auto" }}
             />
           </div>
         </section>
