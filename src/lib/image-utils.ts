@@ -35,6 +35,16 @@ async function checkRenderAvailable(baseUrl: string): Promise<boolean> {
  */
 export function getOptimizedImageUrl(url: string, width = 800, quality = 80): string {
   if (!url) return url;
+
+  // Chemins locaux (public/) : forcer une URL absolue.
+  // Dans certains contextes (iframes / base href), les chemins absolus "/..." peuvent être résolus de façon inattendue.
+  if (url.startsWith("/")) {
+    try {
+      return new URL(url, window.location.origin).toString();
+    } catch {
+      return url;
+    }
+  }
   
   // Images Supabase Storage : retourner l'URL originale
   // (La transformation nécessite le plan Pro)
