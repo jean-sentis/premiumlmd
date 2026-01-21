@@ -201,17 +201,71 @@ const Index = () => {
           </p>
         </section>
 
-        {/* Video Section */}
-        <section className="w-full -mt-[15px] -mb-[40px]">
-          <div className="relative w-full" style={{ paddingTop: '56.25%' }}>
-            <iframe
-              src="https://player.vimeo.com/video/1065516509?autoplay=1&loop=1&muted=1&background=1"
-              className="absolute inset-0 w-full h-full"
-              frameBorder="0"
-              allow="autoplay; fullscreen; picture-in-picture"
-              allowFullScreen
-              title="Vidéo de présentation"
-            />
+        {/* Hero Gallery - Disposition musée asymétrique */}
+        <section className="w-full py-8 md:py-12 bg-muted/30">
+          <div className="container">
+            <div className="grid grid-cols-12 gap-3 md:gap-4 auto-rows-[120px] md:auto-rows-[160px]">
+              {/* Grande image principale - gauche */}
+              <div className="col-span-7 row-span-3 relative overflow-hidden group">
+                <img 
+                  src="/images/sales/2025-11-08-art-moderne.jpg" 
+                  alt="Art Moderne" 
+                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                <div className="absolute bottom-4 left-4 right-4">
+                  <p className="font-serif text-white text-lg md:text-2xl">Art Moderne</p>
+                  <p className="text-white/70 text-xs">École de Paris, Expressionnisme</p>
+                </div>
+              </div>
+              
+              {/* Image moyenne - haut droite */}
+              <div className="col-span-5 row-span-2 relative overflow-hidden group">
+                <img 
+                  src="/images/sales/2025-10-18-bijoux-montres.jpg" 
+                  alt="Bijoux & Montres" 
+                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                <div className="absolute bottom-3 left-3 right-3">
+                  <p className="font-serif text-white text-base md:text-lg">Bijoux & Montres</p>
+                  <p className="text-white/70 text-xs hidden md:block">Joaillerie, Horlogerie de luxe</p>
+                </div>
+              </div>
+              
+              {/* Petite image - bas droite 1 */}
+              <div className="col-span-3 row-span-1 relative overflow-hidden group">
+                <img 
+                  src="/images/sales/2024-08-22-chartreuse.jpg" 
+                  alt="Vins & Spiritueux" 
+                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+                <p className="absolute bottom-2 left-2 font-serif text-white text-sm">Vins</p>
+              </div>
+              
+              {/* Petite image - bas droite 2 */}
+              <div className="col-span-2 row-span-1 relative overflow-hidden group">
+                <img 
+                  src="/images/sales/2025-11-22-automobiles.jpg" 
+                  alt="Automobiles" 
+                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+                <p className="absolute bottom-2 left-2 font-serif text-white text-xs">Auto</p>
+              </div>
+            </div>
+            
+            {/* Lien vers toutes les spécialités */}
+            <div className="text-center mt-6">
+              <Link 
+                to="/specialites" 
+                className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <span className="font-sans tracking-wide">Découvrir nos spécialités</span>
+                <ChevronRight className="h-4 w-4" />
+              </Link>
+            </div>
           </div>
         </section>
 
