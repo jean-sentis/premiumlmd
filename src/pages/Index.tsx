@@ -269,7 +269,7 @@ const Index = () => {
         </section>
 
         {/* Hero Section - 1440×600px */}
-        <section className="w-full bg-white overflow-hidden relative" style={{ border: "5px solid black" }}>
+        <section className="w-full bg-white overflow-hidden relative" style={{ boxShadow: "inset 0 0 0 30px black" }}>
           <div className="absolute inset-0 flex items-start justify-start z-10" style={{ marginTop: "140px", marginLeft: "500px" }}>
             <div className="text-left">
               <p className="font-serif text-2xl md:text-3xl lg:text-4xl font-light tracking-wide text-black">
