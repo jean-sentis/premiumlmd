@@ -416,8 +416,39 @@ const VenteDetail = () => {
                   </div>
                 </div>
 
-                {/* Right side: Info + Accordion */}
-                <div className="flex-1 flex flex-col pt-2.5">
+                {/* Right side: Title, dates, Info + Accordion */}
+                <div className="flex-1 flex flex-col">
+                  {/* Sale title and dates */}
+                  <div className="mb-6">
+                    <h1 className="font-serif text-xl md:text-2xl font-semibold tracking-wide uppercase mb-2">
+                      {decodedTitle}{sale.lot_count ? ` — ${sale.lot_count} lots` : ''}
+                    </h1>
+                    <div className="space-y-1">
+                      {isChronoInPreparation ? (
+                        <>
+                          <p className="text-base">
+                            <span className="text-muted-foreground">Début des enchères le </span>
+                            <span className="text-brand-gold font-medium capitalize">{formattedDate}</span>
+                          </p>
+                          <p className="text-base">
+                            <span className="text-muted-foreground">Clôture le </span>
+                            <span className="text-brand-gold font-medium capitalize">{formattedDate}</span>
+                            {formattedTime && <span className="text-brand-gold font-semibold"> à {formattedTime}</span>}
+                          </p>
+                        </>
+                      ) : (
+                        <p className="text-base">
+                          <span className="text-muted-foreground">Clôture le </span>
+                          <span className="text-brand-gold font-medium capitalize">{formattedDate}</span>
+                          {formattedTime && <span className="text-brand-gold font-semibold"> à {formattedTime}</span>}
+                        </p>
+                      )}
+                      {sale.location && (
+                        <p className="text-sm text-muted-foreground">{sale.location}</p>
+                      )}
+                    </div>
+                  </div>
+                  
                   <div className="flex flex-col sm:flex-row gap-3 mb-6">
                     <ChronoBidButton lotUrl={sale.sale_url} className="sm:flex-1" />
                   </div>
