@@ -273,8 +273,8 @@ const Index = () => {
             <img 
               src={heroCeramique}
               alt="Céramique"
-              className="object-contain mb-[5px]"
-              style={{ height: "180px", width: "auto", marginRight: "5px" }}
+              className="object-contain self-end"
+              style={{ height: "240px", width: "auto", marginRight: "5px", marginBottom: "60px" }}
             />
             <img 
               src={heroSculpture}
