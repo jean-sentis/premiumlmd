@@ -131,10 +131,26 @@ Explique-moi de quoi il s'agit et, si un créateur est mentionné, parle-moi de 
     if (analyze_images && lot.images && lot.images.length > 0) {
       console.log(`Analyzing ${lot.images.length} images...`);
       
-      const imagePrompt = `Décris cet objet d'art/antiquité visible sur la photo.
-Que vois-tu exactement ? Quel style ou époque te semble correspondre ? Quels matériaux sont visibles ?
-Y a-t-il des détails intéressants (signatures, marques, décorations) ?
-Sois informatif comme un guide de musée. 2-3 phrases.`;
+      // Construire l'URL complète de l'image
+      let imageUrl = lot.images[0];
+      
+      // Si c'est un chemin relatif, construire l'URL publique complète
+      if (imageUrl.startsWith('/')) {
+        // Utiliser l'URL du site public (preview ou production)
+        const publicBaseUrl = 'https://id-preview--094b38f1-ba25-434a-9583-d79f9dc77a22.lovable.app';
+        imageUrl = `${publicBaseUrl}${imageUrl}`;
+      }
+      
+      console.log(`Image URL for vision: ${imageUrl}`);
+      
+      const imagePrompt = `Décris précisément cet objet d'art ou antiquité visible sur la photo.
+      
+1. Que vois-tu EXACTEMENT sur cette image ? Décris l'objet tel que tu le vois.
+2. Quel style, époque ou mouvement artistique semble correspondre ?
+3. Quels matériaux et techniques sont visibles ?
+4. Y a-t-il des détails intéressants (signatures, marques, motifs décoratifs) ?
+
+Sois précis et factuel, comme un commissaire-priseur décrivant un lot. 3-4 phrases.`;
 
       const visionResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
         method: 'POST',
@@ -143,13 +159,13 @@ Sois informatif comme un guide de musée. 2-3 phrases.`;
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'google/gemini-2.5-flash',
+          model: 'google/gemini-2.5-pro',
           messages: [
             {
               role: 'user',
               content: [
                 { type: 'text', text: imagePrompt },
-                { type: 'image_url', image_url: { url: lot.images[0] } }
+                { type: 'image_url', image_url: { url: imageUrl } }
               ]
             }
           ]
@@ -160,6 +176,9 @@ Sois informatif comme un guide de musée. 2-3 phrases.`;
         const visionData = await visionResponse.json();
         imageAnalysis = visionData.choices?.[0]?.message?.content;
         console.log('Image analysis:', imageAnalysis);
+      } else {
+        const errorText = await visionResponse.text();
+        console.error('Vision API error:', visionResponse.status, errorText);
       }
     }
 
