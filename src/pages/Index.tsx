@@ -279,12 +279,17 @@ const Index = () => {
                 allow="autoplay; fullscreen"
                 title="Vidéo enchères"
               />
-              <img 
-                src={heroCeramiqueVerticale}
-                alt="Céramique verticale"
-                className="h-full w-auto object-contain"
+              <div 
+                className="h-full overflow-hidden"
                 style={{ marginLeft: "5px" }}
-              />
+              >
+                <img 
+                  src={heroCeramiqueVerticale}
+                  alt="Céramique verticale"
+                  className="h-full w-auto object-cover object-right"
+                  style={{ marginLeft: "-42px" }}
+                />
+              </div>
             </div>
             {/* Groupe droite : céramique + sculpture */}
             <div className="flex items-end h-full">
