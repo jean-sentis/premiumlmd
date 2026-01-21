@@ -1,6 +1,8 @@
 import { ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
+import { format } from "date-fns";
+import { fr } from "date-fns/locale";
 import ChronoCountdown from "./ChronoCountdown";
 
 interface ChronoStickyBarProps {
@@ -12,6 +14,10 @@ interface ChronoStickyBarProps {
   formattedTime?: string;
   /** Force the bar to be visible immediately (e.g. on lot pages). */
   alwaysVisible?: boolean;
+  /** Is the sale still in preparation (less than 4 lots AND more than 2 weeks away)? */
+  isInPreparation?: boolean;
+  /** Optional start date for sales in preparation */
+  startDate?: Date;
 }
 
 const ChronoStickyBar = ({
@@ -22,6 +28,8 @@ const ChronoStickyBar = ({
   formattedDate,
   formattedTime,
   alwaysVisible = false,
+  isInPreparation = false,
+  startDate,
 }: ChronoStickyBarProps) => {
   const [isVisible, setIsVisible] = useState(alwaysVisible);
 
@@ -40,6 +48,11 @@ const ChronoStickyBar = ({
 
   if (!isVisible) return null;
 
+  // Format start date if provided
+  const formattedStartDate = startDate 
+    ? format(startDate, "d MMMM", { locale: fr })
+    : null;
+
   return (
     <div 
       className={`fixed left-0 right-0 z-[105] border-b border-brand-gold/20 shadow-md transition-opacity duration-200 ${
@@ -57,7 +70,9 @@ const ChronoStickyBar = ({
             {/* Left: Vente chrono + mode d'emploi */}
             <div className="flex items-center gap-4 flex-shrink-0">
               <div className="text-xs">
-                <div className="font-medium text-foreground">Vente chrono</div>
+                <div className="font-medium text-foreground">
+                  {isInPreparation ? "Vente chrono en préparation" : "Vente chrono"}
+                </div>
                 <Link 
                   to={`/vente/${saleId}#guide`}
                   className="text-muted-foreground hover:text-brand-gold transition-colors"
@@ -66,11 +81,26 @@ const ChronoStickyBar = ({
                 </Link>
               </div>
               <div className="text-xs text-right">
-                <div className="text-muted-foreground">
-                  Fin le <span className="text-brand-gold font-medium">{formattedDate}</span>
-                </div>
-                {formattedTime && (
-                  <div className="text-brand-gold font-medium">à {formattedTime}</div>
+                {isInPreparation ? (
+                  <>
+                    {formattedStartDate && (
+                      <div className="text-muted-foreground">
+                        Début le <span className="text-brand-gold font-medium">{formattedStartDate}</span>
+                      </div>
+                    )}
+                    <div className="text-muted-foreground">
+                      Fin le <span className="text-brand-gold font-medium">{formattedDate}</span>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="text-muted-foreground">
+                      Fin le <span className="text-brand-gold font-medium">{formattedDate}</span>
+                    </div>
+                    {formattedTime && (
+                      <div className="text-brand-gold font-medium">à {formattedTime}</div>
+                    )}
+                  </>
                 )}
               </div>
             </div>
@@ -80,7 +110,7 @@ const ChronoStickyBar = ({
               {saleTitle}
             </h1>
 
-            {/* Right: Action button + Countdown */}
+            {/* Right: Action button + Countdown or dates */}
             <div className="flex items-center gap-4 md:gap-6 flex-shrink-0">
               <Link
                 to={`/vente/${saleId}`}
@@ -93,14 +123,25 @@ const ChronoStickyBar = ({
                 </span>
               </Link>
 
-              <div className="flex flex-col items-center text-center">
-                <span className="text-[10px] md:text-xs text-muted-foreground">
-                  Temps restant
-                </span>
-                <span className="text-sm font-medium text-brand-gold">
-                  <ChronoCountdown endDate={endDate} variant="inline" />
-                </span>
-              </div>
+              {isInPreparation ? (
+                <div className="flex flex-col items-center text-center">
+                  <span className="text-[10px] md:text-xs text-muted-foreground">
+                    Catalogue en cours
+                  </span>
+                  <span className="text-sm font-medium text-brand-gold">
+                    de constitution
+                  </span>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center text-center">
+                  <span className="text-[10px] md:text-xs text-muted-foreground">
+                    Temps restant
+                  </span>
+                  <span className="text-sm font-medium text-brand-gold">
+                    <ChronoCountdown endDate={endDate} variant="inline" />
+                  </span>
+                </div>
+              )}
             </div>
           </div>
         </div>

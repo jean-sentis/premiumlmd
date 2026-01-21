@@ -24,6 +24,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { supabase } from "@/integrations/supabase/client";
+import { getDemoNow } from "@/lib/site-config";
 
 // Helper to detect if a sale is a chrono/online sale
 const isChronoSale = (saleType: string | null): boolean => {
@@ -231,6 +232,11 @@ const VenteDetail = () => {
   // Check if this is a chrono sale
   const isChrono = isChronoSale(sale.sale_type);
 
+  // Check if the sale is "in preparation": less than 4 lots AND date is more than 2 weeks away
+  const now = getDemoNow();
+  const twoWeeksFromNow = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
+  const isChronoInPreparation = isChrono && lotsCount < 4 && saleDate && saleDate > twoWeeksFromNow;
+
   // No more pageStyle override needed - header-height is now the single source of truth
 
   return (
@@ -249,6 +255,7 @@ const VenteDetail = () => {
           saleId={sale.id}
           formattedDate={formattedDate}
           formattedTime={formattedTime}
+          isInPreparation={isChronoInPreparation}
         />
       )}
 
