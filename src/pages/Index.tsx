@@ -269,8 +269,8 @@ const Index = () => {
         </section>
 
         {/* Hero Section - 1440×600px */}
-        <section className="w-full bg-white overflow-hidden">
-          <div className="mx-auto flex justify-between items-end" style={{ maxWidth: "1440px", height: "600px", paddingRight: "0" }}>
+        <section className="w-full bg-white overflow-hidden" style={{ border: "5px solid black" }}>
+          <div className="mx-auto flex justify-between items-end" style={{ maxWidth: "1430px", height: "590px", paddingRight: "0" }}>
             {/* Groupe gauche : vidéo + céramique verticale */}
             <div className="flex items-end h-full">
               <iframe
