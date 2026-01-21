@@ -184,7 +184,13 @@ export default function AdminLots() {
       try {
         // Vérifier le type de fichier
         const isExcel = file.name.endsWith('.xlsx') || file.name.endsWith('.xls');
-        const isImage = file.type.startsWith('image/');
+        const lowerName = file.name.toLowerCase();
+        const isImage = file.type.startsWith('image/') || 
+          lowerName.endsWith('.jpg') || 
+          lowerName.endsWith('.jpeg') || 
+          lowerName.endsWith('.png') || 
+          lowerName.endsWith('.webp') ||
+          lowerName.endsWith('.gif');
 
         if (isImage) {
           // Upload vers le storage
