@@ -126,50 +126,22 @@ Explique-moi de quoi il s'agit et, si un créateur est mentionné, parle-moi de 
     const analysis: AnalysisResult = JSON.parse(toolCall.function.arguments);
     console.log('Analysis result:', analysis);
 
-    // Analyse des images si demandé
+    // Analyse des images si demandé - UNIQUEMENT depuis Supabase Storage
     let imageAnalysis = null;
-    let imageAccessible = false;
     
     if (analyze_images && lot.images && lot.images.length > 0) {
       console.log(`Analyzing ${lot.images.length} images...`);
       
       let imageUrl = lot.images[0];
       
-      // Vérifier si c'est une URL externe accessible (Interenchères, etc.)
-      const isExternalUrl = imageUrl.startsWith('http://') || imageUrl.startsWith('https://');
-      const isInterencheresUrl = imageUrl.includes('interencheres.com');
+      // Vérifier si c'est une URL Supabase Storage (seule source acceptée)
+      const isSupabaseStorageUrl = imageUrl.includes('supabase.co/storage') || imageUrl.includes(supabaseUrl);
       
-      // Si c'est un chemin local, les images ne sont pas accessibles depuis l'extérieur
-      if (!isExternalUrl) {
-        console.log(`Image is a local path, not accessible externally: ${imageUrl}`);
-        imageAnalysis = "⚠️ L'image est stockée localement et n'est pas accessible pour l'analyse visuelle. Seules les URLs externes (Interenchères, etc.) peuvent être analysées.";
-      } else if (isInterencheresUrl) {
-        // Tester si l'URL Interenchères est accessible
-        console.log(`Testing Interencheres image URL: ${imageUrl}`);
-        
-        try {
-          // Vérifier d'abord que l'URL est accessible
-          const testResponse = await fetch(imageUrl, { method: 'HEAD' });
-          
-          if (testResponse.ok && testResponse.headers.get('content-type')?.startsWith('image/')) {
-            imageAccessible = true;
-            console.log(`Image URL accessible: ${imageUrl}`);
-          } else {
-            console.log(`Image URL not accessible or not an image: ${testResponse.status}, ${testResponse.headers.get('content-type')}`);
-            imageAnalysis = "⚠️ L'image Interenchères n'est pas accessible (URL expirée ou protégée).";
-          }
-        } catch (fetchError) {
-          console.error('Error testing image URL:', fetchError);
-          imageAnalysis = "⚠️ Impossible de vérifier l'accessibilité de l'image.";
-        }
+      if (!isSupabaseStorageUrl) {
+        console.log(`Image is not from Supabase Storage: ${imageUrl}`);
+        imageAnalysis = "⚠️ L'image n'est pas stockée dans le cloud Supabase. Utilisez la fonction d'upload pour migrer les images vers le storage.";
       } else {
-        // Autre URL externe, on suppose qu'elle est accessible
-        imageAccessible = true;
-      }
-      
-      // Analyser l'image seulement si elle est accessible
-      if (imageAccessible) {
-        console.log(`Image URL for vision: ${imageUrl}`);
+        console.log(`Image URL from Supabase Storage: ${imageUrl}`);
         
         const imagePrompt = `Décris précisément cet objet d'art ou antiquité visible sur la photo.
       
