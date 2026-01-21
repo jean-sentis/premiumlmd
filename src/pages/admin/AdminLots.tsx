@@ -228,32 +228,53 @@ export default function AdminLots() {
     }
   }, [lots]);
 
-  // Drag handlers pour la zone de drop
-  const handleDragOver = useCallback((e: React.DragEvent, lotId: string) => {
+  // Drag handlers pour la zone de drop (upload de fichiers)
+  const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (!draggingImage) {
+    // Vérifier si c'est un fichier externe (pas un réordonnancement interne)
+    if (e.dataTransfer.types.includes('Files')) {
+      e.dataTransfer.dropEffect = 'copy';
+    }
+  }, []);
+
+  const handleDragEnter = useCallback((e: React.DragEvent, lotId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    // Seulement pour les fichiers externes
+    if (e.dataTransfer.types.includes('Files') && !draggingImage) {
       setDragOverLotId(lotId);
     }
   }, [draggingImage]);
 
-  const handleDragLeave = useCallback((e: React.DragEvent) => {
+  const handleDragLeave = useCallback((e: React.DragEvent, lotId: string) => {
     e.preventDefault();
-    setDragOverLotId(null);
-  }, []);
+    e.stopPropagation();
+    // Vérifier qu'on quitte vraiment la zone (pas un enfant)
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX;
+    const y = e.clientY;
+    if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) {
+      if (dragOverLotId === lotId) {
+        setDragOverLotId(null);
+      }
+    }
+  }, [dragOverLotId]);
 
   const handleDrop = useCallback((e: React.DragEvent, lotId: string) => {
     e.preventDefault();
     e.stopPropagation();
     setDragOverLotId(null);
 
+    // Ignorer si c'est un réordonnancement interne
     if (draggingImage) {
-      // C'est un réordonnancement interne
       return;
     }
 
+    // Récupérer les fichiers
     const files = e.dataTransfer.files;
-    if (files.length > 0) {
+    if (files && files.length > 0) {
+      console.log(`Dropping ${files.length} files on lot ${lotId}`);
       handleMultipleImageUpload(lotId, files);
     }
   }, [draggingImage, handleMultipleImageUpload]);
@@ -411,8 +432,9 @@ export default function AdminLots() {
                         {/* Zone de drop + images */}
                         <div 
                           className="flex-1"
-                          onDragOver={(e) => handleDragOver(e, lot.id)}
-                          onDragLeave={handleDragLeave}
+                          onDragOver={handleDragOver}
+                          onDragEnter={(e) => handleDragEnter(e, lot.id)}
+                          onDragLeave={(e) => handleDragLeave(e, lot.id)}
                           onDrop={(e) => handleDrop(e, lot.id)}
                         >
                           {/* Images existantes avec drag & drop */}
