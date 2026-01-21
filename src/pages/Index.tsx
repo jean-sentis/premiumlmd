@@ -291,7 +291,7 @@ const Index = () => {
                 </p>
               </div>
             </Link>
-            <div className="absolute inset-0 flex items-start justify-start z-10" style={{ marginTop: "130px", marginLeft: "465px" }}>
+            <div className="absolute inset-0 flex items-start justify-start z-10" style={{ marginTop: "110px", marginLeft: "460px" }}>
               <div className="text-left">
                 <p className="font-serif text-2xl md:text-3xl lg:text-4xl font-light tracking-wide text-black">
                   Vente de la collection
