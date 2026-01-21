@@ -18,8 +18,8 @@ import recordTinguelySculpture from "@/assets/record-tinguely-sculpture.png";
 import recordCesarCompression from "@/assets/record-cesar-compression.png";
 import heroSculpture from "@/assets/hero-sculpture.jpg";
 import heroCeramique from "@/assets/hero-ceramique.png";
-import heroCeramiqueVerticale from "@/assets/hero-ceramique-verticale.jpg";
-import heroCeramiqueClaire from "@/assets/hero-ceramique-claire.jpg";
+import heroCeramiqueVerticale from "@/assets/hero-ceramique-verticale-detoured.png";
+import heroCeramiqueClaire from "@/assets/hero-ceramique-claire-detoured.png";
 import {
   Dialog,
   DialogContent,
