@@ -21,7 +21,6 @@ interface Lot {
   images: string[];
 }
 
-const ALLOWED_EMAILS = ['js@caspevi.com', 'admin@example.com'];
 
 export default function AdminLots() {
   const { user, loading: authLoading } = useAuth();
@@ -37,8 +36,8 @@ export default function AdminLots() {
   const [dragOverLotId, setDragOverLotId] = useState<string | null>(null);
   const [draggingImage, setDraggingImage] = useState<{lotId: string, index: number} | null>(null);
 
-  // Vérification simple d'accès
-  const isAdmin = user?.email && (ALLOWED_EMAILS.includes(user.email) || user.email.endsWith('@lovable.dev'));
+  // Accès libre pour tout utilisateur connecté
+  const isAdmin = !!user;
 
   // Charger les ventes
   useEffect(() => {
