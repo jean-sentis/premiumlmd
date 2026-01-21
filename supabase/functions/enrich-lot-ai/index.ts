@@ -128,22 +128,50 @@ Explique-moi de quoi il s'agit et, si un créateur est mentionné, parle-moi de 
 
     // Analyse des images si demandé
     let imageAnalysis = null;
+    let imageAccessible = false;
+    
     if (analyze_images && lot.images && lot.images.length > 0) {
       console.log(`Analyzing ${lot.images.length} images...`);
       
-      // Construire l'URL complète de l'image
       let imageUrl = lot.images[0];
       
-      // Si c'est un chemin relatif, construire l'URL publique complète
-      if (imageUrl.startsWith('/')) {
-        // Utiliser l'URL du site public (preview ou production)
-        const publicBaseUrl = 'https://id-preview--094b38f1-ba25-434a-9583-d79f9dc77a22.lovable.app';
-        imageUrl = `${publicBaseUrl}${imageUrl}`;
+      // Vérifier si c'est une URL externe accessible (Interenchères, etc.)
+      const isExternalUrl = imageUrl.startsWith('http://') || imageUrl.startsWith('https://');
+      const isInterencheresUrl = imageUrl.includes('interencheres.com');
+      
+      // Si c'est un chemin local, les images ne sont pas accessibles depuis l'extérieur
+      if (!isExternalUrl) {
+        console.log(`Image is a local path, not accessible externally: ${imageUrl}`);
+        imageAnalysis = "⚠️ L'image est stockée localement et n'est pas accessible pour l'analyse visuelle. Seules les URLs externes (Interenchères, etc.) peuvent être analysées.";
+      } else if (isInterencheresUrl) {
+        // Tester si l'URL Interenchères est accessible
+        console.log(`Testing Interencheres image URL: ${imageUrl}`);
+        
+        try {
+          // Vérifier d'abord que l'URL est accessible
+          const testResponse = await fetch(imageUrl, { method: 'HEAD' });
+          
+          if (testResponse.ok && testResponse.headers.get('content-type')?.startsWith('image/')) {
+            imageAccessible = true;
+            console.log(`Image URL accessible: ${imageUrl}`);
+          } else {
+            console.log(`Image URL not accessible or not an image: ${testResponse.status}, ${testResponse.headers.get('content-type')}`);
+            imageAnalysis = "⚠️ L'image Interenchères n'est pas accessible (URL expirée ou protégée).";
+          }
+        } catch (fetchError) {
+          console.error('Error testing image URL:', fetchError);
+          imageAnalysis = "⚠️ Impossible de vérifier l'accessibilité de l'image.";
+        }
+      } else {
+        // Autre URL externe, on suppose qu'elle est accessible
+        imageAccessible = true;
       }
       
-      console.log(`Image URL for vision: ${imageUrl}`);
-      
-      const imagePrompt = `Décris précisément cet objet d'art ou antiquité visible sur la photo.
+      // Analyser l'image seulement si elle est accessible
+      if (imageAccessible) {
+        console.log(`Image URL for vision: ${imageUrl}`);
+        
+        const imagePrompt = `Décris précisément cet objet d'art ou antiquité visible sur la photo.
       
 1. Que vois-tu EXACTEMENT sur cette image ? Décris l'objet tel que tu le vois.
 2. Quel style, époque ou mouvement artistique semble correspondre ?
@@ -152,33 +180,35 @@ Explique-moi de quoi il s'agit et, si un créateur est mentionné, parle-moi de 
 
 Sois précis et factuel, comme un commissaire-priseur décrivant un lot. 3-4 phrases.`;
 
-      const visionResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'google/gemini-2.5-pro',
-          messages: [
-            {
-              role: 'user',
-              content: [
-                { type: 'text', text: imagePrompt },
-                { type: 'image_url', image_url: { url: imageUrl } }
-              ]
-            }
-          ]
-        }),
-      });
+        const visionResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: 'google/gemini-2.5-pro',
+            messages: [
+              {
+                role: 'user',
+                content: [
+                  { type: 'text', text: imagePrompt },
+                  { type: 'image_url', image_url: { url: imageUrl } }
+                ]
+              }
+            ]
+          }),
+        });
 
-      if (visionResponse.ok) {
-        const visionData = await visionResponse.json();
-        imageAnalysis = visionData.choices?.[0]?.message?.content;
-        console.log('Image analysis:', imageAnalysis);
-      } else {
-        const errorText = await visionResponse.text();
-        console.error('Vision API error:', visionResponse.status, errorText);
+        if (visionResponse.ok) {
+          const visionData = await visionResponse.json();
+          imageAnalysis = visionData.choices?.[0]?.message?.content;
+          console.log('Image analysis:', imageAnalysis);
+        } else {
+          const errorText = await visionResponse.text();
+          console.error('Vision API error:', visionResponse.status, errorText);
+          imageAnalysis = "⚠️ Erreur lors de l'analyse de l'image par l'IA Vision.";
+        }
       }
     }
 
