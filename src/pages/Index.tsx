@@ -269,7 +269,7 @@ const Index = () => {
             to={galleryLots.length > 0 ? `/vente/${galleryLots[0].sale_id}/lot/${galleryLots[0].id}` : "/acheter/ventes-a-venir"}
             className="block relative group cursor-pointer"
           >
-            <div className="relative w-full aspect-[16/9] md:aspect-[21/9] overflow-hidden bg-muted">
+            <div className="relative w-full aspect-[4/3] md:aspect-[16/9] overflow-hidden bg-muted">
               <img 
                 src="/images/sales/2024-06-22-prestige-sculpture.jpg"
                 alt="Sculpture de prestige"
