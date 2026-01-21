@@ -265,7 +265,7 @@ const Index = () => {
 
         {/* Hero Gallery Museum Grid - 1440×600px */}
         <section className="w-full bg-[#1a1a1a]">
-          <div className="mx-auto" style={{ maxWidth: "1440px", height: "600px" }}>
+          <div className="mx-auto" style={{ maxWidth: "1440px", height: "570px" }}>
             <div className="relative w-full h-full p-6">
               {/* Grille asymétrique style accrochage musée */}
               <div className="absolute inset-6 grid grid-cols-12 grid-rows-6 gap-4">
