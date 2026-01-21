@@ -17,6 +17,7 @@ const DemoRdvOverlay = ({
 }: DemoRdvOverlayProps) => {
   const location = useLocation();
   const [isVisible, setIsVisible] = useState(false);
+  const [initialPath] = useState(location.pathname);
 
   // Bypass "mode démo": persiste même si le paramètre disparaît lors d'une navigation SPA
   const isDemoMode = (() => {
@@ -32,22 +33,28 @@ const DemoRdvOverlay = ({
     try { return sessionStorage.getItem(DEMO_STORAGE_KEY) === "true"; } catch (e) { return false; }
   })();
 
-  // Détecter le scroll pour déclencher l'overlay
+  // Déclencher l'overlay si navigation vers une autre page
+  useEffect(() => {
+    if (isDemoMode || isVisible) return;
+    
+    if (location.pathname !== initialPath) {
+      setIsVisible(true);
+    }
+  }, [location.pathname, initialPath, isDemoMode, isVisible]);
+
+  // Détecter le scroll pour déclencher l'overlay (2500px)
   useEffect(() => {
     if (isDemoMode || isVisible) return;
 
     const handleScroll = () => {
-      const isHomePage = location.pathname === "/";
-      const triggerPoint = isHomePage ? 4800 : 200;
-      
-      if (window.scrollY > triggerPoint) {
+      if (window.scrollY > 2500) {
         setIsVisible(true);
       }
     };
 
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
-  }, [location.pathname, isDemoMode, isVisible]);
+  }, [isDemoMode, isVisible]);
 
   // Bloquer le scroll quand l'overlay est visible
   useEffect(() => {
