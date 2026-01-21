@@ -201,69 +201,145 @@ const Index = () => {
           </p>
         </section>
 
-        {/* Hero Gallery - Disposition musée asymétrique */}
-        <section className="w-full py-8 md:py-12 bg-muted/30">
-          <div className="container">
-            <div className="grid grid-cols-12 gap-3 md:gap-4 auto-rows-[120px] md:auto-rows-[160px]">
-              {/* Grande image principale - gauche */}
-              <div className="col-span-7 row-span-3 relative overflow-hidden group">
-                <img 
-                  src="/images/sales/2025-11-08-art-moderne.jpg" 
-                  alt="Art Moderne" 
-                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-                <div className="absolute bottom-4 left-4 right-4">
-                  <p className="font-serif text-white text-lg md:text-2xl">Art Moderne</p>
-                  <p className="text-white/70 text-xs">École de Paris, Expressionnisme</p>
+        {/* Hero Gallery - Disposition musée asymétrique raffinée */}
+        <section className="w-full py-6 md:py-10">
+          <div className="container max-w-6xl">
+            {/* Grille musée - disposition salon style XIXe */}
+            <div className="relative">
+              {/* Fond mur de galerie subtil */}
+              <div className="absolute inset-0 -m-4 md:-m-6 bg-gradient-to-b from-muted/20 via-muted/40 to-muted/20 rounded-sm" />
+              
+              <div className="relative grid grid-cols-12 gap-2 md:gap-3 p-4 md:p-6">
+                {/* Colonne gauche - Grande œuvre maîtresse */}
+                <div className="col-span-12 md:col-span-7 space-y-2 md:space-y-3">
+                  {/* Tableau principal - Art Moderne */}
+                  <Link 
+                    to="/specialites/art-moderne" 
+                    className="block relative group"
+                  >
+                    <div className="relative overflow-hidden bg-background shadow-[0_4px_20px_rgba(0,0,0,0.15)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.4)]">
+                      {/* Cadre doré subtil */}
+                      <div className="absolute inset-0 border-[3px] border-brand-gold/30 pointer-events-none z-10" />
+                      <div className="absolute inset-[3px] border border-brand-gold/20 pointer-events-none z-10" />
+                      
+                      <div className="aspect-[4/3] overflow-hidden">
+                        <img 
+                          src="/images/sales/667692-lot-aizpiri.jpg" 
+                          alt="Paul Aizpiri - Peinture moderne" 
+                          className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-[1.02]"
+                        />
+                      </div>
+                    </div>
+                    {/* Cartel musée */}
+                    <div className="mt-2 text-center">
+                      <p className="font-serif text-sm md:text-base text-foreground">Art Moderne & Contemporain</p>
+                      <p className="text-xs text-muted-foreground">École de Paris · Expressionnisme · Art Brut</p>
+                    </div>
+                  </Link>
                 </div>
-              </div>
-              
-              {/* Image moyenne - haut droite */}
-              <div className="col-span-5 row-span-2 relative overflow-hidden group">
-                <img 
-                  src="/images/sales/2025-10-18-bijoux-montres.jpg" 
-                  alt="Bijoux & Montres" 
-                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-                <div className="absolute bottom-3 left-3 right-3">
-                  <p className="font-serif text-white text-base md:text-lg">Bijoux & Montres</p>
-                  <p className="text-white/70 text-xs hidden md:block">Joaillerie, Horlogerie de luxe</p>
+                
+                {/* Colonne droite - Accrochage vertical */}
+                <div className="col-span-12 md:col-span-5 space-y-2 md:space-y-3">
+                  {/* Bijoux - format paysage */}
+                  <Link 
+                    to="/specialites/bijoux-montres" 
+                    className="block relative group"
+                  >
+                    <div className="relative overflow-hidden bg-background shadow-[0_3px_15px_rgba(0,0,0,0.12)] dark:shadow-[0_3px_15px_rgba(0,0,0,0.35)]">
+                      <div className="absolute inset-0 border-2 border-brand-gold/25 pointer-events-none z-10" />
+                      
+                      <div className="aspect-[16/9] overflow-hidden">
+                        <img 
+                          src="/images/sales/668645-montre.jpg" 
+                          alt="Montre de luxe - Haute horlogerie" 
+                          className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-[1.02]"
+                        />
+                      </div>
+                    </div>
+                    <div className="mt-1.5 text-center">
+                      <p className="font-serif text-xs md:text-sm text-foreground">Bijoux & Montres</p>
+                      <p className="text-[10px] text-muted-foreground hidden md:block">Haute joaillerie · Horlogerie de prestige</p>
+                    </div>
+                  </Link>
+                  
+                  {/* Deux petits tableaux côte à côte */}
+                  <div className="grid grid-cols-2 gap-2 md:gap-3">
+                    {/* Vins */}
+                    <Link 
+                      to="/specialites/vins-spiritueux" 
+                      className="block relative group"
+                    >
+                      <div className="relative overflow-hidden bg-background shadow-[0_2px_10px_rgba(0,0,0,0.10)] dark:shadow-[0_2px_10px_rgba(0,0,0,0.30)]">
+                        <div className="absolute inset-0 border border-brand-gold/20 pointer-events-none z-10" />
+                        
+                        <div className="aspect-square overflow-hidden">
+                          <img 
+                            src="/images/sales/668871-poster-pecrus.jpg" 
+                            alt="Pétrus - Grand cru" 
+                            className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-[1.02]"
+                          />
+                        </div>
+                      </div>
+                      <div className="mt-1 text-center">
+                        <p className="font-serif text-[10px] md:text-xs text-foreground">Vins & Spiritueux</p>
+                      </div>
+                    </Link>
+                    
+                    {/* Arts d'Asie */}
+                    <Link 
+                      to="/specialites/collections" 
+                      className="block relative group"
+                    >
+                      <div className="relative overflow-hidden bg-background shadow-[0_2px_10px_rgba(0,0,0,0.10)] dark:shadow-[0_2px_10px_rgba(0,0,0,0.30)]">
+                        <div className="absolute inset-0 border border-brand-gold/20 pointer-events-none z-10" />
+                        
+                        <div className="aspect-square overflow-hidden">
+                          <img 
+                            src="/images/sales/669871-bouddha.jpg" 
+                            alt="Bouddha - Arts d'Asie" 
+                            className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-[1.02]"
+                          />
+                        </div>
+                      </div>
+                      <div className="mt-1 text-center">
+                        <p className="font-serif text-[10px] md:text-xs text-foreground">Arts d'Asie</p>
+                      </div>
+                    </Link>
+                  </div>
+                  
+                  {/* Mobilier - format paysage */}
+                  <Link 
+                    to="/specialites/mobilier-objets-art" 
+                    className="block relative group"
+                  >
+                    <div className="relative overflow-hidden bg-background shadow-[0_3px_15px_rgba(0,0,0,0.12)] dark:shadow-[0_3px_15px_rgba(0,0,0,0.35)]">
+                      <div className="absolute inset-0 border-2 border-brand-gold/25 pointer-events-none z-10" />
+                      
+                      <div className="aspect-[16/10] overflow-hidden">
+                        <img 
+                          src="/images/sales/667941-vierge.jpg" 
+                          alt="Vierge à l'enfant - Objet d'art" 
+                          className="w-full h-full object-cover object-top transition-transform duration-1000 group-hover:scale-[1.02]"
+                        />
+                      </div>
+                    </div>
+                    <div className="mt-1.5 text-center">
+                      <p className="font-serif text-xs md:text-sm text-foreground">Mobilier & Objets d'Art</p>
+                      <p className="text-[10px] text-muted-foreground hidden md:block">XVIIe · XVIIIe · XIXe siècles</p>
+                    </div>
+                  </Link>
                 </div>
-              </div>
-              
-              {/* Petite image - bas droite 1 */}
-              <div className="col-span-3 row-span-1 relative overflow-hidden group">
-                <img 
-                  src="/images/sales/2024-08-22-chartreuse.jpg" 
-                  alt="Vins & Spiritueux" 
-                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-                <p className="absolute bottom-2 left-2 font-serif text-white text-sm">Vins</p>
-              </div>
-              
-              {/* Petite image - bas droite 2 */}
-              <div className="col-span-2 row-span-1 relative overflow-hidden group">
-                <img 
-                  src="/images/sales/2025-11-22-automobiles.jpg" 
-                  alt="Automobiles" 
-                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-                <p className="absolute bottom-2 left-2 font-serif text-white text-xs">Auto</p>
               </div>
             </div>
             
             {/* Lien vers toutes les spécialités */}
-            <div className="text-center mt-6">
+            <div className="text-center mt-8">
               <Link 
                 to="/specialites" 
-                className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                className="inline-flex items-center gap-2 text-xs tracking-widest uppercase text-muted-foreground hover:text-foreground transition-colors group"
               >
-                <span className="font-sans tracking-wide">Découvrir nos spécialités</span>
-                <ChevronRight className="h-4 w-4" />
+                <span>Toutes nos spécialités</span>
+                <ChevronRight className="h-3 w-3 transition-transform group-hover:translate-x-1" />
               </Link>
             </div>
           </div>
