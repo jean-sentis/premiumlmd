@@ -302,7 +302,7 @@ const Index = () => {
                   className="object-contain"
                   style={{ height: "360px", width: "auto" }}
                 />
-                <div className="flex-1" />
+                <div className="flex-1 w-full bg-neutral-400" />
                 <img 
                   src={heroCeramique}
                   alt="Céramique"
