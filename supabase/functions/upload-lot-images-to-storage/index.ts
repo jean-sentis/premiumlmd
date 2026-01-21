@@ -37,7 +37,8 @@ serve(async (req) => {
     console.log(`Processing ${lots?.length || 0} lots for sale ${sale_id}`);
 
     const results: any[] = [];
-    const publicBaseUrl = 'https://id-preview--094b38f1-ba25-434a-9583-d79f9dc77a22.lovable.app';
+    // Use published URL which serves static files directly without auth
+    const publicBaseUrl = 'https://094b38f1-ba25-434a-9583-d79f9dc77a22.lovableproject.com';
 
     for (const lot of lots || []) {
       if (!lot.images || lot.images.length === 0) {

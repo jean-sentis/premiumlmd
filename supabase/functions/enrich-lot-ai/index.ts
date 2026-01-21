@@ -149,7 +149,23 @@ Explique-moi de quoi il s'agit et, si un créateur est mentionné, parle-moi de 
         // URL accessible - on peut analyser
         console.log(`Image URL accessible for vision: ${imageUrl}`);
         
-        const imagePrompt = `Décris précisément cet objet d'art ou antiquité visible sur la photo.
+        try {
+          // Télécharger l'image et la convertir en base64 pour contourner les problèmes d'accès
+          console.log(`Downloading image from: ${imageUrl}`);
+          const imageResponse = await fetch(imageUrl);
+          
+          if (!imageResponse.ok) {
+            console.error(`Failed to download image: ${imageResponse.status}`);
+            imageAnalysis = `⚠️ Impossible de télécharger l'image (HTTP ${imageResponse.status}).`;
+          } else {
+            const imageBuffer = await imageResponse.arrayBuffer();
+            const base64Image = btoa(String.fromCharCode(...new Uint8Array(imageBuffer)));
+            const contentType = imageResponse.headers.get('content-type') || 'image/jpeg';
+            const dataUrl = `data:${contentType};base64,${base64Image}`;
+            
+            console.log(`Image downloaded and converted to base64 (${Math.round(imageBuffer.byteLength / 1024)} KB)`);
+            
+            const imagePrompt = `Décris précisément cet objet d'art ou antiquité visible sur la photo.
       
 1. Que vois-tu EXACTEMENT sur cette image ? Décris l'objet tel que tu le vois.
 2. Quel style, époque ou mouvement artistique semble correspondre ?
@@ -158,34 +174,39 @@ Explique-moi de quoi il s'agit et, si un créateur est mentionné, parle-moi de 
 
 Sois précis et factuel, comme un commissaire-priseur décrivant un lot. 3-4 phrases.`;
 
-        const visionResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            model: 'google/gemini-2.5-pro',
-            messages: [
-              {
-                role: 'user',
-                content: [
-                  { type: 'text', text: imagePrompt },
-                  { type: 'image_url', image_url: { url: imageUrl } }
+            const visionResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                model: 'google/gemini-2.5-flash',
+                messages: [
+                  {
+                    role: 'user',
+                    content: [
+                      { type: 'text', text: imagePrompt },
+                      { type: 'image_url', image_url: { url: dataUrl } }
+                    ]
+                  }
                 ]
-              }
-            ]
-          }),
-        });
+              }),
+            });
 
-        if (visionResponse.ok) {
-          const visionData = await visionResponse.json();
-          imageAnalysis = visionData.choices?.[0]?.message?.content;
-          console.log('Image analysis:', imageAnalysis);
-        } else {
-          const errorText = await visionResponse.text();
-          console.error('Vision API error:', visionResponse.status, errorText);
-          imageAnalysis = "⚠️ Erreur lors de l'analyse de l'image par l'IA Vision. L'image n'est peut-être pas accessible publiquement.";
+            if (visionResponse.ok) {
+              const visionData = await visionResponse.json();
+              imageAnalysis = visionData.choices?.[0]?.message?.content;
+              console.log('Image analysis successful:', imageAnalysis?.substring(0, 100));
+            } else {
+              const errorText = await visionResponse.text();
+              console.error('Vision API error:', visionResponse.status, errorText);
+              imageAnalysis = `⚠️ Erreur API Vision (${visionResponse.status}): ${errorText.substring(0, 200)}`;
+            }
+          }
+        } catch (downloadError) {
+          console.error('Error downloading image:', downloadError);
+          imageAnalysis = `⚠️ Erreur lors du téléchargement de l'image: ${String(downloadError)}`;
         }
       } else {
         imageAnalysis = "⚠️ Format d'URL d'image non reconnu.";
