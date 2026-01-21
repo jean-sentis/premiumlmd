@@ -274,7 +274,7 @@ const Index = () => {
               src={heroCeramique}
               alt="Céramique"
               className="object-contain self-end"
-              style={{ height: "240px", width: "auto", marginRight: "5px", marginBottom: "60px" }}
+              style={{ height: "216px", width: "auto", marginRight: "5px", marginBottom: "60px" }}
             />
             <img 
               src={heroSculpture}
