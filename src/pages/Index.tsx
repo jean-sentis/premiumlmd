@@ -268,6 +268,9 @@ const Index = () => {
           </p>
         </section>
 
+        {/* Espaceur 35px */}
+        <div className="h-[35px]" />
+
         {/* Hero Section - 1440×600px */}
         <section className="w-full bg-white overflow-hidden relative">
           {/* Cadre noir au-dessus de tout */}
