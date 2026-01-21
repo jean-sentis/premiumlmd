@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Sparkles, Eye, Loader2, ChevronDown, ChevronUp } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Sparkles, Eye, Loader2, ChevronDown, ChevronUp, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 
@@ -12,10 +12,9 @@ interface LotAIAnalysisProps {
 }
 
 interface AnalysisResult {
-  enriched: {
-    title: string;
-    description: string;
-    dimensions: string | null;
+  analysis: {
+    explanation: string;
+    creator_info: string | null;
   };
   image_analysis: string | null;
   original: {
@@ -23,6 +22,8 @@ interface AnalysisResult {
     description: string | null;
     dimensions: string | null;
   };
+  lot_id: string;
+  lot_number: number;
 }
 
 const LotAIAnalysis = ({
@@ -35,6 +36,14 @@ const LotAIAnalysis = ({
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [expanded, setExpanded] = useState(true);
+
+  // Important: si on change de lot, on doit réinitialiser l'état, sinon on affiche
+  // l'analyse du lot précédent (source du "l'IA voit un autre lot").
+  useEffect(() => {
+    setResult(null);
+    setExpanded(true);
+    setLoading(false);
+  }, [lotId]);
 
   const analyzeWithAI = async () => {
     setLoading(true);
@@ -63,13 +72,15 @@ const LotAIAnalysis = ({
       
       if (data.success) {
         setResult({
-          enriched: data.enriched,
+          analysis: data.analysis,
           image_analysis: data.image_analysis,
           original: data.original,
+          lot_id: data.lot_id,
+          lot_number: data.lot_number,
         });
         toast({
           title: "Analyse terminée",
-          description: "L'IA a analysé le lot et les photos",
+          description: "L'IA a analysé le lot (et la photo si accessible)",
         });
       } else {
         throw new Error(data.error || "Erreur inconnue");
@@ -128,6 +139,17 @@ const LotAIAnalysis = ({
       {/* Results */}
       {result && expanded && (
         <div className="p-4 space-y-4 text-sm">
+          {/* Safety: afficher le contexte pour éviter toute confusion */}
+          <div className="flex items-start gap-2 rounded border border-border/40 bg-background/50 p-3">
+            <Info className="mt-0.5 h-4 w-4 text-muted-foreground" />
+            <div className="leading-snug">
+              <div className="text-xs text-muted-foreground">Analyse calculée pour :</div>
+              <div className="text-sm font-medium text-foreground">
+                Lot {result.lot_number} — {result.original.title}
+              </div>
+            </div>
+          </div>
+
           {/* Image Analysis */}
           {result.image_analysis && (
             <div className="space-y-1">
@@ -136,46 +158,31 @@ const LotAIAnalysis = ({
                 Ce que l'IA voit sur la photo
               </div>
               <p className="text-foreground leading-relaxed italic bg-background/50 p-3 rounded border border-border/30">
-                "{result.image_analysis}"
+                {result.image_analysis.startsWith("⚠️")
+                  ? result.image_analysis
+                  : `"${result.image_analysis}"`}
               </p>
             </div>
           )}
 
-          {/* Suggested improvements */}
+          {/* Analysis */}
           <div className="space-y-3">
             <div className="text-xs uppercase tracking-wider text-muted-foreground font-medium">
-              Restructuration suggérée
+              Analyse du lot
             </div>
-            
-            {/* Title comparison */}
+
             <div className="grid gap-2">
-              <div className="text-xs text-muted-foreground">Titre :</div>
-              <div className="grid md:grid-cols-2 gap-2">
-                <div className="p-2 bg-red-500/10 border border-red-500/20 rounded text-xs">
-                  <span className="text-red-400 font-medium">Avant :</span>
-                  <p className="mt-1 text-foreground/70 line-through">{result.original.title}</p>
-                </div>
-                <div className="p-2 bg-green-500/10 border border-green-500/20 rounded text-xs">
-                  <span className="text-green-400 font-medium">Après :</span>
-                  <p className="mt-1 text-foreground font-medium">{result.enriched.title}</p>
-                </div>
+              <div className="text-xs text-muted-foreground">Explication :</div>
+              <div className="p-3 bg-muted/20 border border-border/30 rounded text-xs leading-relaxed">
+                <p className="text-foreground">{result.analysis.explanation || "—"}</p>
               </div>
             </div>
 
-            {/* Description */}
-            <div className="grid gap-2">
-              <div className="text-xs text-muted-foreground">Description extraite :</div>
-              <div className="p-2 bg-muted/30 border border-border/30 rounded text-xs">
-                <p className="text-foreground">{result.enriched.description || "—"}</p>
-              </div>
-            </div>
-
-            {/* Dimensions */}
-            {result.enriched.dimensions && (
+            {result.analysis.creator_info && (
               <div className="grid gap-2">
-                <div className="text-xs text-muted-foreground">Dimensions extraites :</div>
-                <div className="p-2 bg-muted/30 border border-border/30 rounded text-xs">
-                  <p className="text-foreground">{result.enriched.dimensions}</p>
+                <div className="text-xs text-muted-foreground">À propos du créateur :</div>
+                <div className="p-3 bg-muted/20 border border-border/30 rounded text-xs leading-relaxed">
+                  <p className="text-foreground">{result.analysis.creator_info}</p>
                 </div>
               </div>
             )}
@@ -183,7 +190,7 @@ const LotAIAnalysis = ({
 
           {/* Note */}
           <p className="text-[10px] text-muted-foreground italic">
-            Mode aperçu — Les modifications n'ont pas été appliquées à la base de données.
+            Mode aperçu — aucune modification n'a été appliquée à la base de données.
           </p>
         </div>
       )}
