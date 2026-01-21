@@ -74,7 +74,7 @@ const DemoRdvOverlay = ({
                 <Calendar className="w-10 h-10 text-brand-gold" />
                 <button
                   onClick={handleCtaClick}
-                  className="w-full border-2 border-brand-gold bg-brand-gold text-black px-6 py-4 font-serif text-lg hover:bg-transparent hover:text-brand-gold transition-colors"
+                  className="w-full border-2 border-brand-gold bg-black text-white px-6 py-4 font-serif text-lg hover:bg-brand-gold hover:text-black transition-colors"
                 >
                   {ctaText}
                 </button>
