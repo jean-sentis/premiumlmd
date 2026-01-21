@@ -280,6 +280,15 @@ const Index = () => {
               src={heroSculpture}
               alt="Sculpture"
               className="h-full w-auto object-contain"
+              style={{ marginRight: "5px" }}
+            />
+            {/* Vidéo Vimeo à droite */}
+            <iframe
+              src="https://player.vimeo.com/video/1078927258?autoplay=1&loop=1&muted=1&background=1"
+              className="h-full border-0"
+              style={{ width: "auto", aspectRatio: "9/16" }}
+              allow="autoplay; fullscreen"
+              title="Vidéo enchères"
             />
           </div>
         </section>
