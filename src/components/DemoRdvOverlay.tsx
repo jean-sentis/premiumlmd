@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Calendar } from "lucide-react";
@@ -18,21 +18,25 @@ const DemoRdvOverlay = ({
   const [initialPath] = useState(location.pathname);
 
   // Bypass si ?demo=true dans l'URL (vérifie aussi le parent pour les iframes)
-  const isDemoMode = (() => {
+  const isDemoMode = useMemo(() => {
     // Vérifier l'URL courante (react-router)
-    if (new URLSearchParams(location.search).get("demo") === "true") return true;
+    const routerDemo = new URLSearchParams(location.search).get("demo") === "true";
     // Vérifier l'URL du navigateur directement
-    if (new URLSearchParams(window.location.search).get("demo") === "true") return true;
+    const windowDemo = new URLSearchParams(window.location.search).get("demo") === "true";
     // Vérifier l'URL parente (si accessible, même origine)
+    let parentDemo = false;
     try {
       if (window.parent && window.parent !== window) {
-        if (new URLSearchParams(window.parent.location.search).get("demo") === "true") return true;
+        parentDemo = new URLSearchParams(window.parent.location.search).get("demo") === "true";
       }
     } catch (e) {
       // Cross-origin, ignorer
     }
-    return false;
-  })();
+    
+    const result = routerDemo || windowDemo || parentDemo;
+    console.log("DemoRdvOverlay - isDemoMode:", result, { routerDemo, windowDemo, parentDemo, search: location.search, windowSearch: window.location.search });
+    return result;
+  }, [location.search]);
 
   // Détecter un changement de page (navigation)
   useEffect(() => {
