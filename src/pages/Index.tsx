@@ -269,22 +269,22 @@ const Index = () => {
             to={galleryLots.length > 0 ? `/vente/${galleryLots[0].sale_id}/lot/${galleryLots[0].id}` : "/acheter/ventes-a-venir"}
             className="block relative group cursor-pointer"
           >
-            <div className="relative w-full aspect-[4/3] md:aspect-[16/9] overflow-hidden bg-muted">
+            <div className="relative w-full h-[52vh] md:h-[68vh] overflow-hidden bg-muted">
               <img 
                 src="/images/sales/2024-06-22-prestige-sculpture.jpg"
                 alt="Sculpture de prestige"
-                className="w-full h-full object-cover object-center transition-transform duration-1000 ease-out group-hover:scale-[1.02]"
+                className="w-full h-full object-contain object-center"
               />
               {/* Overlay subtil permanent en bas */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-foreground/60 via-transparent to-transparent" />
               
               {/* Cartel discret en bas à gauche */}
               <div className="absolute bottom-0 left-0 right-0 p-6 md:p-10">
                 <div className="max-w-4xl">
-                  <p className="font-serif text-white text-xl md:text-3xl lg:text-4xl font-light leading-tight drop-shadow-lg">
+                  <p className="font-serif text-background text-xl md:text-3xl lg:text-4xl font-light leading-tight drop-shadow-lg">
                     Ventes de prestige
                   </p>
-                  <span className="inline-flex items-center gap-2 text-white/80 text-xs md:text-sm uppercase tracking-widest mt-3 group-hover:text-white transition-colors">
+                  <span className="inline-flex items-center gap-2 text-background/80 text-xs md:text-sm uppercase tracking-widest mt-3 group-hover:text-background transition-colors">
                     Découvrir le catalogue
                     <ChevronRight className="h-3 w-3 transition-transform group-hover:translate-x-1" />
                   </span>
