@@ -295,18 +295,19 @@ const Index = () => {
             {/* Groupe droite : céramiques empilées + sculpture */}
             <div className="flex items-end h-full" style={{ marginRight: "-25px" }}>
               {/* Colonne céramiques empilées */}
-              <div className="flex flex-col items-end justify-end h-full" style={{ marginRight: "5px" }}>
-                <img 
-                  src={heroCeramique}
-                  alt="Céramique"
-                  className="object-contain"
-                  style={{ height: "216px", width: "auto" }}
-                />
+              <div className="flex flex-col items-end h-full" style={{ marginRight: "5px" }}>
                 <img 
                   src={heroCeramiqueClaire}
                   alt="Céramique fond clair"
                   className="object-contain"
                   style={{ height: "360px", width: "auto" }}
+                />
+                <div className="flex-1" />
+                <img 
+                  src={heroCeramique}
+                  alt="Céramique"
+                  className="object-contain"
+                  style={{ height: "216px", width: "auto" }}
                 />
               </div>
               <img 
