@@ -17,8 +17,22 @@ const DemoRdvOverlay = ({
   const [hasNavigated, setHasNavigated] = useState(false);
   const [initialPath] = useState(location.pathname);
 
-  // Bypass si ?demo=true dans l'URL
-  const isDemoMode = new URLSearchParams(location.search).get("demo") === "true";
+  // Bypass si ?demo=true dans l'URL (vérifie aussi le parent pour les iframes)
+  const isDemoMode = (() => {
+    // Vérifier l'URL courante (react-router)
+    if (new URLSearchParams(location.search).get("demo") === "true") return true;
+    // Vérifier l'URL du navigateur directement
+    if (new URLSearchParams(window.location.search).get("demo") === "true") return true;
+    // Vérifier l'URL parente (si accessible, même origine)
+    try {
+      if (window.parent && window.parent !== window) {
+        if (new URLSearchParams(window.parent.location.search).get("demo") === "true") return true;
+      }
+    } catch (e) {
+      // Cross-origin, ignorer
+    }
+    return false;
+  })();
 
   // Détecter un changement de page (navigation)
   useEffect(() => {
