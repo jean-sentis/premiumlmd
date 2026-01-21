@@ -12,6 +12,7 @@ import SaleStickyHeader from "@/components/SaleStickyHeader";
 import InlinePlanningSlot from "@/components/InlinePlanningSlot";
 import ImageViewer from "@/components/ImageViewer";
 import { normalizeInterencheresImageUrl } from "@/lib/interencheres-images";
+import { getDisplayUrl, getThumbnailUrl, getFullscreenUrl } from "@/lib/image-utils";
 import { ChronoCountdown, ChronoBidButton, ChronoStickyBar } from "@/components/chrono";
 import { LotActionsPanel, LotActionIcons, SaleInfoAccordion, MemorizeButton } from "@/components/lot";
 
@@ -203,7 +204,9 @@ const LotDetail = () => {
     }
   };
 
-  const displayImage = hasImages && !imageError ? lot!.images[currentImageIndex] : null;
+  const rawDisplayImage = hasImages && !imageError ? lot!.images[currentImageIndex] : null;
+  const displayImage = rawDisplayImage ? getDisplayUrl(rawDisplayImage) : null;
+  const fullscreenImage = rawDisplayImage ? getFullscreenUrl(rawDisplayImage) : null;
 
   if (loading) {
     return (
@@ -442,7 +445,7 @@ const LotDetail = () => {
                           : 'border-border/50 opacity-60 hover:opacity-100'
                       }`}
                     >
-                      <img src={img} alt="" className="w-full h-full object-cover" loading="lazy" />
+                      <img src={getThumbnailUrl(img)} alt="" className="w-full h-full object-cover" loading="lazy" />
                     </button>
                   ))}
                 </div>

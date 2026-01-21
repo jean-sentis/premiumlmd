@@ -90,7 +90,56 @@ export default function AdminLots() {
     setDroppedFiles([]);
   }, []);
 
-  // Parser un fichier Excel et extraire les données
+  // Compression d'image côté client
+  const compressImage = async (file: File, maxWidth = 1600, quality = 0.8): Promise<File> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let { width, height } = img;
+        
+        // Redimensionner si trop grand
+        if (width > maxWidth) {
+          height = (height * maxWidth) / width;
+          width = maxWidth;
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          reject(new Error('Canvas context not available'));
+          return;
+        }
+        
+        ctx.drawImage(img, 0, 0, width, height);
+        
+        canvas.toBlob(
+          (blob) => {
+            if (!blob) {
+              reject(new Error('Failed to compress image'));
+              return;
+            }
+            
+            // Créer un nouveau fichier avec le blob compressé
+            const compressedFile = new File([blob], file.name, {
+              type: 'image/jpeg',
+              lastModified: Date.now(),
+            });
+            
+            console.log(`[compress] ${file.name}: ${Math.round(file.size/1024)}KB → ${Math.round(blob.size/1024)}KB`);
+            resolve(compressedFile);
+          },
+          'image/jpeg',
+          quality
+        );
+      };
+      
+      img.onerror = () => reject(new Error('Failed to load image'));
+      img.src = URL.createObjectURL(file);
+    });
+  };
   const parseExcelFile = async (file: File): Promise<{ sale: ParsedSale; lots: ParsedLot[] } | null> => {
     try {
       const arrayBuffer = await file.arrayBuffer();
@@ -193,16 +242,21 @@ export default function AdminLots() {
           lowerName.endsWith('.gif');
 
         if (isImage) {
+          // Compresser l'image avant upload
+          const compressedFile = await compressImage(file, 1600, 0.8);
+          const originalSize = Math.round(file.size / 1024);
+          const compressedSize = Math.round(compressedFile.size / 1024);
+          
           // Upload vers le storage
-          const fileName = `${Date.now()}-${file.name}`;
+          const fileName = `${Date.now()}-${file.name.replace(/\.[^.]+$/, '.jpg')}`;
           const { error: uploadError } = await supabase.storage
             .from('sale-images')
-            .upload(fileName, file);
+            .upload(fileName, compressedFile);
 
           if (uploadError) throw uploadError;
 
           setDroppedFiles(prev => prev.map(f => 
-            f.id === id ? { ...f, status: 'done' as const, result: `Image uploadée: ${fileName}` } : f
+            f.id === id ? { ...f, status: 'done' as const, result: `${originalSize}KB → ${compressedSize}KB` } : f
           ));
         } else if (isExcel) {
           // Parser le fichier Excel

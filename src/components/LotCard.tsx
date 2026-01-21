@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Check, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { getThumbnailUrl } from "@/lib/image-utils";
 
 interface LotCardProps {
   id: string;
@@ -19,22 +20,6 @@ interface LotCardProps {
   lotUrl: string;
   shadowClass?: string;
 }
-
-// Proxy les images interenchères pour éviter le blocage CORS/hotlink
-const getProxiedImageUrl = (url: string): string => {
-  if (!url) return url;
-  
-  if (url.includes('supabase.co')) {
-    return url;
-  }
-  
-  if (url.includes('interencheres.com')) {
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-    return `${supabaseUrl}/functions/v1/image-proxy?url=${encodeURIComponent(url)}`;
-  }
-  
-  return url;
-};
 
 interface LiaSuggestion {
   id: string;
@@ -78,7 +63,7 @@ const LotCard = ({
 
   const hasImages = images && images.length > 0;
   const rawImage = hasImages && !imageError ? images[currentIndex] : null;
-  const displayImage = rawImage ? getProxiedImageUrl(rawImage) : null;
+  const displayImage = rawImage ? getThumbnailUrl(rawImage) : null;
 
   // Cadre vert visible si suggestion non validée négativement
   const showGreenFrame = liaSuggestion && liaSuggestion.is_validated !== false;
