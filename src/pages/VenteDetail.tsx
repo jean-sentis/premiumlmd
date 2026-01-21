@@ -307,13 +307,22 @@ const VenteDetail = () => {
 
                 {/* Right side: Info + Accordion */}
                 <div className="flex-1 flex flex-col">
-                  <div className="flex gap-3 mb-4 md:mb-6">
+                  <div className="flex flex-wrap gap-3 mb-4 md:mb-6">
                     <a
                       href={`mailto:jean@lemarteaudigital.fr?subject=${encodeURIComponent(`Demande d'informations - ${decodedTitle}`)}`}
                       className="border border-border px-4 md:px-5 py-2 md:py-2.5 text-xs tracking-widest hover:border-foreground transition-colors whitespace-nowrap text-center"
                     >
                       DEMANDE D'INFO
                     </a>
+
+                    {lotsCount > 0 && (
+                      <a
+                        href="#catalogue"
+                        className="border border-border px-4 md:px-5 py-2 md:py-2.5 text-xs tracking-widest hover:border-foreground transition-colors whitespace-nowrap text-center"
+                      >
+                        VOIR LE CATALOGUE — {lotsCount} LOTS
+                      </a>
+                    )}
                   </div>
 
                   <Accordion type="single" collapsible className="border-t border-border">
