@@ -76,6 +76,7 @@ import ExportWordPress from "./pages/ExportWordPress";
 import ExportAdaptation from "./pages/ExportAdaptation";
 import OffresCommerciales from "./pages/OffresCommerciales";
 import AdminLots from "./pages/admin/AdminLots";
+import ExportVenteCSV from "./pages/ExportVenteCSV";
 
 const queryClient = new QueryClient();
 
@@ -172,6 +173,9 @@ const App = () => (
                 
                 {/* Admin */}
                 <Route path="/admin/lots" element={<AdminLots />} />
+                
+                {/* Export */}
+                <Route path="/export/vente/:id" element={<ExportVenteCSV />} />
                 
                 <Route path="*" element={<NotFound />} />
               </Routes>
