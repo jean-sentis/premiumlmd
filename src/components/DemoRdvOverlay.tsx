@@ -86,8 +86,14 @@ const DemoRdvOverlay = ({
   useEffect(() => {
     if (isDemoMode || isVisible) return;
 
+    // Important: certaines pages restaurent une position scroll élevée à l'arrivée.
+    // On déclenche donc sur une *distance scrollée* depuis l'entrée sur la page,
+    // pas sur un scrollY absolu.
+    const startY = window.scrollY;
+    const DELTA_TRIGGER_PX = 1200;
+
     const handleScroll = () => {
-      if (window.scrollY > 2500) {
+      if (window.scrollY - startY > DELTA_TRIGGER_PX) {
         setIsVisible(true);
       }
     };
