@@ -11,6 +11,49 @@ interface DemoRdvOverlayProps {
 const DEMO_STORAGE_KEY = "lmd_demo_mode";
 const DEMO_GLOBAL_KEY = "__LMD_DEMO_MODE__";
 
+const computeDemoModeSync = (search: string) => {
+  // Vérifier l'URL actuelle (React Router)
+  const urlHasDemo = new URLSearchParams(search).get("demo") === "true";
+
+  // Vérifier aussi window.location au cas où (navigation directe)
+  const windowHasDemo = new URLSearchParams(window.location.search).get("demo") === "true";
+
+  // Vérifier l'URL parente (iframe)
+  let parentHasDemo = false;
+  try {
+    if (window.parent !== window) {
+      parentHasDemo = new URLSearchParams(window.parent.location.search).get("demo") === "true";
+    }
+  } catch {
+    // ignore cross-origin
+  }
+
+  if (urlHasDemo || windowHasDemo || parentHasDemo) {
+    try {
+      (window as any)[DEMO_GLOBAL_KEY] = true;
+    } catch {
+      // ignore
+    }
+    try {
+      sessionStorage.setItem(DEMO_STORAGE_KEY, "true");
+    } catch {
+      // ignore
+    }
+    return true;
+  }
+
+  try {
+    if ((window as any)[DEMO_GLOBAL_KEY] === true) return true;
+  } catch {
+    // ignore
+  }
+  try {
+    return sessionStorage.getItem(DEMO_STORAGE_KEY) === "true";
+  } catch {
+    return false;
+  }
+};
+
 const DemoRdvOverlay = ({
   rdvUrl = "https://app.cal.eu/votre-lien",
   ctaText = "Prenons rendez-vous pour une démo accompagnée",
@@ -18,52 +61,17 @@ const DemoRdvOverlay = ({
   const location = useLocation();
   const [isVisible, setIsVisible] = useState(false);
   const [initialPath] = useState(location.pathname);
-  const [isDemoMode, setIsDemoMode] = useState(false);
+  const [isDemoMode, setIsDemoMode] = useState(() => computeDemoModeSync(location.search));
 
   // Vérifier le mode démo au montage ET à chaque changement de location
   useEffect(() => {
-    const checkDemoMode = () => {
-      // Vérifier l'URL actuelle (React Router)
-      const urlHasDemo = new URLSearchParams(location.search).get("demo") === "true";
-      
-      // Vérifier aussi window.location au cas où (navigation directe)
-      const windowHasDemo = new URLSearchParams(window.location.search).get("demo") === "true";
-      
-      // Vérifier l'URL parente (iframe)
-      let parentHasDemo = false;
-      try {
-        if (window.parent !== window) {
-          parentHasDemo = new URLSearchParams(window.parent.location.search).get("demo") === "true";
-        }
-      } catch (e) {}
-
-      if (urlHasDemo || windowHasDemo || parentHasDemo) {
-        try { (window as any)[DEMO_GLOBAL_KEY] = true; } catch (e) {}
-        try { sessionStorage.setItem(DEMO_STORAGE_KEY, "true"); } catch (e) {}
-        setIsDemoMode(true);
-        return;
-      }
-
-      // Vérifier le storage/global si pas dans l'URL
-      try { 
-        if ((window as any)[DEMO_GLOBAL_KEY] === true) {
-          setIsDemoMode(true);
-          return;
-        }
-      } catch (e) {}
-      
-      try { 
-        if (sessionStorage.getItem(DEMO_STORAGE_KEY) === "true") {
-          setIsDemoMode(true);
-          return;
-        }
-      } catch (e) {}
-      
-      setIsDemoMode(false);
-    };
-
-    checkDemoMode();
+    setIsDemoMode(computeDemoModeSync(location.search));
   }, [location.search]);
+
+  // Si le mode démo s'active, on s'assure que l'overlay n'est jamais visible
+  useEffect(() => {
+    if (isDemoMode) setIsVisible(false);
+  }, [isDemoMode]);
 
   // Déclencher l'overlay si navigation vers une autre page
   useEffect(() => {
