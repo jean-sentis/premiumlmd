@@ -18,20 +18,52 @@ const DemoRdvOverlay = ({
   const location = useLocation();
   const [isVisible, setIsVisible] = useState(false);
   const [initialPath] = useState(location.pathname);
+  const [isDemoMode, setIsDemoMode] = useState(false);
 
-  // Bypass "mode démo": persiste même si le paramètre disparaît lors d'une navigation SPA
-  const isDemoMode = (() => {
-    const urlHasDemo = new URLSearchParams(location.search).get("demo") === "true";
+  // Vérifier le mode démo au montage ET à chaque changement de location
+  useEffect(() => {
+    const checkDemoMode = () => {
+      // Vérifier l'URL actuelle (React Router)
+      const urlHasDemo = new URLSearchParams(location.search).get("demo") === "true";
+      
+      // Vérifier aussi window.location au cas où (navigation directe)
+      const windowHasDemo = new URLSearchParams(window.location.search).get("demo") === "true";
+      
+      // Vérifier l'URL parente (iframe)
+      let parentHasDemo = false;
+      try {
+        if (window.parent !== window) {
+          parentHasDemo = new URLSearchParams(window.parent.location.search).get("demo") === "true";
+        }
+      } catch (e) {}
 
-    if (urlHasDemo) {
-      try { (window as any)[DEMO_GLOBAL_KEY] = true; } catch (e) {}
-      try { sessionStorage.setItem(DEMO_STORAGE_KEY, "true"); } catch (e) {}
-      return true;
-    }
+      if (urlHasDemo || windowHasDemo || parentHasDemo) {
+        try { (window as any)[DEMO_GLOBAL_KEY] = true; } catch (e) {}
+        try { sessionStorage.setItem(DEMO_STORAGE_KEY, "true"); } catch (e) {}
+        setIsDemoMode(true);
+        return;
+      }
 
-    try { if ((window as any)[DEMO_GLOBAL_KEY] === true) return true; } catch (e) {}
-    try { return sessionStorage.getItem(DEMO_STORAGE_KEY) === "true"; } catch (e) { return false; }
-  })();
+      // Vérifier le storage/global si pas dans l'URL
+      try { 
+        if ((window as any)[DEMO_GLOBAL_KEY] === true) {
+          setIsDemoMode(true);
+          return;
+        }
+      } catch (e) {}
+      
+      try { 
+        if (sessionStorage.getItem(DEMO_STORAGE_KEY) === "true") {
+          setIsDemoMode(true);
+          return;
+        }
+      } catch (e) {}
+      
+      setIsDemoMode(false);
+    };
+
+    checkDemoMode();
+  }, [location.search]);
 
   // Déclencher l'overlay si navigation vers une autre page
   useEffect(() => {
