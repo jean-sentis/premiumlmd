@@ -13,14 +13,20 @@ import verreVinRouge from "@/assets/verre-vin-rouge.png";
 import bouteillePetrus from "@/assets/bouteille-petrus.png";
 import bouteilleChartreuse from "@/assets/bouteille-chartreuse.png";
 import expertVins from "@/assets/expert-vins-spiritueux.png";
+import romaneeConti from "@/assets/vins/romanee-conti.png";
+import petrus from "@/assets/vins/petrus.png";
+import lafite from "@/assets/vins/lafite.png";
+import macallan from "@/assets/vins/macallan.png";
+import domPerignon from "@/assets/vins/dom-perignon.png";
+import hennessy from "@/assets/vins/hennessy.png";
 
 const bellesEncheres = [
-  { title: "Romanée-Conti 1990", price: "18 500 €", image: "/placeholder.svg" },
-  { title: "Pétrus 1982", price: "4 200 €", image: "/placeholder.svg" },
-  { title: "Château Lafite Rothschild 1961", price: "3 800 €", image: "/placeholder.svg" },
-  { title: "Macallan 25 ans", price: "2 400 €", image: "/placeholder.svg" },
-  { title: "Dom Pérignon 1969", price: "1 950 €", image: "/placeholder.svg" },
-  { title: "Cognac Hennessy Paradis", price: "890 €", image: "/placeholder.svg" },
+  { title: "Romanée-Conti 1990", price: "18 500 €", image: romaneeConti },
+  { title: "Pétrus 1982", price: "4 200 €", image: petrus },
+  { title: "Château Lafite Rothschild 1961", price: "3 800 €", image: lafite },
+  { title: "Macallan 25 ans", price: "2 400 €", image: macallan },
+  { title: "Dom Pérignon 1969", price: "1 950 €", image: domPerignon },
+  { title: "Cognac Hennessy X.X.O", price: "890 €", image: hennessy },
 ];
 
 const autresSpecialites = [
