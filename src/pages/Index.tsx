@@ -286,24 +286,30 @@ const Index = () => {
                 left: "227px", 
                 bottom: "157px", 
                 width: "329px", 
-                height: "178px",
+                height: "175px",
                 padding: "16px"
               }}
             >
-              <p className="font-serif text-xs tracking-[0.3em] uppercase text-muted-foreground mb-2">céramiques contemporaines</p>
+              <p className="font-serif text-xs font-light tracking-[0.3em] uppercase text-muted-foreground mb-2">céramiques contemporaines</p>
               <p className="font-serif text-xl text-center leading-tight text-foreground">
                 Collection de
               </p>
-              <p className="font-serif text-xl italic text-center leading-tight text-foreground">
+              <p className="font-serif text-xl italic text-center leading-tight text-foreground mb-3">
                 Madame X
               </p>
+              <Link 
+                to="/vente/367ce7dd-fe30-4ce9-a8e5-2fb2f871481e"
+                className="bg-black text-white text-xs uppercase tracking-[0.2em] px-4 py-2 hover:bg-black/80 transition-colors"
+              >
+                voir la vente
+              </Link>
             </div>
             {/* Cartouche 2 : Date */}
             <div 
               className="absolute bg-white flex flex-col items-center justify-center z-10"
               style={{ 
                 right: "225px", 
-                top: "214px", 
+                top: "174px", 
                 width: "225px", 
                 height: "180px",
                 padding: "16px"
