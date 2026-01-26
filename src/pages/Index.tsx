@@ -285,12 +285,12 @@ const Index = () => {
               style={{ 
                 left: "227px", 
                 bottom: "157px", 
-                width: "332px", 
-                height: "185px",
+                width: "329px", 
+                height: "178px",
                 padding: "16px"
               }}
             >
-              <p className="font-serif text-xs tracking-[0.3em] uppercase text-muted-foreground mb-2">céramique contemporaine</p>
+              <p className="font-serif text-xs tracking-[0.3em] uppercase text-muted-foreground mb-2">céramiques contemporaines</p>
               <p className="font-serif text-xl text-center leading-tight text-foreground">
                 Collection de
               </p>
