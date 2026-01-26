@@ -1,5 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { Image } from "https://deno.land/x/imagescript@1.3.0/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -9,6 +10,78 @@ const corsHeaders = {
 interface AnalysisResult {
   explanation: string;
   creator_info: string | null;
+}
+
+// Paramètres de compression pour qualité web optimale
+const MAX_IMAGE_DIMENSION = 1024; // pixels
+const JPEG_QUALITY = 80; // 1-100
+
+/**
+ * Compresse et redimensionne une image pour l'envoi à l'IA
+ * Retourne un data URL base64 optimisé
+ */
+async function compressImageForAI(imageBuffer: ArrayBuffer, contentType: string): Promise<{ dataUrl: string; originalSize: number; compressedSize: number }> {
+  const originalSize = imageBuffer.byteLength;
+  
+  try {
+    // Décoder l'image
+    const uint8Array = new Uint8Array(imageBuffer);
+    let image: Image;
+    
+    if (contentType.includes('png')) {
+      image = await Image.decode(uint8Array);
+    } else {
+      // JPEG et autres formats
+      image = await Image.decode(uint8Array);
+    }
+    
+    const originalWidth = image.width;
+    const originalHeight = image.height;
+    
+    // Redimensionner si nécessaire (garder le ratio)
+    if (originalWidth > MAX_IMAGE_DIMENSION || originalHeight > MAX_IMAGE_DIMENSION) {
+      const ratio = Math.min(MAX_IMAGE_DIMENSION / originalWidth, MAX_IMAGE_DIMENSION / originalHeight);
+      const newWidth = Math.round(originalWidth * ratio);
+      const newHeight = Math.round(originalHeight * ratio);
+      
+      image = image.resize(newWidth, newHeight);
+      console.log(`Image resized: ${originalWidth}x${originalHeight} → ${newWidth}x${newHeight}`);
+    }
+    
+    // Encoder en JPEG avec compression
+    const compressedBuffer = await image.encodeJPEG(JPEG_QUALITY);
+    const compressedSize = compressedBuffer.length;
+    
+    // Convertir en base64 par chunks
+    let binaryString = '';
+    const chunkSize = 8192;
+    for (let i = 0; i < compressedBuffer.length; i += chunkSize) {
+      const chunk = compressedBuffer.subarray(i, i + chunkSize);
+      binaryString += String.fromCharCode.apply(null, chunk as unknown as number[]);
+    }
+    const base64Image = btoa(binaryString);
+    
+    const dataUrl = `data:image/jpeg;base64,${base64Image}`;
+    
+    console.log(`Image compressed: ${Math.round(originalSize / 1024)} KB → ${Math.round(compressedSize / 1024)} KB (${Math.round((1 - compressedSize / originalSize) * 100)}% reduction)`);
+    
+    return { dataUrl, originalSize, compressedSize };
+  } catch (compressionError) {
+    console.warn('Image compression failed, using original:', compressionError);
+    
+    // Fallback: utiliser l'image originale
+    const uint8Array = new Uint8Array(imageBuffer);
+    let binaryString = '';
+    const chunkSize = 8192;
+    for (let i = 0; i < uint8Array.length; i += chunkSize) {
+      const chunk = uint8Array.subarray(i, i + chunkSize);
+      binaryString += String.fromCharCode.apply(null, chunk as unknown as number[]);
+    }
+    const base64Image = btoa(binaryString);
+    const dataUrl = `data:${contentType};base64,${base64Image}`;
+    
+    return { dataUrl, originalSize, compressedSize: originalSize };
+  }
 }
 
 serve(async (req) => {
@@ -150,7 +223,7 @@ Explique-moi de quoi il s'agit et, si un créateur est mentionné, parle-moi de 
         console.log(`Image URL accessible for vision: ${imageUrl}`);
         
         try {
-          // Télécharger l'image et la convertir en base64 pour contourner les problèmes d'accès
+          // Télécharger l'image
           console.log(`Downloading image from: ${imageUrl}`);
           const imageResponse = await fetch(imageUrl);
           
@@ -159,22 +232,10 @@ Explique-moi de quoi il s'agit et, si un créateur est mentionné, parle-moi de 
             imageAnalysis = `⚠️ Impossible de télécharger l'image (HTTP ${imageResponse.status}).`;
           } else {
             const imageBuffer = await imageResponse.arrayBuffer();
-            const uint8Array = new Uint8Array(imageBuffer);
-            
-            // Convertir en base64 par chunks pour éviter le stack overflow
-            // (le spread operator échoue sur les gros tableaux)
-            let binaryString = '';
-            const chunkSize = 8192;
-            for (let i = 0; i < uint8Array.length; i += chunkSize) {
-              const chunk = uint8Array.subarray(i, i + chunkSize);
-              binaryString += String.fromCharCode.apply(null, chunk as unknown as number[]);
-            }
-            const base64Image = btoa(binaryString);
-            
             const contentType = imageResponse.headers.get('content-type') || 'image/jpeg';
-            const dataUrl = `data:${contentType};base64,${base64Image}`;
             
-            console.log(`Image downloaded and converted to base64 (${Math.round(imageBuffer.byteLength / 1024)} KB)`);
+            // Compresser l'image pour l'IA (max 1024px, qualité web)
+            const { dataUrl, originalSize, compressedSize } = await compressImageForAI(imageBuffer, contentType);
             
             const imagePrompt = `Décris précisément cet objet d'art ou antiquité visible sur la photo.
       
