@@ -279,15 +279,15 @@ const Index = () => {
               alt="Collection de céramiques"
               className="w-full h-full object-cover object-center"
             />
-            {/* Cartouche 1 : Annonce de la vente - zone boîte bleue */}
+            {/* Cartouche 1 : Annonce de la vente - partie supérieure du cube bleu */}
             <div 
               className="absolute bg-white flex flex-col items-center justify-center z-10"
               style={{ 
                 left: "385px", 
-                bottom: "15px", 
+                bottom: "95px", 
                 width: "230px", 
-                height: "170px",
-                padding: "20px"
+                height: "115px",
+                padding: "16px"
               }}
             >
               <p className="font-serif text-xs tracking-[0.3em] uppercase text-muted-foreground mb-2">Vente</p>
