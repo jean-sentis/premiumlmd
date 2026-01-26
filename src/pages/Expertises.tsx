@@ -14,6 +14,7 @@ import { ChevronLeft, ChevronRight, Calendar, Clock, MapPin, Phone, Gavel, Eye, 
 import { format, addWeeks, startOfWeek, addDays, isSameDay, isToday, isBefore } from "date-fns";
 import { fr } from "date-fns/locale";
 import { useTimelineEvents, TimelineEvent } from "@/hooks/use-timeline-events";
+import { getDemoNow } from "@/lib/site-config";
 
 // Types d'événements avec couleurs distinctes
 type EventType = "expertise" | "vente" | "exposition";
@@ -62,7 +63,7 @@ const eventTypeColors: Record<EventType, { bg: string; border: string; icon: str
 
 const Expertises = () => {
   const [currentWeekStart, setCurrentWeekStart] = useState(() => 
-    startOfWeek(new Date(), { weekStartsOn: 1 })
+    startOfWeek(getDemoNow(), { weekStartsOn: 1 })
   );
   const [selectedEvent, setSelectedEvent] = useState<TimelineEvent | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -192,7 +193,7 @@ const Expertises = () => {
                   <div key={weekIndex} className="grid grid-cols-7 gap-1 md:gap-2">
                     {week.map((date) => {
                       const events = getEventsForDate(date);
-                      const isPast = isBefore(date, new Date()) && !isToday(date);
+                      const isPast = isBefore(date, getDemoNow()) && !isToday(date);
                       const hasEvents = events.length > 0;
                       const firstEvent = events[0];
                       const displayType = firstEvent ? mapEventType(firstEvent.type) : null;
@@ -276,7 +277,7 @@ const Expertises = () => {
             ) : (
               <div className="space-y-4">
                 {calendarEvents
-                  .filter(event => !isBefore(event.date, new Date()) || isToday(event.date))
+                  .filter(event => !isBefore(event.date, getDemoNow()) || isToday(event.date))
                   .sort((a, b) => a.date.getTime() - b.date.getTime())
                   .slice(0, 8)
                   .map((event) => {

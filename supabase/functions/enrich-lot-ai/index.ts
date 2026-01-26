@@ -165,11 +165,17 @@ Explique-moi de quoi il s'agit et, si un créateur est mentionné, parle-moi de 
         console.log(`Fetching image from: ${imageUrl}`);
         
         try {
+          const buildOptimizedUrl = (url: string, width: number, quality: number) =>
+            `https://wsrv.nl/?url=${encodeURIComponent(url)}&w=${width}&q=${quality}&output=jpg`;
+
+          let fetchUrl = imageUrl;
+          let abortImageProcessing = false;
+
           // Télécharger l'image avec un timeout et limite de taille
           const controller = new AbortController();
           const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout
           
-          const imageResponse = await fetch(imageUrl, { 
+          let imageResponse = await fetch(fetchUrl, { 
             signal: controller.signal,
             headers: {
               'Accept': 'image/*'
@@ -184,22 +190,62 @@ Explique-moi de quoi il s'agit et, si un créateur est mentionné, parle-moi de 
             // Vérifier la taille via Content-Length header si disponible
             const contentLength = imageResponse.headers.get('content-length');
             if (contentLength && parseInt(contentLength) > MAX_IMAGE_SIZE_BYTES) {
-              console.log(`Image too large: ${contentLength} bytes`);
-              imageAnalysis = `⚠️ Image trop volumineuse (${Math.round(parseInt(contentLength) / 1024 / 1024)}MB). Maximum: 3MB.`;
+              console.log(`Image too large: ${contentLength} bytes — retry optimized`);
+
+              // Retenter avec une version redimensionnée/optimisée (sans stocker de copie)
+              fetchUrl = buildOptimizedUrl(imageUrl, 1024, 75);
+              const controller2 = new AbortController();
+              const timeoutId2 = setTimeout(() => controller2.abort(), 15000);
+              imageResponse = await fetch(fetchUrl, {
+                signal: controller2.signal,
+                headers: { 'Accept': 'image/*' },
+              });
+              clearTimeout(timeoutId2);
+
+              if (!imageResponse.ok) {
+                console.error(`Failed to download optimized image: ${imageResponse.status}`);
+                imageAnalysis = `⚠️ Image trop volumineuse / inaccessible (HTTP ${imageResponse.status}).`;
+                abortImageProcessing = true;
+              }
+            }
+
+            if (abortImageProcessing) {
+              // imageAnalysis déjà renseignée
             } else {
-              // Télécharger le contenu
-              const imageBuffer = await imageResponse.arrayBuffer();
-              const actualSize = imageBuffer.byteLength;
-              
-              console.log(`Image downloaded: ${Math.round(actualSize / 1024)} KB`);
-              
-              if (actualSize > MAX_IMAGE_SIZE_BYTES) {
-                imageAnalysis = `⚠️ Image trop volumineuse (${Math.round(actualSize / 1024 / 1024)}MB). Maximum: 3MB.`;
-              } else {
-                // Convertir en base64
-                const contentType = imageResponse.headers.get('content-type') || 'image/jpeg';
-                const base64Image = arrayBufferToBase64(imageBuffer);
-                const dataUrl = `data:${contentType};base64,${base64Image}`;
+
+            // Télécharger le contenu
+            let imageBuffer = await imageResponse.arrayBuffer();
+            let actualSize = imageBuffer.byteLength;
+            
+            console.log(`Image downloaded: ${Math.round(actualSize / 1024)} KB`);
+            
+            if (actualSize > MAX_IMAGE_SIZE_BYTES) {
+              console.log(`Image still too large (${actualSize} bytes) — retry smaller optimized`);
+
+              const smallerUrl = buildOptimizedUrl(imageUrl, 720, 70);
+              const controller3 = new AbortController();
+              const timeoutId3 = setTimeout(() => controller3.abort(), 15000);
+              const smallerResponse = await fetch(smallerUrl, {
+                signal: controller3.signal,
+                headers: { 'Accept': 'image/*' },
+              });
+              clearTimeout(timeoutId3);
+
+              if (smallerResponse.ok) {
+                imageBuffer = await smallerResponse.arrayBuffer();
+                actualSize = imageBuffer.byteLength;
+                imageResponse = smallerResponse;
+                console.log(`Smaller image downloaded: ${Math.round(actualSize / 1024)} KB`);
+              }
+            }
+
+            if (actualSize > MAX_IMAGE_SIZE_BYTES) {
+              imageAnalysis = `⚠️ Image trop volumineuse (${Math.round(actualSize / 1024 / 1024)}MB). Maximum: 3MB.`;
+            } else {
+              // Convertir en base64
+              const contentType = imageResponse.headers.get('content-type') || 'image/jpeg';
+              const base64Image = arrayBufferToBase64(imageBuffer);
+              const dataUrl = `data:${contentType};base64,${base64Image}`;
                 
                 console.log(`Sending image to vision API...`);
                 
@@ -248,7 +294,7 @@ Sois précis et factuel, comme un commissaire-priseur décrivant un lot. 3-4 phr
                     imageAnalysis = `⚠️ Erreur API Vision (${visionResponse.status})`;
                   }
                 }
-              }
+            }
             }
           }
         } catch (downloadError) {
