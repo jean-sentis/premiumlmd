@@ -159,7 +159,18 @@ Explique-moi de quoi il s'agit et, si un créateur est mentionné, parle-moi de 
             imageAnalysis = `⚠️ Impossible de télécharger l'image (HTTP ${imageResponse.status}).`;
           } else {
             const imageBuffer = await imageResponse.arrayBuffer();
-            const base64Image = btoa(String.fromCharCode(...new Uint8Array(imageBuffer)));
+            const uint8Array = new Uint8Array(imageBuffer);
+            
+            // Convertir en base64 par chunks pour éviter le stack overflow
+            // (le spread operator échoue sur les gros tableaux)
+            let binaryString = '';
+            const chunkSize = 8192;
+            for (let i = 0; i < uint8Array.length; i += chunkSize) {
+              const chunk = uint8Array.subarray(i, i + chunkSize);
+              binaryString += String.fromCharCode.apply(null, chunk as unknown as number[]);
+            }
+            const base64Image = btoa(binaryString);
+            
             const contentType = imageResponse.headers.get('content-type') || 'image/jpeg';
             const dataUrl = `data:${contentType};base64,${base64Image}`;
             
