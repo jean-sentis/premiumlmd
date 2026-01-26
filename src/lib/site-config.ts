@@ -17,27 +17,17 @@
  * =====================================================
  */
 
-// =====================================================
-// Temps / “now”
-// =====================================================
-// IMPORTANT:
-// Le calendrier (expertises/ventes) filtre les événements à partir de "maintenant".
-// Si on force une date de démo dans le futur, tout le planning passé disparaît.
+// Date actuelle du site (mode démo : 3 janvier 2026)
+// Cette date de base est utilisée pour définir le jour de démo
+const DEMO_DATE_BASE = new Date('2026-01-03');
 
-// Activer uniquement si vous voulez simuler une date fixe (dev / démo interne)
-const DEMO_MODE = false;
-const DEMO_DATE_BASE = new Date('2026-01-03T12:00:00Z');
-
-// Fonction centrale pour obtenir la date “courante” de l’app
+// Fonction pour obtenir la date de démo avec l'heure réelle actuelle
 export const getDemoNow = (): Date => {
-  if (!DEMO_MODE) return new Date();
-
-  // Date fixe avec heure réelle (utile pour simuler un jour donné)
   const realNow = new Date();
   return new Date(
-    DEMO_DATE_BASE.getFullYear(),
-    DEMO_DATE_BASE.getMonth(),
-    DEMO_DATE_BASE.getDate(),
+    2026, // année de démo
+    0,    // janvier (0-indexed)
+    3,    // jour 3
     realNow.getHours(),
     realNow.getMinutes(),
     realNow.getSeconds(),
@@ -49,7 +39,7 @@ export const getDemoNow = (): Date => {
 export const DEMO_DATE = DEMO_DATE_BASE;
 
 // Année courante pour les copyrights et affichages
-export const CURRENT_YEAR = new Date().getFullYear();
+export const CURRENT_YEAR = 2026;
 
 // Coordonnées de l'entreprise (SOURCE UNIQUE - à utiliser partout)
 export const COMPANY_INFO = {
