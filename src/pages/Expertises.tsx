@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Helmet } from "react-helmet-async";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -10,23 +10,30 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { ChevronLeft, ChevronRight, Calendar, Clock, MapPin, Phone, Gavel, Eye, Search } from "lucide-react";
+import { ChevronLeft, ChevronRight, Calendar, Clock, MapPin, Phone, Gavel, Eye, Search, Loader2 } from "lucide-react";
 import { format, addWeeks, startOfWeek, addDays, isSameDay, isToday, isBefore } from "date-fns";
 import { fr } from "date-fns/locale";
+import { useTimelineEvents, TimelineEvent } from "@/hooks/use-timeline-events";
 
 // Types d'événements avec couleurs distinctes
-type EventType = "expertise" | "vente" | "exposition-vente";
+type EventType = "expertise" | "vente" | "exposition";
 
-interface CalendarEvent {
-  date: Date;
-  title: string;
-  expert?: string;
-  time: string;
-  description: string;
-  location: string;
-  type: EventType;
-  catalogueUrl?: string; // URL si catalogue en ligne
-}
+// Mapping des types de TimelineEvent vers EventType pour l'affichage
+const mapEventType = (type: TimelineEvent["type"]): EventType => {
+  switch (type) {
+    case "vente-live":
+    case "vente-chrono":
+    case "vente-preparation":
+      return "vente";
+    case "exposition":
+    case "veille-exposition":
+      return "exposition";
+    case "expertise":
+    case "expertise-itinerante":
+    default:
+      return "expertise";
+  }
+};
 
 // Couleurs par type d'événement - déclinaisons de bleu et blanc
 const eventTypeColors: Record<EventType, { bg: string; border: string; icon: string; label: string; cardBg: string }> = {
@@ -44,103 +51,31 @@ const eventTypeColors: Record<EventType, { bg: string; border: string; icon: str
     label: "Vente",
     cardBg: "bg-brand-primary/5"
   },
-  "exposition-vente": {
+  exposition: {
     bg: "bg-sky-500/15",
     border: "border-sky-500/40",
     icon: "text-sky-600",
-    label: "Exposition & Vente",
+    label: "Exposition",
     cardBg: "bg-sky-50"
   }
 };
-
-// Mock data for calendar events - in production this would come from a database
-const calendarEvents: CalendarEvent[] = [
-  {
-    date: new Date(2025, 11, 9),
-    title: "Expertise Bijoux & Montres",
-    expert: "Marie Dupont",
-    time: "10h00 - 12h00",
-    description: "Expertise gratuite de vos bijoux anciens, montres de collection et pierres précieuses.",
-    location: "Salle d'expertise principale",
-    type: "expertise"
-  },
-  {
-    date: new Date(2025, 11, 10),
-    title: "Vente Mobilier & Objets d'Art",
-    time: "14h00",
-    description: "Vente cataloguée de mobilier XVIIIe et XIXe, objets d'art et tableaux anciens.",
-    location: "Grande salle des ventes",
-    type: "vente",
-    catalogueUrl: "https://interencheres.com/catalogue-123"
-  },
-  {
-    date: new Date(2025, 11, 11),
-    title: "Exposition Art Moderne",
-    time: "10h00 - 18h00",
-    description: "Exposition publique avant la vente du 12 décembre. Venez découvrir les lots.",
-    location: "Galerie du premier étage",
-    type: "exposition-vente"
-  },
-  {
-    date: new Date(2025, 11, 12),
-    title: "Vente Art Moderne",
-    time: "14h30",
-    description: "Tableaux, sculptures et œuvres du XXème siècle. Vente live et en ligne.",
-    location: "Galerie du premier étage",
-    type: "vente",
-    catalogueUrl: "https://interencheres.com/catalogue-124"
-  },
-  {
-    date: new Date(2025, 11, 16),
-    title: "Expertise Générale",
-    expert: "Maître Pascal Delbarry",
-    time: "10h00 - 12h00",
-    description: "Expertise tous objets : mobilier, tableaux, objets d'art, argenterie, etc.",
-    location: "Hôtel des ventes",
-    type: "expertise"
-  },
-  {
-    date: new Date(2025, 11, 17),
-    title: "Exposition Vins & Spiritueux",
-    time: "14h00 - 18h00",
-    description: "Exposition des lots avant la vente du 18 décembre. Dégustation sur réservation.",
-    location: "Cave climatisée",
-    type: "exposition-vente"
-  },
-  {
-    date: new Date(2025, 11, 18),
-    title: "Vente Vins & Spiritueux",
-    time: "14h00",
-    description: "Grands crus de Bourgogne et Bordeaux, champagnes millésimés, whiskies rares.",
-    location: "Cave climatisée",
-    type: "vente"
-  },
-  {
-    date: new Date(2025, 11, 23),
-    title: "Expertise Militaria",
-    expert: "Colonel Bertrand",
-    time: "10h00 - 12h00",
-    description: "Uniformes, décorations, armes anciennes et souvenirs historiques.",
-    location: "Salle des collections",
-    type: "expertise"
-  },
-  {
-    date: new Date(2026, 0, 6),
-    title: "Expertise Céramiques",
-    expert: "Claire Fontaine",
-    time: "14h00 - 17h00",
-    description: "Porcelaines, faïences, grès et céramiques de toutes époques.",
-    location: "Salle d'expertise principale",
-    type: "expertise"
-  },
-];
 
 const Expertises = () => {
   const [currentWeekStart, setCurrentWeekStart] = useState(() => 
     startOfWeek(new Date(), { weekStartsOn: 1 })
   );
-  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
+  const [selectedEvent, setSelectedEvent] = useState<TimelineEvent | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+
+  // Récupérer les événements depuis la base de données
+  const { events: timelineEvents, isLoading } = useTimelineEvents(true);
+
+  // Filtrer pour ne garder que les événements pertinents (expertises, ventes, expositions)
+  const calendarEvents = useMemo(() => {
+    return timelineEvents.filter(evt => 
+      evt.type !== "fermeture"
+    );
+  }, [timelineEvents]);
 
   // Generate 4 weeks of dates
   const weeks = Array.from({ length: 4 }, (_, weekIndex) => {
@@ -156,7 +91,7 @@ const Expertises = () => {
     switch (type) {
       case "expertise": return Search;
       case "vente": return Gavel;
-      case "exposition-vente": return Eye;
+      case "exposition": return Eye;
     }
   };
 
@@ -171,7 +106,7 @@ const Expertises = () => {
   const handleDateClick = (date: Date) => {
     const events = getEventsForDate(date);
     if (events.length > 0) {
-      setSelectedEvent(events[0]); // Show first event, could be extended to show multiple
+      setSelectedEvent(events[0]);
       setDialogOpen(true);
     }
   };
@@ -247,46 +182,56 @@ const Expertises = () => {
             </div>
 
             {/* Calendar Grid - 4 Weeks */}
-            <div className="space-y-1 md:space-y-2">
-              {weeks.map((week, weekIndex) => (
-                <div key={weekIndex} className="grid grid-cols-7 gap-1 md:gap-2">
-                  {week.map((date) => {
-                    const events = getEventsForDate(date);
-                    const isPast = isBefore(date, new Date()) && !isToday(date);
-                    const hasEvents = events.length > 0;
-                    const firstEvent = events[0];
-                    const eventColors = firstEvent ? eventTypeColors[firstEvent.type] : null;
-                    const EventIcon = firstEvent ? getEventIcon(firstEvent.type) : Calendar;
+            {isLoading ? (
+              <div className="flex items-center justify-center py-20">
+                <Loader2 className="h-8 w-8 animate-spin text-brand-primary" />
+              </div>
+            ) : (
+              <div className="space-y-1 md:space-y-2">
+                {weeks.map((week, weekIndex) => (
+                  <div key={weekIndex} className="grid grid-cols-7 gap-1 md:gap-2">
+                    {week.map((date) => {
+                      const events = getEventsForDate(date);
+                      const isPast = isBefore(date, new Date()) && !isToday(date);
+                      const hasEvents = events.length > 0;
+                      const firstEvent = events[0];
+                      const displayType = firstEvent ? mapEventType(firstEvent.type) : null;
+                      const eventColors = displayType ? eventTypeColors[displayType] : null;
+                      const EventIcon = displayType ? getEventIcon(displayType) : Calendar;
 
-                    return (
-                      <button
-                        key={date.toISOString()}
-                        onClick={() => handleDateClick(date)}
-                        disabled={!hasEvents || isPast}
-                        className={`
-                          aspect-square p-1 md:p-2 rounded-lg text-center transition-all
-                          flex flex-col items-center justify-center gap-0.5
-                          ${isToday(date) ? "ring-2 ring-brand-primary" : ""}
-                          ${hasEvents && !isPast && eventColors
-                            ? `${eventColors.bg} hover:opacity-80 cursor-pointer border ${eventColors.border}` 
-                            : "bg-muted/30"
-                          }
-                          ${isPast ? "opacity-40" : ""}
-                          ${!hasEvents ? "cursor-default" : ""}
-                        `}
-                      >
-                        <span className={`text-sm md:text-base font-medium ${hasEvents && !isPast ? "text-brand-primary" : "text-muted-foreground"}`}>
-                          {format(date, "d")}
-                        </span>
-                        {hasEvents && eventColors && (
-                          <EventIcon className={`h-3 w-3 md:h-4 md:w-4 ${isPast ? "text-muted-foreground" : eventColors.icon}`} />
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-              ))}
-            </div>
+                      return (
+                        <button
+                          key={date.toISOString()}
+                          onClick={() => handleDateClick(date)}
+                          disabled={!hasEvents || isPast}
+                          className={`
+                            aspect-square p-1 md:p-2 rounded-lg text-center transition-all
+                            flex flex-col items-center justify-center gap-0.5
+                            ${isToday(date) ? "ring-2 ring-brand-primary" : ""}
+                            ${hasEvents && !isPast && eventColors
+                              ? `${eventColors.bg} hover:opacity-80 cursor-pointer border ${eventColors.border}` 
+                              : "bg-muted/30"
+                            }
+                            ${isPast ? "opacity-40" : ""}
+                            ${!hasEvents ? "cursor-default" : ""}
+                          `}
+                        >
+                          <span className={`text-sm md:text-base font-medium ${hasEvents && !isPast ? "text-brand-primary" : "text-muted-foreground"}`}>
+                            {format(date, "d")}
+                          </span>
+                          {hasEvents && eventColors && (
+                            <EventIcon className={`h-3 w-3 md:h-4 md:w-4 ${isPast ? "text-muted-foreground" : eventColors.icon}`} />
+                          )}
+                          {events.length > 1 && (
+                            <span className="text-[10px] text-muted-foreground">+{events.length - 1}</span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                ))}
+              </div>
+            )}
 
             {/* Legend */}
             <div className="flex flex-wrap items-center justify-center gap-4 md:gap-6 mt-8 text-sm text-muted-foreground">
@@ -301,9 +246,9 @@ const Expertises = () => {
                 <span>Vente</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className={`w-4 h-4 rounded ${eventTypeColors["exposition-vente"].bg} border ${eventTypeColors["exposition-vente"].border}`} />
-                <Eye className={`h-3 w-3 ${eventTypeColors["exposition-vente"].icon}`} />
-                <span>Exposition & Vente</span>
+                <div className={`w-4 h-4 rounded ${eventTypeColors.exposition.bg} border ${eventTypeColors.exposition.border}`} />
+                <Eye className={`h-3 w-3 ${eventTypeColors.exposition.icon}`} />
+                <span>Exposition</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-4 h-4 rounded ring-2 ring-brand-primary bg-background" />
@@ -320,52 +265,70 @@ const Expertises = () => {
               Prochains Événements
             </h2>
             
-            <div className="space-y-4">
-              {calendarEvents
-                .filter(event => !isBefore(event.date, new Date()) || isToday(event.date))
-                .sort((a, b) => a.date.getTime() - b.date.getTime())
-                .slice(0, 8)
-                .map((event, index) => {
-                  const colors = eventTypeColors[event.type];
-                  const EventIcon = getEventIcon(event.type);
-                  
-                  return (
-                    <button
-                      key={index}
-                      onClick={() => {
-                        setSelectedEvent(event);
-                        setDialogOpen(true);
-                      }}
-                      className={`w-full text-left bg-card rounded-lg p-4 md:p-6 shadow-sm hover:shadow-md transition-shadow border-l-4 ${colors.border.replace('/50', '')}`}
-                    >
-                      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 md:gap-4">
-                        <div className="flex items-start gap-3">
-                          <EventIcon className={`h-5 w-5 mt-1 ${colors.icon}`} />
-                          <div>
-                            <div className="flex items-center gap-2 mb-1">
-                              <span className={`text-xs px-2 py-0.5 rounded-full ${colors.bg} ${colors.icon} font-medium`}>
-                                {colors.label}
-                              </span>
+            {isLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="h-6 w-6 animate-spin text-brand-primary" />
+              </div>
+            ) : calendarEvents.length === 0 ? (
+              <p className="text-center text-muted-foreground py-8">
+                Aucun événement à venir pour le moment.
+              </p>
+            ) : (
+              <div className="space-y-4">
+                {calendarEvents
+                  .filter(event => !isBefore(event.date, new Date()) || isToday(event.date))
+                  .sort((a, b) => a.date.getTime() - b.date.getTime())
+                  .slice(0, 8)
+                  .map((event) => {
+                    const displayType = mapEventType(event.type);
+                    const colors = eventTypeColors[displayType];
+                    const EventIcon = getEventIcon(displayType);
+                    
+                    return (
+                      <button
+                        key={event.id}
+                        onClick={() => {
+                          setSelectedEvent(event);
+                          setDialogOpen(true);
+                        }}
+                        className={`w-full text-left bg-card rounded-lg p-4 md:p-6 shadow-sm hover:shadow-md transition-shadow border-l-4 ${colors.border.replace('/50', '').replace('/40', '').replace('/30', '')}`}
+                      >
+                        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 md:gap-4">
+                          <div className="flex items-start gap-3">
+                            <EventIcon className={`h-5 w-5 mt-1 ${colors.icon}`} />
+                            <div>
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className={`text-xs px-2 py-0.5 rounded-full ${colors.bg} ${colors.icon} font-medium`}>
+                                  {colors.label}
+                                </span>
+                                {event.specialty && (
+                                  <span className="text-xs text-muted-foreground">
+                                    {event.specialty}
+                                  </span>
+                                )}
+                              </div>
+                              <h3 className="font-semibold text-lg text-brand-primary">{event.title}</h3>
+                              {event.location && <p className="text-muted-foreground text-sm">{event.location}</p>}
                             </div>
-                            <h3 className="font-semibold text-lg text-brand-primary">{event.title}</h3>
-                            {event.expert && <p className="text-muted-foreground text-sm">{event.expert}</p>}
+                          </div>
+                          <div className="flex items-center gap-4 text-sm text-muted-foreground ml-8 md:ml-0">
+                            <span className="flex items-center gap-1">
+                              <Calendar className="h-4 w-4" />
+                              {format(event.date, "d MMMM yyyy", { locale: fr })}
+                            </span>
+                            {event.time && (
+                              <span className="flex items-center gap-1">
+                                <Clock className="h-4 w-4" />
+                                {event.time}
+                              </span>
+                            )}
                           </div>
                         </div>
-                        <div className="flex items-center gap-4 text-sm text-muted-foreground ml-8 md:ml-0">
-                          <span className="flex items-center gap-1">
-                            <Calendar className="h-4 w-4" />
-                            {format(event.date, "d MMMM yyyy", { locale: fr })}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <Clock className="h-4 w-4" />
-                            {event.time}
-                          </span>
-                        </div>
-                      </div>
-                    </button>
-                  );
-                })}
-            </div>
+                      </button>
+                    );
+                  })}
+              </div>
+            )}
           </div>
         </section>
 
@@ -449,8 +412,9 @@ const Expertises = () => {
               {selectedEvent && (
                 <>
                   {(() => {
-                    const EventIcon = getEventIcon(selectedEvent.type);
-                    const colors = eventTypeColors[selectedEvent.type];
+                    const displayType = mapEventType(selectedEvent.type);
+                    const EventIcon = getEventIcon(displayType);
+                    const colors = eventTypeColors[displayType];
                     return <EventIcon className={`h-5 w-5 ${colors.icon}`} />;
                   })()}
                   {selectedEvent.title}
@@ -460,12 +424,14 @@ const Expertises = () => {
             <DialogDescription asChild>
               <div className="space-y-4 pt-4">
                 {selectedEvent && (
-                  <span className={`inline-block text-xs px-2 py-0.5 rounded-full ${eventTypeColors[selectedEvent.type].bg} ${eventTypeColors[selectedEvent.type].icon} font-medium`}>
-                    {eventTypeColors[selectedEvent.type].label}
+                  <span className={`inline-block text-xs px-2 py-0.5 rounded-full ${eventTypeColors[mapEventType(selectedEvent.type)].bg} ${eventTypeColors[mapEventType(selectedEvent.type)].icon} font-medium`}>
+                    {eventTypeColors[mapEventType(selectedEvent.type)].label}
                   </span>
                 )}
                 
-                <p className="text-base">{selectedEvent?.description}</p>
+                {selectedEvent?.description && (
+                  <p className="text-base">{selectedEvent.description}</p>
+                )}
                 
                 <div className="space-y-3 text-sm">
                   <div className="flex items-center gap-3">
@@ -474,31 +440,35 @@ const Expertises = () => {
                       {selectedEvent?.date && format(selectedEvent.date, "EEEE d MMMM yyyy", { locale: fr })}
                     </span>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <Clock className="h-4 w-4 text-brand-secondary" />
-                    <span>{selectedEvent?.time}</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <MapPin className="h-4 w-4 text-brand-secondary" />
-                    <span>{selectedEvent?.location}</span>
-                  </div>
+                  {selectedEvent?.time && (
+                    <div className="flex items-center gap-3">
+                      <Clock className="h-4 w-4 text-brand-secondary" />
+                      <span>{selectedEvent.time}</span>
+                    </div>
+                  )}
+                  {selectedEvent?.location && (
+                    <div className="flex items-center gap-3">
+                      <MapPin className="h-4 w-4 text-brand-secondary" />
+                      <span>{selectedEvent.location}</span>
+                    </div>
+                  )}
                 </div>
 
-                {selectedEvent?.expert && (
+                {selectedEvent?.specialty && (
                   <div className="pt-4 border-t">
-                    <p className="text-sm text-muted-foreground mb-2">Expert responsable :</p>
-                    <p className="font-medium">{selectedEvent.expert}</p>
+                    <p className="text-sm text-muted-foreground mb-2">Spécialité :</p>
+                    <p className="font-medium">{selectedEvent.specialty}</p>
                   </div>
                 )}
 
                 <div className="flex gap-3 pt-4">
-                  {selectedEvent?.catalogueUrl ? (
+                  {selectedEvent?.link ? (
                     <Button className="flex-1" asChild>
-                      <a href={selectedEvent.catalogueUrl} target="_blank" rel="noopener noreferrer">
+                      <a href={selectedEvent.link}>
                         Voir le catalogue
                       </a>
                     </Button>
-                  ) : selectedEvent?.type === "vente" ? (
+                  ) : mapEventType(selectedEvent?.type || "expertise") === "vente" ? (
                     <Button className="flex-1" disabled>
                       Catalogue en préparation
                     </Button>
