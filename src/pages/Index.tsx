@@ -283,9 +283,9 @@ const Index = () => {
             <div 
               className="absolute bg-white flex flex-col items-center justify-center z-10"
               style={{ 
-                left: "235px", 
-                bottom: "192px", 
-                width: "336px", 
+                left: "227px", 
+                bottom: "157px", 
+                width: "332px", 
                 height: "185px",
                 padding: "16px"
               }}
@@ -303,7 +303,7 @@ const Index = () => {
               className="absolute bg-white flex flex-col items-center justify-center z-10"
               style={{ 
                 right: "225px", 
-                top: "210px", 
+                top: "214px", 
                 width: "225px", 
                 height: "180px",
                 padding: "16px"
