@@ -1,4 +1,4 @@
-import { addWeeks, addDays, startOfWeek, setHours, setMinutes, isAfter, nextWednesday } from "date-fns";
+import { addWeeks, addDays, startOfWeek, setHours, setMinutes, isAfter, nextWednesday, startOfDay } from "date-fns";
 import { isJourFerie } from "./site-config";
 
 export interface TimelineEvent {
@@ -69,27 +69,17 @@ const VILLES_TOURNEE = [
 export const generateExpertiseItineranteEvents = (startDate: Date, weeksAhead: number = 24): TimelineEvent[] => {
   const events: TimelineEvent[] = [];
   
-  // Date de début de la tournée : 7 janvier 2026 (mode démo)
-  const tourStartDate = new Date(2026, 0, 7); // 7 janvier 2026 (c'est un mercredi)
-  let currentWednesday = tourStartDate;
-  
-  // Si la date de départ est avant le début de la tournée, commencer au début de la tournée
-  if (isAfter(tourStartDate, startDate)) {
-    // On commence à la première date de tournée après startDate
-    while (isAfter(startDate, currentWednesday)) {
-      currentWednesday = addDays(currentWednesday, 14); // Avancer de 2 semaines
-    }
-  } else {
-    // Trouver le prochain mercredi de tournée après startDate
-    while (isAfter(startDate, currentWednesday)) {
-      currentWednesday = addDays(currentWednesday, 14);
-    }
-  }
-  
-  // Calculer l'index de départ dans la rotation des villes
-  const daysSinceStart = Math.floor((currentWednesday.getTime() - tourStartDate.getTime()) / (1000 * 60 * 60 * 24));
-  const weeksElapsed = Math.floor(daysSinceStart / 14);
-  let villeIndex = weeksElapsed % VILLES_TOURNEE.length;
+  // IMPORTANT:
+  // Ne pas dépendre d'une année “démo” (sinon la tournée disparaît). On calcule
+  // la tournée à partir du prochain mercredi réel, puis un mercredi sur deux.
+
+  // Premier mercredi >= startDate
+  const first = nextWednesday(startOfDay(startDate));
+  let currentWednesday = first;
+
+  // Rotation stable: index basé sur le nombre de pas (toutes les 2 semaines) depuis le 1er mercredi
+  let stepIndex = 0;
+  let villeIndex = 0;
   
   // Générer les événements pour les prochaines semaines
   const endDate = addWeeks(startDate, weeksAhead);
@@ -114,7 +104,8 @@ export const generateExpertiseItineranteEvents = (startDate: Date, weeksAhead: n
     
     // Passer au mercredi suivant (dans 2 semaines)
     currentWednesday = addDays(currentWednesday, 14);
-    villeIndex = (villeIndex + 1) % VILLES_TOURNEE.length;
+    stepIndex += 1;
+    villeIndex = stepIndex % VILLES_TOURNEE.length;
   }
   
   return events;
