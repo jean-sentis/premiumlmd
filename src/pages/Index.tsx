@@ -273,22 +273,12 @@ const Index = () => {
           <div className="relative bg-white overflow-hidden" style={{ maxWidth: "1330px", width: "100%", height: "550px" }}>
             {/* Cadre noir au-dessus de tout */}
             <div className="absolute inset-0 pointer-events-none z-20" style={{ border: "15px solid black" }}></div>
-            <div className="w-full h-full flex items-stretch relative">
-              {/* Vidéo à gauche */}
-              <iframe
-                src="https://player.vimeo.com/video/1078927258?autoplay=1&loop=1&muted=1&background=1"
-                className="h-full border-0 flex-shrink-0"
-                style={{ width: "auto", aspectRatio: "9/16" }}
-                allow="autoplay; fullscreen"
-                title="Vidéo enchères"
-              />
-              {/* Mosaïque céramiques à droite */}
-              <img 
-                src={heroCeramiquesMosaic}
-                alt="Collection de céramiques"
-                className="flex-1 h-full object-cover object-center"
-              />
-            </div>
+            {/* Mosaïque céramiques pleine largeur */}
+            <img 
+              src={heroCeramiquesMosaic}
+              alt="Collection de céramiques"
+              className="w-full h-full object-cover object-center"
+            />
           </div>
         </section>
 
