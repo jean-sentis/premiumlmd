@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { parseISO, subDays, format } from "date-fns";
+import { parseISO, subDays, format, addDays, differenceInDays } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { generateEstimationEvents, generateExpertiseItineranteEvents } from "@/lib/timeline-utils";
 import { getDemoNow } from "@/lib/site-config";
@@ -47,7 +47,7 @@ export const useTimelineEvents = (enabled: boolean = true) => {
         const [salesResult, eventsResult] = await Promise.all([
           supabase
             .from('interencheres_sales')
-            .select('id, title, sale_date, sale_type, specialty')
+            .select('id, title, sale_date, sale_type, specialty, lot_count')
             .gte('sale_date', demoDate.toISOString())
             .order('sale_date', { ascending: true }),
           supabase
@@ -67,8 +67,25 @@ export const useTimelineEvents = (enabled: boolean = true) => {
               const saleEndDate = parseISO(sale.sale_date);
               const saleType = sale.sale_type?.toLowerCase() || '';
               const isChrono = saleType.includes('chrono') || saleType.includes('online');
+              const daysUntilSale = differenceInDays(saleEndDate, demoDate);
+              const lotCount = sale.lot_count || 0;
+              
+              // Vente en préparation: plus de 14 jours et moins de 4 lots
+              const isInPreparation = daysUntilSale > 14 && lotCount < 4;
 
-              if (isChrono) {
+              if (isInPreparation) {
+                // Vente en préparation
+                timelineEvents.push({
+                  id: sale.id,
+                  type: "vente-preparation",
+                  title: sale.title,
+                  date: saleEndDate,
+                  time: format(saleEndDate, "HH:mm"),
+                  link: `/vente/${sale.id}`,
+                  specialty: sale.specialty || undefined,
+                  description: "Catalogue en cours de constitution"
+                });
+              } else if (isChrono) {
                 // Vente chrono : commence 11 jours avant la date de fin
                 const chronoStartDate = subDays(saleEndDate, 11);
                 timelineEvents.push({
