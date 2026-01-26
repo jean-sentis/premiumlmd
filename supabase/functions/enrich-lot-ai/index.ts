@@ -1,6 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { Image } from "https://deno.land/x/imagescript@1.3.0/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -12,76 +11,23 @@ interface AnalysisResult {
   creator_info: string | null;
 }
 
-// Paramètres de compression pour qualité web optimale
-const MAX_IMAGE_DIMENSION = 1024; // pixels
-const JPEG_QUALITY = 80; // 1-100
+// Limite de taille d'image pour éviter les dépassements de mémoire
+const MAX_IMAGE_SIZE_BYTES = 3 * 1024 * 1024; // 3 MB max
 
 /**
- * Compresse et redimensionne une image pour l'envoi à l'IA
- * Retourne un data URL base64 optimisé
+ * Convertit un ArrayBuffer en base64 par chunks (évite stack overflow)
  */
-async function compressImageForAI(imageBuffer: ArrayBuffer, contentType: string): Promise<{ dataUrl: string; originalSize: number; compressedSize: number }> {
-  const originalSize = imageBuffer.byteLength;
+function arrayBufferToBase64(buffer: ArrayBuffer): string {
+  const uint8Array = new Uint8Array(buffer);
+  const chunkSize = 8192;
+  let binaryString = '';
   
-  try {
-    // Décoder l'image
-    const uint8Array = new Uint8Array(imageBuffer);
-    let image: Image;
-    
-    if (contentType.includes('png')) {
-      image = await Image.decode(uint8Array);
-    } else {
-      // JPEG et autres formats
-      image = await Image.decode(uint8Array);
-    }
-    
-    const originalWidth = image.width;
-    const originalHeight = image.height;
-    
-    // Redimensionner si nécessaire (garder le ratio)
-    if (originalWidth > MAX_IMAGE_DIMENSION || originalHeight > MAX_IMAGE_DIMENSION) {
-      const ratio = Math.min(MAX_IMAGE_DIMENSION / originalWidth, MAX_IMAGE_DIMENSION / originalHeight);
-      const newWidth = Math.round(originalWidth * ratio);
-      const newHeight = Math.round(originalHeight * ratio);
-      
-      image = image.resize(newWidth, newHeight);
-      console.log(`Image resized: ${originalWidth}x${originalHeight} → ${newWidth}x${newHeight}`);
-    }
-    
-    // Encoder en JPEG avec compression
-    const compressedBuffer = await image.encodeJPEG(JPEG_QUALITY);
-    const compressedSize = compressedBuffer.length;
-    
-    // Convertir en base64 par chunks
-    let binaryString = '';
-    const chunkSize = 8192;
-    for (let i = 0; i < compressedBuffer.length; i += chunkSize) {
-      const chunk = compressedBuffer.subarray(i, i + chunkSize);
-      binaryString += String.fromCharCode.apply(null, chunk as unknown as number[]);
-    }
-    const base64Image = btoa(binaryString);
-    
-    const dataUrl = `data:image/jpeg;base64,${base64Image}`;
-    
-    console.log(`Image compressed: ${Math.round(originalSize / 1024)} KB → ${Math.round(compressedSize / 1024)} KB (${Math.round((1 - compressedSize / originalSize) * 100)}% reduction)`);
-    
-    return { dataUrl, originalSize, compressedSize };
-  } catch (compressionError) {
-    console.warn('Image compression failed, using original:', compressionError);
-    
-    // Fallback: utiliser l'image originale
-    const uint8Array = new Uint8Array(imageBuffer);
-    let binaryString = '';
-    const chunkSize = 8192;
-    for (let i = 0; i < uint8Array.length; i += chunkSize) {
-      const chunk = uint8Array.subarray(i, i + chunkSize);
-      binaryString += String.fromCharCode.apply(null, chunk as unknown as number[]);
-    }
-    const base64Image = btoa(binaryString);
-    const dataUrl = `data:${contentType};base64,${base64Image}`;
-    
-    return { dataUrl, originalSize, compressedSize: originalSize };
+  for (let i = 0; i < uint8Array.length; i += chunkSize) {
+    const chunk = uint8Array.subarray(i, Math.min(i + chunkSize, uint8Array.length));
+    binaryString += String.fromCharCode(...chunk);
   }
+  
+  return btoa(binaryString);
 }
 
 serve(async (req) => {
@@ -188,7 +134,7 @@ Explique-moi de quoi il s'agit et, si un créateur est mentionné, parle-moi de 
     }
 
     const aiData = await aiResponse.json();
-    console.log('AI response:', JSON.stringify(aiData, null, 2));
+    console.log('AI response received');
 
     // Extraire le résultat du tool call
     const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
@@ -197,11 +143,9 @@ Explique-moi de quoi il s'agit et, si un créateur est mentionné, parle-moi de 
     }
 
     const analysis: AnalysisResult = JSON.parse(toolCall.function.arguments);
-    console.log('Analysis result:', analysis);
+    console.log('Text analysis complete');
 
     // Analyse des images si demandé
-    // Sources acceptées : URLs Supabase Storage OU URLs externes (Interenchères, etc.)
-    // Les chemins locaux (/images/...) ne sont PAS accessibles depuis l'edge function
     let imageAnalysis = null;
     
     if (analyze_images && lot.images && lot.images.length > 0) {
@@ -215,30 +159,52 @@ Explique-moi de quoi il s'agit et, si un créateur est mentionné, parle-moi de 
       const isLocalPath = imageUrl.startsWith('/');
       
       if (isLocalPath) {
-        // Les chemins locaux ne sont pas accessibles depuis l'edge function
         console.log(`Image is a local path (not accessible): ${imageUrl}`);
-        imageAnalysis = "⚠️ L'image est stockée localement dans le projet. Pour activer l'analyse visuelle, uploadez l'image vers le storage cloud ou utilisez une URL externe (Interenchères).";
+        imageAnalysis = "⚠️ L'image est stockée localement dans le projet. Pour activer l'analyse visuelle, utilisez une URL externe (Interenchères).";
       } else if (isSupabaseStorageUrl || isExternalUrl) {
-        // URL accessible - on peut analyser
-        console.log(`Image URL accessible for vision: ${imageUrl}`);
+        console.log(`Fetching image from: ${imageUrl}`);
         
         try {
-          // Télécharger l'image
-          console.log(`Downloading image from: ${imageUrl}`);
-          const imageResponse = await fetch(imageUrl);
+          // Télécharger l'image avec un timeout et limite de taille
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout
+          
+          const imageResponse = await fetch(imageUrl, { 
+            signal: controller.signal,
+            headers: {
+              'Accept': 'image/*'
+            }
+          });
+          clearTimeout(timeoutId);
           
           if (!imageResponse.ok) {
             console.error(`Failed to download image: ${imageResponse.status}`);
             imageAnalysis = `⚠️ Impossible de télécharger l'image (HTTP ${imageResponse.status}).`;
           } else {
-            const imageBuffer = await imageResponse.arrayBuffer();
-            const contentType = imageResponse.headers.get('content-type') || 'image/jpeg';
-            
-            // Compresser l'image pour l'IA (max 1024px, qualité web)
-            const { dataUrl, originalSize, compressedSize } = await compressImageForAI(imageBuffer, contentType);
-            
-            const imagePrompt = `Décris précisément cet objet d'art ou antiquité visible sur la photo.
-      
+            // Vérifier la taille via Content-Length header si disponible
+            const contentLength = imageResponse.headers.get('content-length');
+            if (contentLength && parseInt(contentLength) > MAX_IMAGE_SIZE_BYTES) {
+              console.log(`Image too large: ${contentLength} bytes`);
+              imageAnalysis = `⚠️ Image trop volumineuse (${Math.round(parseInt(contentLength) / 1024 / 1024)}MB). Maximum: 3MB.`;
+            } else {
+              // Télécharger le contenu
+              const imageBuffer = await imageResponse.arrayBuffer();
+              const actualSize = imageBuffer.byteLength;
+              
+              console.log(`Image downloaded: ${Math.round(actualSize / 1024)} KB`);
+              
+              if (actualSize > MAX_IMAGE_SIZE_BYTES) {
+                imageAnalysis = `⚠️ Image trop volumineuse (${Math.round(actualSize / 1024 / 1024)}MB). Maximum: 3MB.`;
+              } else {
+                // Convertir en base64
+                const contentType = imageResponse.headers.get('content-type') || 'image/jpeg';
+                const base64Image = arrayBufferToBase64(imageBuffer);
+                const dataUrl = `data:${contentType};base64,${base64Image}`;
+                
+                console.log(`Sending image to vision API...`);
+                
+                const imagePrompt = `Décris précisément cet objet d'art ou antiquité visible sur la photo.
+
 1. Que vois-tu EXACTEMENT sur cette image ? Décris l'objet tel que tu le vois.
 2. Quel style, époque ou mouvement artistique semble correspondre ?
 3. Quels matériaux et techniques sont visibles ?
@@ -246,39 +212,52 @@ Explique-moi de quoi il s'agit et, si un créateur est mentionné, parle-moi de 
 
 Sois précis et factuel, comme un commissaire-priseur décrivant un lot. 3-4 phrases.`;
 
-            const visionResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-              method: 'POST',
-              headers: {
-                'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                model: 'google/gemini-2.5-flash',
-                messages: [
-                  {
-                    role: 'user',
-                    content: [
-                      { type: 'text', text: imagePrompt },
-                      { type: 'image_url', image_url: { url: dataUrl } }
+                const visionResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+                  method: 'POST',
+                  headers: {
+                    'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({
+                    model: 'google/gemini-2.5-flash',
+                    messages: [
+                      {
+                        role: 'user',
+                        content: [
+                          { type: 'text', text: imagePrompt },
+                          { type: 'image_url', image_url: { url: dataUrl } }
+                        ]
+                      }
                     ]
-                  }
-                ]
-              }),
-            });
+                  }),
+                });
 
-            if (visionResponse.ok) {
-              const visionData = await visionResponse.json();
-              imageAnalysis = visionData.choices?.[0]?.message?.content;
-              console.log('Image analysis successful:', imageAnalysis?.substring(0, 100));
-            } else {
-              const errorText = await visionResponse.text();
-              console.error('Vision API error:', visionResponse.status, errorText);
-              imageAnalysis = `⚠️ Erreur API Vision (${visionResponse.status}): ${errorText.substring(0, 200)}`;
+                if (visionResponse.ok) {
+                  const visionData = await visionResponse.json();
+                  imageAnalysis = visionData.choices?.[0]?.message?.content;
+                  console.log('Image analysis successful');
+                } else {
+                  const errorText = await visionResponse.text();
+                  console.error('Vision API error:', visionResponse.status, errorText);
+                  
+                  if (visionResponse.status === 429) {
+                    imageAnalysis = "⚠️ Limite de requêtes atteinte. Réessayez dans quelques instants.";
+                  } else if (visionResponse.status === 402) {
+                    imageAnalysis = "⚠️ Crédits IA insuffisants.";
+                  } else {
+                    imageAnalysis = `⚠️ Erreur API Vision (${visionResponse.status})`;
+                  }
+                }
+              }
             }
           }
         } catch (downloadError) {
-          console.error('Error downloading image:', downloadError);
-          imageAnalysis = `⚠️ Erreur lors du téléchargement de l'image: ${String(downloadError)}`;
+          console.error('Error processing image:', downloadError);
+          if (downloadError instanceof Error && downloadError.name === 'AbortError') {
+            imageAnalysis = "⚠️ Timeout lors du téléchargement de l'image.";
+          } else {
+            imageAnalysis = `⚠️ Erreur lors du traitement de l'image.`;
+          }
         }
       } else {
         imageAnalysis = "⚠️ Format d'URL d'image non reconnu.";
