@@ -279,14 +279,14 @@ const Index = () => {
               alt="Collection de céramiques"
               className="w-full h-full object-cover object-center"
             />
-            {/* Cartouche 1 : Annonce de la vente - partie supérieure du cube bleu */}
+            {/* Cartouche 1 : Annonce de la vente - 25% plus large, 2x plus haute, 40px à gauche */}
             <div 
               className="absolute bg-white flex flex-col items-center justify-center z-10"
               style={{ 
-                left: "385px", 
+                left: "345px", 
                 bottom: "95px", 
-                width: "230px", 
-                height: "115px",
+                width: "288px", 
+                height: "230px",
                 padding: "16px"
               }}
             >
@@ -298,14 +298,14 @@ const Index = () => {
                 Madame X
               </p>
             </div>
-            {/* Cartouche 2 : Jour et heure - zone sphères noires */}
+            {/* Cartouche 2 : Date - carré, base doublée (230px), 20px plus bas */}
             <div 
               className="absolute bg-white flex flex-col items-center justify-center z-10"
               style={{ 
                 right: "230px", 
-                top: "125px", 
-                width: "115px", 
-                height: "235px",
+                top: "145px", 
+                width: "230px", 
+                height: "230px",
                 padding: "16px"
               }}
             >
