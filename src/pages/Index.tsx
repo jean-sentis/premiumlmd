@@ -16,10 +16,7 @@ import hotelDesVentesEquipe from "@/assets/hotel-des-ventes-equipe.png";
 import recordJaguarXK120 from "@/assets/record-jaguar-xk120.png";
 import recordTinguelySculpture from "@/assets/record-tinguely-sculpture.png";
 import recordCesarCompression from "@/assets/record-cesar-compression.png";
-import heroSculpture from "@/assets/hero-sculpture.jpg";
-import heroCeramique from "@/assets/hero-ceramique.png";
-import heroCeramiqueVerticale from "@/assets/hero-ceramique-verticale-detoured.png";
-import heroCeramiqueClaire from "@/assets/hero-ceramique-claire-detoured.png";
+import heroCeramiquesMosaic from "@/assets/hero-ceramiques-mosaic.png";
 import {
   Dialog,
   DialogContent,
@@ -276,79 +273,21 @@ const Index = () => {
           <div className="relative bg-white overflow-hidden" style={{ maxWidth: "1330px", width: "100%", height: "550px" }}>
             {/* Cadre noir au-dessus de tout */}
             <div className="absolute inset-0 pointer-events-none z-20" style={{ border: "15px solid black" }}></div>
-            {/* Lien voir la vente */}
-            <Link 
-              to="/vente/367ce7dd-fe30-4ce9-a8e5-2fb2f871481e" 
-              className="absolute z-30 block" 
-              style={{ bottom: "60px", left: "calc(50% - 210px)" }}
-            >
-              <div className="border border-black px-4 py-3 bg-white/80 hover:bg-black transition-colors cursor-pointer group">
-                <p className="font-serif uppercase tracking-wider text-black group-hover:text-white text-center transition-colors" style={{ fontSize: "14px" }}>
-                  voir
-                </p>
-                <p className="font-serif uppercase tracking-wider text-black group-hover:text-white text-center transition-colors" style={{ fontSize: "14px" }}>
-                  la vente
-                </p>
-              </div>
-            </Link>
-            <div className="absolute inset-0 flex items-start justify-start z-10" style={{ marginTop: "110px", marginLeft: "460px" }}>
-              <div className="text-left">
-                <p className="font-serif text-2xl md:text-3xl lg:text-4xl font-light tracking-wide text-black">
-                  Vente de la collection
-                </p>
-                <p className="font-serif text-2xl md:text-3xl lg:text-4xl font-light tracking-wide text-black" style={{ marginTop: "8px" }}>
-                  de Madame X
-                </p>
-                <p className="font-serif text-xl md:text-2xl lg:text-3xl font-light tracking-wide text-black" style={{ marginTop: "22px" }}>
-                  27 février - 14 h
-                </p>
-              </div>
-            </div>
-            <div className="w-full h-full flex justify-between items-end relative">
-            {/* Groupe gauche : vidéo + céramique verticale */}
-            <div className="flex items-end h-full">
+            <div className="w-full h-full flex items-stretch relative">
+              {/* Vidéo à gauche */}
               <iframe
                 src="https://player.vimeo.com/video/1078927258?autoplay=1&loop=1&muted=1&background=1"
-                className="h-full border-0"
+                className="h-full border-0 flex-shrink-0"
                 style={{ width: "auto", aspectRatio: "9/16" }}
                 allow="autoplay; fullscreen"
                 title="Vidéo enchères"
               />
-              <div 
-                className="h-full overflow-hidden"
-                style={{ marginLeft: "5px" }}
-              >
-                <img 
-                  src={heroCeramiqueVerticale}
-                  alt="Céramique verticale"
-                  className="h-full w-auto object-cover object-right"
-                  style={{ marginLeft: "-42px" }}
-                />
-              </div>
-            </div>
-            {/* Groupe droite : céramiques empilées + sculpture */}
-            <div className="flex items-end h-full" style={{ marginRight: "-25px" }}>
-              {/* Colonne céramiques empilées */}
-              <div className="flex flex-col items-end justify-end h-full" style={{ marginRight: "5px" }}>
-                <img 
-                  src={heroCeramiqueClaire}
-                  alt="Céramique fond clair"
-                  className="object-contain"
-                  style={{ height: "360px", width: "auto", marginBottom: "-8px" }}
-                />
-                <img 
-                  src={heroCeramique}
-                  alt="Céramique"
-                  className="object-contain"
-                  style={{ height: "216px", width: "auto", marginBottom: "-14px" }}
-                />
-              </div>
+              {/* Mosaïque céramiques à droite */}
               <img 
-                src={heroSculpture}
-                alt="Sculpture"
-                className="h-full w-auto object-contain"
+                src={heroCeramiquesMosaic}
+                alt="Collection de céramiques"
+                className="flex-1 h-full object-cover object-center"
               />
-            </div>
             </div>
           </div>
         </section>
