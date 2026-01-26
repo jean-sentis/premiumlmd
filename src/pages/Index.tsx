@@ -279,6 +279,42 @@ const Index = () => {
               alt="Collection de céramiques"
               className="w-full h-full object-cover object-center"
             />
+            {/* Cartouche 1 : Annonce de la vente - zone boîte bleue */}
+            <div 
+              className="absolute bg-white flex flex-col items-center justify-center z-10"
+              style={{ 
+                left: "385px", 
+                bottom: "15px", 
+                width: "230px", 
+                height: "170px",
+                padding: "20px"
+              }}
+            >
+              <p className="font-serif text-xs tracking-[0.3em] uppercase text-muted-foreground mb-2">Vente</p>
+              <p className="font-serif text-xl text-center leading-tight text-foreground">
+                Collection de
+              </p>
+              <p className="font-serif text-xl italic text-center leading-tight text-foreground">
+                Madame X
+              </p>
+            </div>
+            {/* Cartouche 2 : Jour et heure - zone sphères noires */}
+            <div 
+              className="absolute bg-white flex flex-col items-center justify-center z-10"
+              style={{ 
+                right: "230px", 
+                top: "125px", 
+                width: "115px", 
+                height: "235px",
+                padding: "16px"
+              }}
+            >
+              <p className="font-serif text-4xl font-light text-foreground">27</p>
+              <p className="font-sans text-[10px] tracking-[0.25em] uppercase text-muted-foreground mt-1">février</p>
+              <div className="w-8 h-px bg-foreground my-4"></div>
+              <p className="font-serif text-2xl font-light text-foreground">14</p>
+              <p className="font-sans text-[10px] tracking-[0.25em] uppercase text-muted-foreground mt-1">heures</p>
+            </div>
           </div>
         </section>
 
