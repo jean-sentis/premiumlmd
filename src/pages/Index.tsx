@@ -283,14 +283,14 @@ const Index = () => {
             <div 
               className="absolute bg-white flex flex-col items-center justify-center z-10"
               style={{ 
-                left: "305px", 
-                bottom: "174px", 
+                left: "235px", 
+                bottom: "192px", 
                 width: "336px", 
-                height: "135px",
+                height: "185px",
                 padding: "16px"
               }}
             >
-              <p className="font-serif text-xs tracking-[0.3em] uppercase text-muted-foreground mb-2">Vente</p>
+              <p className="font-serif text-xs tracking-[0.3em] uppercase text-muted-foreground mb-2">céramique contemporaine</p>
               <p className="font-serif text-xl text-center leading-tight text-foreground">
                 Collection de
               </p>
@@ -303,8 +303,8 @@ const Index = () => {
               className="absolute bg-white flex flex-col items-center justify-center z-10"
               style={{ 
                 right: "225px", 
-                top: "185px", 
-                width: "228px", 
+                top: "210px", 
+                width: "225px", 
                 height: "180px",
                 padding: "16px"
               }}
