@@ -23,6 +23,7 @@ import {
 import { fr } from "date-fns/locale";
 import EventDetailDialog from "./EventDetailDialog";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { getDemoNow } from "@/lib/site-config";
 
 interface TimelineEvent {
   id: string;
@@ -58,8 +59,8 @@ const TimelineCalendar = ({ events, mode, variant = "default" }: TimelineCalenda
       setDialogOpen(true);
     }
   };
-  // Date de démo fixe : 3 janvier 2026
-  const demoDate = new Date(2026, 0, 3);
+  // Date de référence (Mode démo) : toujours passer par la config centrale
+  const demoDate = getDemoNow();
   // Sur mobile, on commence à la date démo directement (pas forcément début de semaine)
   const [periodStart, setPeriodStart] = useState(
     isMobile ? startOfDay(demoDate) : startOfWeek(demoDate, { weekStartsOn: 1 })
@@ -78,11 +79,11 @@ const TimelineCalendar = ({ events, mode, variant = "default" }: TimelineCalenda
   const weekStart = isMobile ? periodStart : startOfWeek(periodStart, { weekStartsOn: 1 });
   
   // Current time state (updates every second)
-  const [currentTime, setCurrentTime] = useState(new Date());
+  const [currentTime, setCurrentTime] = useState(() => getDemoNow());
   
   useEffect(() => {
     const interval = setInterval(() => {
-      setCurrentTime(new Date());
+      setCurrentTime(getDemoNow());
     }, 1000);
     return () => clearInterval(interval);
   }, []);

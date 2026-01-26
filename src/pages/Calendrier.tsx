@@ -9,6 +9,7 @@ import Footer from "@/components/Footer";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import { getDemoNow } from "@/lib/site-config";
 
 // Types d'événements
 type EventType = 'expertise-prevue' | 'expertise-creneau' | 'vente-preparation' | 'vente-catalogue' | 'exposition';
@@ -94,7 +95,9 @@ const Calendrier = () => {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const today = startOfDay(new Date());
+  // Important: le site fonctionne en "Mode démo" (date de référence).
+  // On doit donc baser l'affichage/filtrage sur getDemoNow(), pas sur la date système.
+  const today = startOfDay(getDemoNow());
   const weekStart = startOfWeek(today, { weekStartsOn: 1 });
 
   // Fetch sales and SVV events from Supabase
