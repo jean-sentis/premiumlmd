@@ -11,7 +11,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { ChevronLeft, ChevronRight, Calendar, Clock, MapPin, Phone, Gavel, Eye, Search, Loader2 } from "lucide-react";
-import { format, addWeeks, startOfWeek, addDays, isSameDay, isToday, isBefore } from "date-fns";
+import { format, addWeeks, startOfWeek, addDays, isSameDay, isBefore, startOfDay } from "date-fns";
 import { fr } from "date-fns/locale";
 import { useTimelineEvents, TimelineEvent } from "@/hooks/use-timeline-events";
 import { getDemoNow } from "@/lib/site-config";
@@ -114,6 +114,12 @@ const Expertises = () => {
 
   const dayNames = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"];
 
+  // IMPORTANT: le site est en mode démo. On ne doit jamais utiliser isToday()
+  // (basé sur la date système) pour griser/désactiver des jours.
+  const demoToday = startOfDay(getDemoNow());
+  const isTodayDemo = (date: Date) => isSameDay(date, demoToday);
+  const isPastDemo = (date: Date) => isBefore(date, demoToday);
+
   return (
     <>
       <Helmet>
@@ -193,7 +199,7 @@ const Expertises = () => {
                   <div key={weekIndex} className="grid grid-cols-7 gap-1 md:gap-2">
                     {week.map((date) => {
                       const events = getEventsForDate(date);
-                      const isPast = isBefore(date, getDemoNow()) && !isToday(date);
+                       const isPast = isPastDemo(date);
                       const hasEvents = events.length > 0;
                       const firstEvent = events[0];
                       const displayType = firstEvent ? mapEventType(firstEvent.type) : null;
@@ -208,7 +214,7 @@ const Expertises = () => {
                           className={`
                             aspect-square p-1 md:p-2 rounded-lg text-center transition-all
                             flex flex-col items-center justify-center gap-0.5
-                            ${isToday(date) ? "ring-2 ring-brand-primary" : ""}
+                             ${isTodayDemo(date) ? "ring-2 ring-brand-primary" : ""}
                             ${hasEvents && !isPast && eventColors
                               ? `${eventColors.bg} hover:opacity-80 cursor-pointer border ${eventColors.border}` 
                               : "bg-muted/30"
@@ -277,7 +283,7 @@ const Expertises = () => {
             ) : (
               <div className="space-y-4">
                 {calendarEvents
-                  .filter(event => !isBefore(event.date, getDemoNow()) || isToday(event.date))
+                  .filter(event => !isPastDemo(startOfDay(event.date)) || isTodayDemo(event.date))
                   .sort((a, b) => a.date.getTime() - b.date.getTime())
                   .slice(0, 8)
                   .map((event) => {
