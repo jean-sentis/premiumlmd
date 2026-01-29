@@ -51,7 +51,7 @@ const VinsSpiriteux = () => {
           {/* Titre H1 */}
           <div className="max-w-2xl mx-auto text-center mb-12">
             <h1 className="text-2xl md:text-3xl font-semibold text-[hsl(var(--brand-primary))] mb-4">
-              Vins et Spiritueux
+              <span className="border-b-2 border-[hsl(var(--brand-secondary))] pb-1">Vins et Spiritueux</span>
             </h1>
             <p className="text-lg md:text-xl text-muted-foreground">
               Grands crus et millésimes d'exception
