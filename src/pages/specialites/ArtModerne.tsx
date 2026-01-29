@@ -74,7 +74,7 @@ const DetailContent = () => (
         <div className="grid md:grid-cols-2 gap-8">
           {/* Art moderne */}
           <div className="bg-neutral-50 p-8 border border-neutral-200">
-            <h3 className="text-xl font-serif text-neutral-900 mb-6 pb-4 border-b border-neutral-300">
+            <h3 className="text-xl font-semibold text-neutral-900 mb-6 pb-4 border-b border-neutral-300">
               Art Moderne (1900-1960)
             </h3>
             <div className="space-y-4 text-muted-foreground">
@@ -104,7 +104,7 @@ const DetailContent = () => (
 
           {/* Art contemporain */}
           <div className="bg-neutral-50 p-8 border border-neutral-200">
-            <h3 className="text-xl font-serif text-neutral-900 mb-6 pb-4 border-b border-neutral-300">
+            <h3 className="text-xl font-semibold text-neutral-900 mb-6 pb-4 border-b border-neutral-300">
               Art Contemporain (1960-2000)
             </h3>
             <div className="space-y-4 text-muted-foreground">
@@ -135,7 +135,7 @@ const DetailContent = () => (
 
         {/* Techniques et supports */}
         <div className="bg-neutral-50 p-8 border border-neutral-200">
-          <h3 className="text-xl font-serif text-neutral-900 mb-6 pb-4 border-b border-neutral-300">
+          <h3 className="text-xl font-semibold text-neutral-900 mb-6 pb-4 border-b border-neutral-300">
             Techniques et Authentification
           </h3>
           <div className="grid md:grid-cols-3 gap-8 text-muted-foreground">

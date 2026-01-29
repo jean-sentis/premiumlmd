@@ -18,7 +18,7 @@ const DetailContent = () => (
     <div className="grid md:grid-cols-2 gap-12 mb-16">
       {/* Véhicules de prestige */}
       <div className="bg-[hsl(var(--brand-blue-100))] p-8 border border-[hsl(var(--brand-gold-200))]">
-        <h3 className="text-xl font-serif text-[hsl(var(--brand-primary))] mb-6 pb-4 border-b border-[hsl(var(--brand-gold-300))]">
+        <h3 className="text-xl font-semibold text-[hsl(var(--brand-primary))] mb-6 pb-4 border-b border-[hsl(var(--brand-gold-300))]">
           Prestige et Sport
         </h3>
         <div className="space-y-4 text-muted-foreground">
@@ -49,7 +49,7 @@ const DetailContent = () => (
 
       {/* Automobiles françaises */}
       <div className="bg-[hsl(var(--brand-blue-100))] p-8 border border-[hsl(var(--brand-gold-200))]">
-        <h3 className="text-xl font-serif text-[hsl(var(--brand-primary))] mb-6 pb-4 border-b border-[hsl(var(--brand-gold-300))]">
+        <h3 className="text-xl font-semibold text-[hsl(var(--brand-primary))] mb-6 pb-4 border-b border-[hsl(var(--brand-gold-300))]">
           Excellence Française
         </h3>
         <div className="space-y-4 text-muted-foreground">
@@ -80,7 +80,7 @@ const DetailContent = () => (
 
     {/* Expertise technique */}
     <div className="bg-[hsl(var(--brand-blue-100))] p-8 border border-[hsl(var(--brand-gold-200))]">
-      <h3 className="text-xl font-serif text-[hsl(var(--brand-primary))] mb-6 pb-4 border-b border-[hsl(var(--brand-gold-300))]">
+      <h3 className="text-xl font-semibold text-[hsl(var(--brand-primary))] mb-6 pb-4 border-b border-[hsl(var(--brand-gold-300))]">
         Critères d'Évaluation
       </h3>
       <div className="grid md:grid-cols-3 gap-8 text-muted-foreground">

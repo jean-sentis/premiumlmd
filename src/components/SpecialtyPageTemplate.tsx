@@ -131,7 +131,7 @@ const CarouselResultItem = ({ item, isActive }: { item: BelleEnchere; isActive: 
         }`}
       >
         <div className="max-w-4xl mx-auto">
-          <h3 className="text-white font-serif text-xl md:text-2xl mb-2">{item.title}</h3>
+          <h3 className="text-white font-semibold text-xl md:text-2xl mb-2">{item.title}</h3>
           <div className="flex items-center gap-6">
             <div>
               <p className="text-white font-semibold text-lg">{item.price}</p>
@@ -202,7 +202,7 @@ const SpecialtyPageTemplate = ({
       >
         <div className="container">
           <div className="max-w-3xl mx-auto text-center -translate-y-[25px]">
-            <h1 className="text-lg md:text-xl font-serif font-semibold text-foreground tracking-widest uppercase mb-4">
+            <h1 className="text-lg md:text-xl font-semibold text-foreground tracking-widest uppercase mb-4">
               <span className="border-b-2 border-brand-gold-600 pb-1">{title}</span>
             </h1>
             <p className="text-sm md:text-base text-muted-foreground font-light">
@@ -215,7 +215,7 @@ const SpecialtyPageTemplate = ({
       {/* Section 2: Carrousel des belles enchères */}
       <section className="py-12 md:py-16 bg-brand-gray-blue-deep">
         <div className="container">
-          <h2 className="text-center text-lg md:text-xl font-serif text-brand-primary-foreground mb-10">
+          <h2 className="text-center text-lg md:text-xl font-semibold text-brand-primary-foreground mb-10">
             Nos Belles Enchères
           </h2>
           
@@ -264,7 +264,7 @@ const SpecialtyPageTemplate = ({
       {/* Section 3: Texte SEO */}
       <section className="py-12 md:py-16 bg-background">
         <div className="container max-w-4xl">
-          <h2 className="text-lg md:text-xl font-serif text-foreground mb-6 text-center">
+          <h2 className="text-lg md:text-xl font-semibold text-foreground mb-6 text-center">
             {seoTitle}
           </h2>
           <div className="prose prose-sm max-w-none text-muted-foreground leading-relaxed">
@@ -320,7 +320,7 @@ const SpecialtyPageTemplate = ({
                     </div>
                     {/* Info sous l'affiche */}
                     <div className="p-3 bg-card">
-                      <h3 className="font-serif text-xs md:text-sm font-medium text-center tracking-wide mb-1 line-clamp-2 uppercase">
+                      <h3 className="text-xs md:text-sm font-medium text-center tracking-wide mb-1 line-clamp-2 uppercase">
                         {vente.titre.replace(/^vente\s*/i, "")}
                       </h3>
                       <p className="font-sans text-xs md:text-sm text-muted-foreground text-center">
@@ -338,7 +338,7 @@ const SpecialtyPageTemplate = ({
       {/* Section 5: Textes longs détaillés */}
       <section className="py-12 md:py-16 bg-background">
         <div className="container max-w-5xl">
-          <h2 className="text-lg md:text-xl font-serif text-foreground mb-8 text-center">{detailTitle}</h2>
+          <h2 className="text-lg md:text-xl font-semibold text-foreground mb-8 text-center">{detailTitle}</h2>
           <div className="prose prose-sm max-w-none text-muted-foreground">
             {detailContent}
           </div>
@@ -369,7 +369,7 @@ const SpecialtyPageTemplate = ({
                 <p className="text-brand-primary-foreground/60 text-xs uppercase tracking-wider mb-2">
                   Votre expert
                 </p>
-                <h3 className="text-lg md:text-xl font-serif mb-2">{expert.nom}</h3>
+                <h3 className="text-lg md:text-xl font-semibold mb-2">{expert.nom}</h3>
                 <p className="text-brand-primary-foreground/70 text-sm mb-4">{expert.titre}</p>
                 <div className="prose prose-sm prose-invert max-w-none text-brand-primary-foreground/90 leading-relaxed">
                   {expert.bio}
@@ -391,7 +391,7 @@ const SpecialtyPageTemplate = ({
           <div className="container">
             <div className="flex items-center justify-center gap-2 mb-10">
               <HelpCircle className="w-5 h-5 text-foreground" />
-              <h2 className="text-lg md:text-xl font-serif text-foreground">
+              <h2 className="text-lg md:text-xl font-semibold text-foreground">
                 Le Saviez-Vous ?
               </h2>
             </div>
@@ -415,7 +415,7 @@ const SpecialtyPageTemplate = ({
                   
                   {/* Question et réponse */}
                   <div className="md:w-2/3 p-5 md:p-6 flex flex-col justify-center">
-                    <h3 className="text-base font-serif text-foreground mb-3">
+                    <h3 className="text-base font-semibold text-foreground mb-3">
                       {item.question}
                     </h3>
                     <p className="text-sm text-muted-foreground leading-relaxed">
@@ -435,7 +435,7 @@ const SpecialtyPageTemplate = ({
           <div className="container">
             <div className="flex items-center justify-center gap-2 mb-10">
               <Archive className="w-5 h-5 text-foreground" />
-              <h2 className="text-lg md:text-xl font-serif text-foreground">
+              <h2 className="text-lg md:text-xl font-semibold text-foreground">
                 Nos Ventes Passées
               </h2>
             </div>
@@ -455,7 +455,7 @@ const SpecialtyPageTemplate = ({
                     />
                   </div>
                   <div className="p-3 bg-card">
-                    <h3 className="font-serif text-xs md:text-sm font-medium text-center tracking-wide mb-1 line-clamp-2 uppercase">
+                    <h3 className="text-xs md:text-sm font-medium text-center tracking-wide mb-1 line-clamp-2 uppercase">
                       {vente.titre.replace(/^vente\s*/i, "")}
                     </h3>
                     <p className="font-sans text-xs md:text-sm text-muted-foreground text-center">
