@@ -48,13 +48,11 @@ const VinsSpiriteux = () => {
         style={{ paddingTop: 'var(--header-height, 145px)' }}
       >
         <div className="container">
-          {/* Titre H1 encadré doré */}
+          {/* Titre H1 */}
           <div className="max-w-2xl mx-auto text-center mb-12">
-            <div className="inline-block border-2 border-[hsl(var(--brand-gold-500))] px-12 md:px-16 py-4 md:py-6 mb-4">
-              <h1 className="text-2xl md:text-3xl font-semibold text-[hsl(var(--brand-primary))]">
-                Vins et Spiritueux
-              </h1>
-            </div>
+            <h1 className="text-2xl md:text-3xl font-semibold text-[hsl(var(--brand-primary))] mb-4">
+              Vins et Spiritueux
+            </h1>
             <p className="text-lg md:text-xl text-muted-foreground">
               Grands crus et millésimes d'exception
             </p>
