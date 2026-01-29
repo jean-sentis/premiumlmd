@@ -47,10 +47,17 @@ const InventaireDomicile = () => {
                   Nous réalisons des inventaires complets en Corse ou sur le Continent, 
                   avec le sérieux et la discrétion que ces situations exigent.
                 </p>
-                <p className="text-sm md:text-base leading-relaxed text-foreground font-medium">
+                <p className="text-sm md:text-base leading-relaxed text-foreground font-medium mb-6">
                   Nos commissaires-priseurs et experts mettent leur connaissance du marché 
                   et leur expérience à votre service, en toute confidentialité.
                 </p>
+                <Button 
+                  onClick={handleDemandeRendezVous}
+                  className="w-full sm:w-auto"
+                >
+                  <Mail className="w-4 h-4 mr-2" />
+                  Demande d'inventaire à domicile
+                </Button>
               </div>
             </div>
           </div>
