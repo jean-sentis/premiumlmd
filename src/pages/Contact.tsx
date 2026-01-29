@@ -44,57 +44,185 @@ const Contact = () => {
     <div className="min-h-screen bg-background">
       <Header />
       
-      {/* Hero Section with Artwork */}
+      {/* Main Content */}
       <section 
         className="relative"
         style={{ paddingTop: 'var(--header-height, 145px)' }}
       >
-        <div className="container py-16 md:py-24">
-          {/* Artwork Display - Text Left, Image Right */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12 items-start">
-            {/* Left Column - Text (1/3) */}
-            <div className="md:col-span-1 space-y-6">
-              {/* Artist Name */}
-              <div>
-                <h1 className="font-serif text-2xl md:text-3xl font-medium tracking-wide">
-                  Ange LECCIA
-                </h1>
+        <div className="container py-12 md:py-20">
+          {/* Logo */}
+          <div className="flex justify-center mb-12">
+            <img 
+              src="/src/assets/logo-12p.png" 
+              alt="Douze pages & associés" 
+              className="h-16 md:h-20"
+            />
+          </div>
+
+          {/* Two Column Layout: Contact Info Left, Actions Right */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-16 mb-20">
+            {/* Left - Contact Info */}
+            <div className="space-y-4 text-sm">
+              <p className="font-serif text-lg font-medium mb-4">{COMPANY_INFO.name}</p>
+              <p>
+                {COMPANY_INFO.address.street}<br />
+                {COMPANY_INFO.address.postalCode} {COMPANY_INFO.address.city}
+              </p>
+              <p className="text-muted-foreground">
+                Lundi – Vendredi<br />
+                9h – 12h30 / 14h – 18h
+              </p>
+              <p>
+                <a 
+                  href={COMPANY_INFO.phoneLink}
+                  className="hover:text-brand-primary transition-colors"
+                >
+                  {COMPANY_INFO.phone}
+                </a>
+              </p>
+              <p>
+                <a 
+                  href={COMPANY_INFO.emailLink}
+                  className="hover:text-brand-primary transition-colors"
+                >
+                  {COMPANY_INFO.email}
+                </a>
+              </p>
+            </div>
+
+            {/* Right - Actions */}
+            <div>
+              <p className="text-muted-foreground mb-6 font-serif text-lg">
+                Comment pouvons-nous vous accompagner ?
+              </p>
+              
+              <div className="grid gap-3">
+                <Button
+                  variant="outline"
+                  className="h-auto py-3 px-5 justify-start gap-3 hover:bg-secondary/50 transition-colors"
+                  onClick={() => setEstimationDialogOpen(true)}
+                >
+                  <Camera className="w-4 h-4 text-brand-primary shrink-0" />
+                  <span className="font-serif text-sm">Demande d'estimation</span>
+                </Button>
+
+                <Button
+                  variant="outline"
+                  className="h-auto py-3 px-5 justify-start gap-3 hover:bg-secondary/50 transition-colors"
+                  onClick={() => setInventaireDialogOpen(true)}
+                >
+                  <Package className="w-4 h-4 text-brand-primary shrink-0" />
+                  <span className="font-serif text-sm">Inventaire à domicile</span>
+                </Button>
+
+                <Button
+                  variant="outline"
+                  className="h-auto py-3 px-5 justify-start gap-3 hover:bg-secondary/50 transition-colors"
+                  onClick={() => setRendezVousDialogOpen(true)}
+                >
+                  <Calendar className="w-4 h-4 text-brand-primary shrink-0" />
+                  <span className="font-serif text-sm">Rendez-vous à l'étude</span>
+                </Button>
+
+                <Button
+                  variant="outline"
+                  className="h-auto py-3 px-5 justify-start gap-3 hover:bg-secondary/50 transition-colors"
+                  onClick={() => setObjetSimilaireDialogOpen(true)}
+                >
+                  <MessageSquare className="w-4 h-4 text-brand-primary shrink-0" />
+                  <span className="font-serif text-sm">J'ai un objet similaire à l'un de vos lots à faire estimer</span>
+                </Button>
               </div>
+
+              {/* Dropdown Links */}
+              <div className="mt-6 flex gap-2">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="sm" className="gap-1.5 text-muted-foreground hover:text-foreground text-xs">
+                      Spécialités
+                      <ChevronDown className="w-3 h-3" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-64 bg-background z-50">
+                    {SPECIALITES.map((spec) => (
+                      <DropdownMenuItem key={spec.href} asChild>
+                        <Link to={spec.href} className="cursor-pointer">
+                          {spec.name}
+                        </Link>
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="sm" className="gap-1.5 text-muted-foreground hover:text-foreground text-xs">
+                      Ventes
+                      <ChevronDown className="w-3 h-3" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-56 bg-background z-50">
+                    <DropdownMenuItem asChild>
+                      <Link to="/acheter/ventes-a-venir" className="cursor-pointer">
+                        Ventes à venir
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link to="/acheter/ventes-passees" className="cursor-pointer">
+                        Résultats des ventes
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link to="/acheter/after-sale" className="cursor-pointer">
+                        After Sale
+                      </Link>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            </div>
+          </div>
+
+          {/* Artwork Section - Text 1/3, Image 2/3 */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12 items-center border-t border-border pt-16">
+            {/* Left Column - Text (1/3) - Smaller, centered vertically */}
+            <div className="md:col-span-1 flex flex-col justify-center text-xs text-muted-foreground space-y-3">
+              {/* Artist Name */}
+              <p className="font-serif text-sm font-medium text-foreground">
+                Ange LECCIA
+              </p>
               
               {/* Title & Year */}
-              <div>
-                <p className="font-serif text-lg italic">SANS TITRE</p>
-                <p className="text-muted-foreground text-sm">1983</p>
-              </div>
+              <p>
+                <span className="italic">SANS TITRE</span> — 1983
+              </p>
               
               {/* Bio */}
-              <p className="text-sm text-muted-foreground leading-relaxed">
+              <p className="leading-relaxed">
                 Ange Leccia né le 19 avril 1952 à Minerviu est un plasticien corse. 
                 Son domaine de prédilection est celui des images en mouvement, 
                 mais son travail prend aussi la forme d'installations et de photographies.
               </p>
               
               {/* Artwork Details */}
-              <div className="text-sm text-muted-foreground space-y-1">
+              <div className="space-y-0.5">
                 <p>Collage de papiers sur toile</p>
                 <p>Signée, datée, située, dédicacée et annotée au dos</p>
                 <p className="italic">"Ange Leccia, Roma Villa Medici, 83, avant-dernier"</p>
-                <p className="mt-2">h: 200 × l: 180 cm</p>
+                <p>h: 200 × l: 180 cm</p>
               </div>
               
               {/* Provenance */}
-              <div className="pt-4 border-t border-border text-sm text-muted-foreground">
-                <p className="font-medium">Provenance</p>
+              <div className="pt-2 border-t border-border/50">
+                <p className="font-medium text-foreground text-xs mb-1">Provenance</p>
                 <p>Galerie Lucien Durand, Paris</p>
-                <p className="mt-1">Vente, Paris, Auction Art, 27 octobre 2008, lot 179</p>
+                <p>Vente, Paris, Auction Art, 27 octobre 2008, lot 179</p>
               </div>
               
               {/* Adjudication */}
-              <div className="pt-4 border-t border-border">
-                <p className="font-serif text-lg font-medium">
-                  Adjugé : 25 400 €
-                </p>
-              </div>
+              <p className="font-serif text-sm font-medium text-foreground pt-2 border-t border-border/50">
+                Adjugé : 25 400 €
+              </p>
             </div>
             
             {/* Right Column - Image (2/3) */}
@@ -102,150 +230,8 @@ const Contact = () => {
               <img 
                 src={angeLeccia} 
                 alt="Ange Leccia - Sans Titre, 1983"
-                className="w-full shadow-2xl"
+                className="w-full shadow-xl"
               />
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Coordonnées */}
-      <section className="py-12 bg-secondary/30">
-        <div className="container">
-          <div className="max-w-3xl mx-auto">
-            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8 text-center">
-              <div>
-                <MapPin className="w-5 h-5 mx-auto mb-3 text-brand-primary" />
-                <p className="text-sm">
-                  {COMPANY_INFO.address.street}<br />
-                  {COMPANY_INFO.address.postalCode} {COMPANY_INFO.address.city}
-                </p>
-              </div>
-              <div>
-                <Clock className="w-5 h-5 mx-auto mb-3 text-brand-primary" />
-                <p className="text-sm">
-                  Lundi – Vendredi<br />
-                  9h – 12h30 / 14h – 18h
-                </p>
-              </div>
-              <div>
-                <Phone className="w-5 h-5 mx-auto mb-3 text-brand-primary" />
-                <a 
-                  href={COMPANY_INFO.phoneLink}
-                  className="text-sm hover:text-brand-primary transition-colors"
-                >
-                  {COMPANY_INFO.phone}
-                </a>
-              </div>
-              <div>
-                <Mail className="w-5 h-5 mx-auto mb-3 text-brand-primary" />
-                <a 
-                  href={COMPANY_INFO.emailLink}
-                  className="text-sm hover:text-brand-primary transition-colors"
-                >
-                  {COMPANY_INFO.email}
-                </a>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Action Cartouches */}
-      <section className="py-16 md:py-24">
-        <div className="container">
-          <div className="max-w-4xl mx-auto">
-            <p className="text-center text-muted-foreground mb-12 font-serif text-lg">
-              Comment pouvons-nous vous accompagner ?
-            </p>
-            
-            <div className="grid sm:grid-cols-2 gap-4">
-              {/* Demande d'estimation */}
-              <Button
-                variant="outline"
-                className="h-auto py-4 px-6 justify-start gap-3 hover:bg-secondary/50 transition-colors"
-                onClick={() => setEstimationDialogOpen(true)}
-              >
-                <Camera className="w-5 h-5 text-brand-primary shrink-0" />
-                <span className="font-serif text-base">Demande d'estimation</span>
-              </Button>
-
-              {/* Demande d'inventaire à domicile */}
-              <Button
-                variant="outline"
-                className="h-auto py-4 px-6 justify-start gap-3 hover:bg-secondary/50 transition-colors"
-                onClick={() => setInventaireDialogOpen(true)}
-              >
-                <Package className="w-5 h-5 text-brand-primary shrink-0" />
-                <span className="font-serif text-base">Inventaire à domicile</span>
-              </Button>
-
-              {/* Rendez-vous à l'étude */}
-              <Button
-                variant="outline"
-                className="h-auto py-4 px-6 justify-start gap-3 hover:bg-secondary/50 transition-colors"
-                onClick={() => setRendezVousDialogOpen(true)}
-              >
-                <Calendar className="w-5 h-5 text-brand-primary shrink-0" />
-                <span className="font-serif text-base">Rendez-vous à l'étude</span>
-              </Button>
-
-              {/* Objet similaire à un lot */}
-              <Button
-                variant="outline"
-                className="h-auto py-4 px-6 justify-start gap-3 hover:bg-secondary/50 transition-colors"
-                onClick={() => setObjetSimilaireDialogOpen(true)}
-              >
-                <MessageSquare className="w-5 h-5 text-brand-primary shrink-0" />
-                <span className="font-serif text-base">J'ai un objet similaire à faire estimer</span>
-              </Button>
-            </div>
-
-            {/* Dropdown Spécialités */}
-            <div className="mt-8 flex justify-center">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="gap-2 text-muted-foreground hover:text-foreground">
-                    Explorer nos spécialités
-                    <ChevronDown className="w-4 h-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-64 bg-background z-50">
-                  {SPECIALITES.map((spec) => (
-                    <DropdownMenuItem key={spec.href} asChild>
-                      <Link to={spec.href} className="cursor-pointer">
-                        {spec.name}
-                      </Link>
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
-
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="gap-2 text-muted-foreground hover:text-foreground">
-                    Voir les ventes
-                    <ChevronDown className="w-4 h-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56 bg-background z-50">
-                  <DropdownMenuItem asChild>
-                    <Link to="/acheter/ventes-a-venir" className="cursor-pointer">
-                      Ventes à venir
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link to="/acheter/ventes-passees" className="cursor-pointer">
-                      Résultats des ventes
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link to="/acheter/after-sale" className="cursor-pointer">
-                      After Sale
-                    </Link>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
             </div>
           </div>
         </div>
