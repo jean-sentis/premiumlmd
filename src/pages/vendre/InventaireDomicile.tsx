@@ -336,7 +336,7 @@ const InventaireDomicile = () => {
                   </Button>
                   <Button 
                     variant="outline"
-                    className="border-brand-primary-foreground text-brand-primary-foreground hover:bg-brand-primary-foreground/10"
+                    className="bg-background text-foreground border-background hover:bg-background/90"
                     asChild
                   >
                     <a href={`tel:${COMPANY_INFO.phone.replace(/\s/g, '')}`}>
