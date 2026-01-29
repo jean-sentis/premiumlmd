@@ -179,8 +179,8 @@ const Contact = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12 items-center border-t border-border pt-16">
             {/* Left Column - Text (1/3) - Smaller, centered vertically */}
             <div className="md:col-span-1 flex flex-col justify-center text-xs text-muted-foreground space-y-3">
-              {/* Artist Name */}
-              <p className="font-serif text-sm font-medium text-foreground">
+              {/* Artist Name - Bigger */}
+              <p className="text-lg font-medium text-foreground">
                 Ange LECCIA
               </p>
               
@@ -212,7 +212,7 @@ const Contact = () => {
               </div>
               
               {/* Adjudication */}
-              <p className="font-serif text-sm font-medium text-foreground pt-2 border-t border-border/50">
+              <p className="text-sm font-medium text-foreground pt-2 border-t border-border/50">
                 Adjugé : 25 400 €
               </p>
             </div>
