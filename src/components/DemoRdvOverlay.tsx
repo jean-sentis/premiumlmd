@@ -58,6 +58,9 @@ const DemoRdvOverlay = ({
   rdvUrl = "https://app.cal.eu/votre-lien",
   ctaText = "Prenons rendez-vous pour une démo accompagnée",
 }: DemoRdvOverlayProps) => {
+  // DÉSACTIVÉ: plus de blocage pour la démo
+  return null;
+  
   const location = useLocation();
   const [isVisible, setIsVisible] = useState(false);
   const [initialPath] = useState(location.pathname);
