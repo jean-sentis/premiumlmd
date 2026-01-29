@@ -84,7 +84,7 @@ export function SellSimilarDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto z-[200]">
         <DialogHeader>
           <DialogTitle className="font-serif text-xl">Je souhaite vendre un objet similaire</DialogTitle>
           <DialogDescription>
