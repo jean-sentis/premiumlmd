@@ -50,15 +50,6 @@ const Contact = () => {
         style={{ paddingTop: 'var(--header-height, 145px)' }}
       >
         <div className="container py-12 md:py-20">
-          {/* Logo */}
-          <div className="flex justify-center mb-12">
-            <img 
-              src="/src/assets/logo-12p.png" 
-              alt="Douze pages & associés" 
-              className="h-16 md:h-20"
-            />
-          </div>
-
           {/* Two Column Layout: Contact Info Left, Actions Right */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-16 mb-20">
             {/* Left - Contact Info */}
@@ -88,6 +79,53 @@ const Contact = () => {
                   {COMPANY_INFO.email}
                 </a>
               </p>
+
+              {/* Dropdown Links */}
+              <div className="pt-4 flex gap-4">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="gap-2 text-muted-foreground hover:text-foreground text-sm px-0">
+                      Spécialités
+                      <ChevronDown className="w-4 h-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-64 bg-background z-50">
+                    {SPECIALITES.map((spec) => (
+                      <DropdownMenuItem key={spec.href} asChild>
+                        <Link to={spec.href} className="cursor-pointer">
+                          {spec.name}
+                        </Link>
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="gap-2 text-muted-foreground hover:text-foreground text-sm px-0">
+                      Ventes
+                      <ChevronDown className="w-4 h-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-56 bg-background z-50">
+                    <DropdownMenuItem asChild>
+                      <Link to="/acheter/ventes-a-venir" className="cursor-pointer">
+                        Ventes à venir
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link to="/acheter/ventes-passees" className="cursor-pointer">
+                        Résultats des ventes
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link to="/acheter/after-sale" className="cursor-pointer">
+                        After Sale
+                      </Link>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
             </div>
 
             {/* Right - Actions */}
@@ -134,52 +172,6 @@ const Contact = () => {
                 </Button>
               </div>
 
-              {/* Dropdown Links */}
-              <div className="mt-6 flex gap-2">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm" className="gap-1.5 text-muted-foreground hover:text-foreground text-xs">
-                      Spécialités
-                      <ChevronDown className="w-3 h-3" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-64 bg-background z-50">
-                    {SPECIALITES.map((spec) => (
-                      <DropdownMenuItem key={spec.href} asChild>
-                        <Link to={spec.href} className="cursor-pointer">
-                          {spec.name}
-                        </Link>
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm" className="gap-1.5 text-muted-foreground hover:text-foreground text-xs">
-                      Ventes
-                      <ChevronDown className="w-3 h-3" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-56 bg-background z-50">
-                    <DropdownMenuItem asChild>
-                      <Link to="/acheter/ventes-a-venir" className="cursor-pointer">
-                        Ventes à venir
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link to="/acheter/ventes-passees" className="cursor-pointer">
-                        Résultats des ventes
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link to="/acheter/after-sale" className="cursor-pointer">
-                        After Sale
-                      </Link>
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
             </div>
           </div>
 
