@@ -168,7 +168,7 @@ const AventuresEncheres = () => {
               et de trouver l'acquéreur qui saura la poursuivre."
             </p>
             <footer className="mt-4 text-muted-foreground text-sm">
-              — Jean-Pierre Delbarry, Commissaire-priseur
+              — Maître Marcaggi, Commissaire-priseur
             </footer>
           </blockquote>
         </div>
