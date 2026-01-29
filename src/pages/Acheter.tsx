@@ -55,7 +55,7 @@ const Acheter = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
             {/* Étape 1 - BIEN CHOISIR */}
             <div className="bg-background border border-border/50 p-6 transition-all duration-300 hover:-translate-y-2 hover:shadow-xl flex flex-col">
-              <span className="font-serif text-2xl font-light block mb-4 text-primary">1</span>
+              <span className="text-2xl font-light block mb-4 text-primary">1</span>
               <h3 className="tracking-wide mb-4">BIEN CHOISIR</h3>
               <div className="text-sm text-muted-foreground leading-relaxed space-y-3 flex-1">
                 <p>
@@ -75,7 +75,7 @@ const Acheter = () => {
             
             {/* Étape 2 - ENCHÉRIR */}
             <div className="bg-background border border-border/50 p-6 transition-all duration-300 hover:-translate-y-2 hover:shadow-xl flex flex-col">
-              <span className="font-serif text-2xl font-light block mb-4 text-primary">2</span>
+              <span className="text-2xl font-light block mb-4 text-primary">2</span>
               <h3 className="tracking-wide mb-4">ENCHÉRIR</h3>
               <div className="text-sm text-muted-foreground leading-relaxed space-y-3 flex-1">
                 <p>
@@ -95,7 +95,7 @@ const Acheter = () => {
             
             {/* Étape 3 - PAYER */}
             <div className="bg-background border border-border/50 p-6 transition-all duration-300 hover:-translate-y-2 hover:shadow-xl flex flex-col">
-              <span className="font-serif text-2xl font-light block mb-4 text-primary">3</span>
+              <span className="text-2xl font-light block mb-4 text-primary">3</span>
               <h3 className="tracking-wide mb-4">PAYER</h3>
               <div className="text-sm text-muted-foreground leading-relaxed space-y-3 flex-1">
                 <p>
@@ -115,7 +115,7 @@ const Acheter = () => {
             
             {/* Étape 4 - RETIRER OU EXPÉDIER */}
             <div className="bg-background border border-border/50 p-6 transition-all duration-300 hover:-translate-y-2 hover:shadow-xl flex flex-col">
-              <span className="font-serif text-2xl font-light block mb-4 text-primary">4</span>
+              <span className="text-2xl font-light block mb-4 text-primary">4</span>
               <h3 className="tracking-wide mb-4">RETIRER OU EXPÉDIER</h3>
               <div className="text-sm text-muted-foreground leading-relaxed space-y-3 flex-1">
                 <p>
@@ -166,7 +166,7 @@ const Acheter = () => {
             <p className="font-sans text-sm tracking-widest text-muted-foreground uppercase mb-2">
               Résultats
             </p>
-            <h2 className="font-serif text-base md:text-lg font-semibold tracking-widest uppercase">
+            <h2 className="text-base md:text-lg font-semibold tracking-widest uppercase">
               VENTES PASSÉES
             </h2>
             <p className="text-muted-foreground mt-4 max-w-2xl mx-auto">
@@ -175,7 +175,7 @@ const Acheter = () => {
           </div>
 
           {/* Nos 6 plus belles enchères */}
-          <h3 className="font-serif text-lg md:text-xl text-center mb-8">Nos Plus Belles Enchères</h3>
+          <h3 className="text-lg md:text-xl text-center mb-8">Nos Plus Belles Enchères</h3>
           <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto mb-16">
             {[
               { title: "Tableau Aïzpiri - Bouquet de fleurs", adjudication: 12500, image: "/images/sales/667692-lot-aizpiri.jpg" },
@@ -194,8 +194,8 @@ const Acheter = () => {
                   />
                 </div>
                 <div className="p-4 text-center">
-                  <h4 className="font-serif text-sm font-medium mb-2 line-clamp-2">{item.title}</h4>
-                  <p className="text-brand-gold font-serif text-lg font-semibold">
+                  <h4 className="text-sm font-medium mb-2 line-clamp-2">{item.title}</h4>
+                  <p className="text-brand-gold text-lg font-semibold">
                     {item.adjudication.toLocaleString('fr-FR')} €
                   </p>
                 </div>
@@ -204,14 +204,14 @@ const Acheter = () => {
           </div>
 
           {/* Grille des résultats */}
-          <h3 className="font-serif text-lg md:text-xl text-center mb-8">Résultats d'Adjudication</h3>
+          <h3 className="text-lg md:text-xl text-center mb-8">Résultats d'Adjudication</h3>
           <div className="overflow-x-auto max-w-4xl mx-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-brand-primary text-brand-primary-foreground">
-                  <th className="px-4 py-3 text-left font-serif">Vente</th>
-                  <th className="px-4 py-3 text-left font-serif">Date</th>
-                  <th className="px-4 py-3 text-right font-serif">Total adjugé</th>
+                  <th className="px-4 py-3 text-left">Vente</th>
+                  <th className="px-4 py-3 text-left">Date</th>
+                  <th className="px-4 py-3 text-right">Total adjugé</th>
                 </tr>
               </thead>
               <tbody>
@@ -279,7 +279,7 @@ const Acheter = () => {
             {/* Eco-responsible */}
             <div className="bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 p-8 h-full flex flex-col justify-center">
               <Recycle className="w-12 h-12 mx-auto mb-4 text-green-600 dark:text-green-400" />
-              <h3 className="font-serif text-xl font-semibold mb-4 text-center">Acheter aux Enchères, c'est Éco-responsable</h3>
+              <h3 className="text-xl font-semibold mb-4 text-center">Acheter aux Enchères, c'est Éco-responsable</h3>
               <p className="text-muted-foreground leading-relaxed text-center">
                 Les ventes aux enchères, c'est du <strong>recyclage</strong>, des <strong>circuits courts</strong>, 
                 une démarche complètement <strong>éco-responsable</strong>. En achetant aux enchères, vous offrez 
@@ -301,7 +301,7 @@ const Acheter = () => {
               className="h-10 md:h-12 brightness-0 invert opacity-30"
             />
           </div>
-          <h2 className="font-serif text-lg md:text-xl font-light mb-6">
+          <h2 className="text-lg md:text-xl font-light mb-6">
             Et si le trésor que vous cherchez se trouvait dans votre grenier ?
           </h2>
           <Link 

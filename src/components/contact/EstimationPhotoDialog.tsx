@@ -132,7 +132,7 @@ export function EstimationPhotoDialog({ open, onOpenChange }: EstimationPhotoDia
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="font-serif text-xl">Demande d'estimation</DialogTitle>
+          <DialogTitle className="text-xl">Demande d'estimation</DialogTitle>
           <DialogDescription>
             Notre IA vérifie la qualité de vos photos pour garantir une estimation optimale.
           </DialogDescription>

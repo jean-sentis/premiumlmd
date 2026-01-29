@@ -812,7 +812,7 @@ const MesAlertes = () => {
             <div className="py-4 space-y-4">
               {/* Keyword display */}
               <div className="text-center">
-                <p className="text-2xl font-serif font-semibold text-foreground">
+                <p className="text-2xl font-semibold text-foreground">
                   {validationDialog.result.suggestedKeyword}
                 </p>
                 {validationDialog.result.specialty && (
