@@ -10,7 +10,7 @@ import GlossaireAccordion from "@/components/GlossaireAccordion";
 import SaleCard from "@/components/SaleCard";
 import { supabase } from "@/integrations/supabase/client";
 import { getDemoNow } from "@/lib/site-config";
-import salleEncheresPublic from "@/assets/salle-encheres-public.png";
+import encheresUrbainesIllustration from "@/assets/encheres-urbaines-illustration.png";
 import coupDeMarteau from "@/assets/coup-de-marteau-illustration.png";
 import { format, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -390,7 +390,7 @@ const GuideAcheteur = () => {
           <div className="container">
             <div className="max-w-5xl mx-auto overflow-hidden">
               <img 
-                src={salleEncheresPublic}
+                src={encheresUrbainesIllustration}
                 alt="Salle des ventes avec le public"
                 className="w-[200%] max-w-none -ml-[50%] md:w-full md:max-w-full md:ml-0 h-auto"
               />
