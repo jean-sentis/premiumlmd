@@ -53,7 +53,7 @@ const Contact = () => {
           {/* Two Column Layout: Contact Info Left, Actions Right */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-16 mb-20">
             {/* Left - Contact Info */}
-            <div className="space-y-3 text-sm font-serif">
+            <div className="space-y-3 text-sm">
               <p className="text-base font-medium mb-4">{COMPANY_INFO.name}</p>
               <p>
                 {COMPANY_INFO.address.street}<br />
