@@ -50,44 +50,60 @@ const Contact = () => {
         style={{ paddingTop: 'var(--header-height, 145px)' }}
       >
         <div className="container py-16 md:py-24">
-          {/* Artwork Display - Museum Style */}
-          <div className="max-w-4xl mx-auto">
-            {/* The Artwork */}
-            <div className="relative">
+          {/* Artwork Display - Text Left, Image Right */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12 items-start">
+            {/* Left Column - Text (1/3) */}
+            <div className="md:col-span-1 space-y-6">
+              {/* Artist Name */}
+              <div>
+                <h1 className="font-serif text-2xl md:text-3xl font-medium tracking-wide">
+                  Ange LECCIA
+                </h1>
+              </div>
+              
+              {/* Title & Year */}
+              <div>
+                <p className="font-serif text-lg italic">SANS TITRE</p>
+                <p className="text-muted-foreground text-sm">1983</p>
+              </div>
+              
+              {/* Bio */}
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                Ange Leccia né le 19 avril 1952 à Minerviu est un plasticien corse. 
+                Son domaine de prédilection est celui des images en mouvement, 
+                mais son travail prend aussi la forme d'installations et de photographies.
+              </p>
+              
+              {/* Artwork Details */}
+              <div className="text-sm text-muted-foreground space-y-1">
+                <p>Collage de papiers sur toile</p>
+                <p>Signée, datée, située, dédicacée et annotée au dos</p>
+                <p className="italic">"Ange Leccia, Roma Villa Medici, 83, avant-dernier"</p>
+                <p className="mt-2">h: 200 × l: 180 cm</p>
+              </div>
+              
+              {/* Provenance */}
+              <div className="pt-4 border-t border-border text-sm text-muted-foreground">
+                <p className="font-medium">Provenance</p>
+                <p>Galerie Lucien Durand, Paris</p>
+                <p className="mt-1">Vente, Paris, Auction Art, 27 octobre 2008, lot 179</p>
+              </div>
+              
+              {/* Adjudication */}
+              <div className="pt-4 border-t border-border">
+                <p className="font-serif text-lg font-medium">
+                  Adjugé : 25 400 €
+                </p>
+              </div>
+            </div>
+            
+            {/* Right Column - Image (2/3) */}
+            <div className="md:col-span-2">
               <img 
                 src={angeLeccia} 
                 alt="Ange Leccia - Sans Titre, 1983"
-                className="w-full max-w-2xl mx-auto shadow-2xl"
+                className="w-full shadow-2xl"
               />
-            </div>
-            
-            {/* Museum Label / Cartel */}
-            <div className="mt-8 max-w-xl mx-auto text-center md:text-left md:ml-auto md:mr-0">
-              <p className="font-serif text-xl md:text-2xl font-medium tracking-wide">
-                Ange LECCIA
-              </p>
-              <p className="text-muted-foreground text-sm mt-1">
-                (Né en 1952)
-              </p>
-              <p className="font-serif text-lg mt-4 italic">
-                SANS TITRE — 1983
-              </p>
-              <p className="text-muted-foreground text-sm mt-2 leading-relaxed">
-                Collage de papiers sur toile<br />
-                Signée, datée, située, dédicacée et annotée au dos<br />
-                <span className="italic">"Ange Leccia, Roma Villa Medici, 83, avant-dernier"</span>
-              </p>
-              <p className="text-muted-foreground text-sm mt-3">
-                h: 200 × l: 180 cm
-              </p>
-              <div className="mt-4 pt-4 border-t border-border">
-                <p className="text-xs text-muted-foreground">
-                  <span className="font-medium">Provenance :</span> Galerie Lucien Durand, Paris
-                </p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Vente, Paris, Auction Art, 27 octobre 2008, lot 179
-                </p>
-              </div>
             </div>
           </div>
         </div>
@@ -144,64 +160,44 @@ const Contact = () => {
             </p>
             
             <div className="grid sm:grid-cols-2 gap-4">
-              {/* Demande d'estimation avec IA */}
+              {/* Demande d'estimation */}
               <Button
                 variant="outline"
-                className="h-auto py-6 px-6 flex flex-col items-start text-left gap-2 hover:bg-secondary/50 transition-colors"
+                className="h-auto py-4 px-6 justify-start gap-3 hover:bg-secondary/50 transition-colors"
                 onClick={() => setEstimationDialogOpen(true)}
               >
-                <div className="flex items-center gap-3 w-full">
-                  <Camera className="w-5 h-5 text-brand-primary shrink-0" />
-                  <span className="font-serif text-base">Demande d'estimation</span>
-                </div>
-                <p className="text-xs text-muted-foreground pl-8">
-                  Notre IA vérifie la qualité de vos photos pour une estimation optimale
-                </p>
+                <Camera className="w-5 h-5 text-brand-primary shrink-0" />
+                <span className="font-serif text-base">Demande d'estimation</span>
               </Button>
 
               {/* Demande d'inventaire à domicile */}
               <Button
                 variant="outline"
-                className="h-auto py-6 px-6 flex flex-col items-start text-left gap-2 hover:bg-secondary/50 transition-colors"
+                className="h-auto py-4 px-6 justify-start gap-3 hover:bg-secondary/50 transition-colors"
                 onClick={() => setInventaireDialogOpen(true)}
               >
-                <div className="flex items-center gap-3 w-full">
-                  <Package className="w-5 h-5 text-brand-primary shrink-0" />
-                  <span className="font-serif text-base">Inventaire à domicile</span>
-                </div>
-                <p className="text-xs text-muted-foreground pl-8">
-                  Succession, assurance, partage : nous nous déplaçons
-                </p>
+                <Package className="w-5 h-5 text-brand-primary shrink-0" />
+                <span className="font-serif text-base">Inventaire à domicile</span>
               </Button>
 
               {/* Rendez-vous à l'étude */}
               <Button
                 variant="outline"
-                className="h-auto py-6 px-6 flex flex-col items-start text-left gap-2 hover:bg-secondary/50 transition-colors"
+                className="h-auto py-4 px-6 justify-start gap-3 hover:bg-secondary/50 transition-colors"
                 onClick={() => setRendezVousDialogOpen(true)}
               >
-                <div className="flex items-center gap-3 w-full">
-                  <Calendar className="w-5 h-5 text-brand-primary shrink-0" />
-                  <span className="font-serif text-base">Rendez-vous à l'étude</span>
-                </div>
-                <p className="text-xs text-muted-foreground pl-8">
-                  Apportez votre objet pour une estimation en main propre
-                </p>
+                <Calendar className="w-5 h-5 text-brand-primary shrink-0" />
+                <span className="font-serif text-base">Rendez-vous à l'étude</span>
               </Button>
 
               {/* Objet similaire à un lot */}
               <Button
                 variant="outline"
-                className="h-auto py-6 px-6 flex flex-col items-start text-left gap-2 hover:bg-secondary/50 transition-colors"
+                className="h-auto py-4 px-6 justify-start gap-3 hover:bg-secondary/50 transition-colors"
                 onClick={() => setObjetSimilaireDialogOpen(true)}
               >
-                <div className="flex items-center gap-3 w-full">
-                  <MessageSquare className="w-5 h-5 text-brand-primary shrink-0" />
-                  <span className="font-serif text-base">J'ai un objet similaire</span>
-                </div>
-                <p className="text-xs text-muted-foreground pl-8">
-                  Notre IA vous aide à retrouver un lot comparable en quelques questions
-                </p>
+                <MessageSquare className="w-5 h-5 text-brand-primary shrink-0" />
+                <span className="font-serif text-base">J'ai un objet similaire à faire estimer</span>
               </Button>
             </div>
 
@@ -270,7 +266,8 @@ const Contact = () => {
       />
       <ObjetSimilaireDialog 
         open={objetSimilaireDialogOpen} 
-        onOpenChange={setObjetSimilaireDialogOpen} 
+        onOpenChange={setObjetSimilaireDialogOpen}
+        onRequestEstimation={() => setEstimationDialogOpen(true)}
       />
 
       <Footer />
