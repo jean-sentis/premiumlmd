@@ -20,6 +20,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { toast as toastSonner } from '@/hooks/use-toast';
+import { SellSimilarDialog } from '@/components/contact/SellSimilarDialog';
 
 interface LotActionsPanelProps {
   lotId: string;
@@ -59,6 +60,7 @@ const LotActionsPanel = ({ lotId, lotNumber, lotTitle, saleTitle, currentDescrip
   const [loading, setLoading] = useState(false);
   const [infoMode, setInfoMode] = useState<'message' | 'ai' | null>(null);
   const [infoPanelOpen, setInfoPanelOpen] = useState(false);
+  const [sellSimilarDialogOpen, setSellSimilarDialogOpen] = useState(false);
 
   // Fetch existing user actions - reset states when lotId changes
   useEffect(() => {
@@ -101,23 +103,9 @@ const LotActionsPanel = ({ lotId, lotNumber, lotTitle, saleTitle, currentDescrip
     callback();
   };
 
-  // Generate mailto link for "Je souhaite vendre un objet similaire"
+  // Open dialog for "Je souhaite vendre un objet similaire"
   const handleSellSimilar = () => {
-    const subject = encodeURIComponent("Je souhaite vendre un objet similaire");
-    const lotUrl = `${window.location.origin}${location.pathname}`;
-    
-    let body = `Je souhaite vendre un objet similaire.\n\n`;
-    body += `---\n`;
-    body += `Référence : Lot n°${lotNumber}\n`;
-    body += `Titre : ${lotTitle}\n`;
-    if (saleTitle) body += `Vente : ${saleTitle}\n`;
-    if (currentDescription) body += `\nDescription :\n${currentDescription}\n`;
-    if (currentDimensions) body += `\nDimensions : ${currentDimensions}\n`;
-    body += `\nLien vers le lot : ${lotUrl}\n`;
-    if (lotImageUrl) body += `\nPhoto du lot : ${lotImageUrl}\n`;
-    
-    const mailtoUrl = `mailto:contact@12pages.fr?subject=${subject}&body=${encodeURIComponent(body)}`;
-    window.location.href = mailtoUrl;
+    setSellSimilarDialogOpen(true);
   };
 
   const handleMemorize = async (checked: boolean) => {
@@ -627,6 +615,19 @@ const LotActionsPanel = ({ lotId, lotNumber, lotTitle, saleTitle, currentDescrip
           )}
         </div>
       )}
+
+      {/* Dialog for selling similar object */}
+      <SellSimilarDialog
+        open={sellSimilarDialogOpen}
+        onOpenChange={setSellSimilarDialogOpen}
+        lotNumber={lotNumber}
+        lotTitle={lotTitle}
+        saleTitle={saleTitle}
+        lotUrl={`${window.location.origin}${location.pathname}`}
+        lotDescription={currentDescription || undefined}
+        lotDimensions={currentDimensions || undefined}
+        lotImageUrl={lotImageUrl || undefined}
+      />
     </div>
   );
 };

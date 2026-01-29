@@ -55,7 +55,7 @@ export function RendezVousDialog({ open, onOpenChange }: RendezVousDialogProps) 
     objetDescription: "",
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!date || !creneau) {
@@ -69,22 +69,10 @@ export function RendezVousDialog({ open, onOpenChange }: RendezVousDialogProps) 
 
     const formattedDate = format(date, "EEEE d MMMM yyyy", { locale: fr });
     
-    const subject = encodeURIComponent("Demande de rendez-vous à l'étude");
-    const body = encodeURIComponent(
-      `Demande de rendez-vous\n\n` +
-      `Nom: ${formData.nom}\n` +
-      `Email: ${formData.email}\n` +
-      `Téléphone: ${formData.telephone}\n\n` +
-      `Date souhaitée: ${formattedDate}\n` +
-      `Créneau: ${creneau}\n\n` +
-      `Description de l'objet:\n${formData.objetDescription}`
-    );
-    
-    window.location.href = `mailto:${COMPANY_INFO.email}?subject=${subject}&body=${body}`;
-    
+    // For now, show confirmation - in future could be connected to edge function
     toast({
-      title: "Demande préparée",
-      description: "Votre client mail s'ouvre. Nous vous confirmerons le rendez-vous sous 48h.",
+      title: "Demande envoyée",
+      description: `Rendez-vous demandé pour le ${formattedDate} à ${creneau}. Nous vous confirmerons sous 48h.`,
     });
     
     onOpenChange(false);

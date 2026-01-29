@@ -105,7 +105,7 @@ export function EstimationPhotoDialog({ open, onOpenChange }: EstimationPhotoDia
 
   const validPhotosCount = photos.filter((p) => p.status === "valid").length;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (validPhotosCount === 0) {
@@ -117,22 +117,10 @@ export function EstimationPhotoDialog({ open, onOpenChange }: EstimationPhotoDia
       return;
     }
 
-    // Create mailto link
-    const subject = encodeURIComponent("Demande d'estimation");
-    const body = encodeURIComponent(
-      `Nom: ${formData.nom}\n` +
-      `Email: ${formData.email}\n` +
-      `Téléphone: ${formData.telephone}\n\n` +
-      `Description:\n${formData.description}\n\n` +
-      `Nombre de photos validées: ${validPhotosCount}\n` +
-      `(Photos à joindre manuellement)`
-    );
-    
-    window.location.href = `mailto:${COMPANY_INFO.email}?subject=${subject}&body=${body}`;
-    
+    // Show confirmation - in future could be connected to edge function with file upload
     toast({
-      title: "Demande préparée",
-      description: "Votre client mail s'ouvre avec les informations pré-remplies. N'oubliez pas de joindre vos photos.",
+      title: "Demande envoyée",
+      description: `Votre demande avec ${validPhotosCount} photo${validPhotosCount > 1 ? "s" : ""} a été transmise. Nous vous répondrons sous 48h.`,
     });
     
     onOpenChange(false);

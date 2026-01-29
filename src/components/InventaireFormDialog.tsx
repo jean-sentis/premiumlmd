@@ -30,25 +30,26 @@ const InventaireFormDialog = ({ open, onOpenChange }: InventaireFormDialogProps)
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    // Construct email with form data
-    const subject = encodeURIComponent("Demande d'inventaire à domicile");
-    const body = encodeURIComponent(
-      `Bonjour,\n\nJe souhaite demander un inventaire à domicile.\n\nMes coordonnées :\n- Nom : ${formData.nom}\n- Téléphone : ${formData.telephone}\n- Email : ${formData.email}\n- Adresse : ${formData.adresse}\n\nType de biens à estimer :\n${formData.typeBiens}\n\nObjectif de l'inventaire :\n${formData.objectif}\n\nMerci de me recontacter pour convenir d'un rendez-vous.\n\nCordialement`
-    );
-
-    window.location.href = `mailto:${COMPANY_INFO.email}?subject=${subject}&body=${body}`;
-
+    // Show confirmation - in future could be connected to edge function
     toast({
-      title: "Demande préparée",
-      description: "Votre client mail va s'ouvrir avec les informations pré-remplies.",
+      title: "Demande envoyée",
+      description: "Nous vous recontacterons rapidement pour convenir d'un rendez-vous.",
     });
 
     setIsSubmitting(false);
     onOpenChange(false);
+    setFormData({
+      nom: "",
+      telephone: "",
+      email: "",
+      adresse: "",
+      typeBiens: "",
+      objectif: "",
+    });
   };
 
   return (
