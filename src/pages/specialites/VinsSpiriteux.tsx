@@ -60,40 +60,6 @@ const VinsSpiriteux = () => {
             </p>
           </div>
 
-          {/* Cartouches cliquables - 30% plus petites */}
-          <div className="grid md:grid-cols-2 gap-6 max-w-3xl mx-auto">
-            {/* Prochaine vente */}
-            <Link 
-              to="/acheter" 
-              className="group bg-[hsl(var(--brand-primary))] p-5 text-white hover:bg-[hsl(var(--brand-primary)/0.9)] transition-colors border border-[hsl(var(--brand-gold-400)/0.3)]"
-            >
-              <div className="flex items-center gap-3 mb-3">
-                <Calendar className="w-6 h-6 text-[hsl(var(--brand-gold-400))]" />
-                <span className="text-[hsl(var(--brand-gold-400))] text-xs uppercase tracking-wider">Prochaine vente</span>
-              </div>
-              <h3 className="text-lg font-serif mb-1">Vente de Vins et Spiritueux</h3>
-              <p className="text-xl font-semibold text-[hsl(var(--brand-gold-400))] mb-2">21 mars 2026</p>
-              <p className="text-white/70 text-xs group-hover:text-white transition-colors">
-                Catalogue en cours de préparation →
-              </p>
-            </Link>
-
-            {/* Expertise */}
-            <Link 
-              to="/expertises" 
-              className="group bg-[hsl(var(--brand-primary))] p-5 text-white hover:bg-[hsl(var(--brand-primary)/0.9)] transition-colors border border-[hsl(var(--brand-gold-400)/0.3)]"
-            >
-              <div className="flex items-center gap-3 mb-3">
-                <Wine className="w-6 h-6 text-[hsl(var(--brand-gold-400))]" />
-                <span className="text-[hsl(var(--brand-gold-400))] text-xs uppercase tracking-wider">Expertise</span>
-              </div>
-              <h3 className="text-lg font-serif mb-1">Expertise de vos Vins</h3>
-              <p className="text-base text-white/90 mb-2">Caves et Collections</p>
-              <p className="text-white/70 text-xs group-hover:text-white transition-colors">
-                Sur rendez-vous uniquement →
-              </p>
-            </Link>
-          </div>
 
           {/* Autres spécialités sur une ligne - 20px d'espace, texte plus grand */}
           <div className="flex flex-wrap items-center justify-center gap-2 text-sm uppercase tracking-wide" style={{ marginTop: '20px' }}>
