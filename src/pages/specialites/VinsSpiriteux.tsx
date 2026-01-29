@@ -42,20 +42,20 @@ const VinsSpiriteux = () => {
     <div className="min-h-screen bg-background">
       <Header />
       
-      {/* Hero Section - Titre H1 + Cartouches + Autres spécialités */}
+      {/* Hero Section - Titre H1 + Autres spécialités */}
       <section 
-        className="pb-12 md:pb-16 bg-[hsl(var(--brand-blue-100))]"
+        className="pb-12 md:pb-16 bg-background"
         style={{ paddingTop: 'var(--header-height, 145px)' }}
       >
         <div className="container">
           {/* Titre H1 encadré doré */}
           <div className="max-w-2xl mx-auto text-center mb-12">
             <div className="inline-block border-2 border-[hsl(var(--brand-gold-500))] px-12 md:px-16 py-4 md:py-6 mb-4">
-              <h1 className="text-2xl md:text-3xl font-serif text-[hsl(var(--brand-primary))]">
+              <h1 className="text-2xl md:text-3xl font-semibold text-[hsl(var(--brand-primary))]">
                 Vins et Spiritueux
               </h1>
             </div>
-            <p className="text-lg md:text-xl text-[hsl(var(--brand-primary)/0.8)]">
+            <p className="text-lg md:text-xl text-muted-foreground">
               Grands crus et millésimes d'exception
             </p>
           </div>
