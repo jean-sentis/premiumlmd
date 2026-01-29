@@ -54,7 +54,7 @@ const Contact = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-16 mb-20">
             {/* Left - Contact Info */}
             <div className="space-y-4 text-sm">
-              <p className="font-serif text-lg font-medium mb-4">{COMPANY_INFO.name}</p>
+              <p className="text-base font-medium mb-4">{COMPANY_INFO.name}</p>
               <p>
                 {COMPANY_INFO.address.street}<br />
                 {COMPANY_INFO.address.postalCode} {COMPANY_INFO.address.city}
