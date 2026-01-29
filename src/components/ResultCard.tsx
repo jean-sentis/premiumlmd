@@ -27,10 +27,10 @@ const ResultCard = ({ title, artist, price, date, imageUrl, variant = "default" 
             {artist}
           </p>
         )}
-        <h4 className={`font-serif text-sm font-medium mb-1 line-clamp-2 ${isLight ? "text-white" : ""}`}>
+        <h4 className={`text-sm font-medium mb-1 line-clamp-2 ${isLight ? "text-white" : ""}`}>
           {title}
         </h4>
-        <p className={`font-serif text-lg font-semibold ${isLight ? "text-white" : ""}`}>{price}</p>
+        <p className={`text-lg font-semibold ${isLight ? "text-white" : ""}`}>{price}</p>
         {date && (
           <p className={`font-sans text-xs mt-1 ${isLight ? "text-white/70" : "text-muted-foreground"}`}>{date}</p>
         )}

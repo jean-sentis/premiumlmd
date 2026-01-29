@@ -178,7 +178,7 @@ const LotCard = ({
               />
             ) : (
               <div className="w-full h-full flex flex-col items-center justify-center text-center px-4">
-                <span className="font-serif text-2xl text-muted-foreground/40 italic">
+                <span className="text-2xl text-muted-foreground/40 italic">
                   Lot {lotNumber}
                 </span>
                 <span className="mt-2 text-[11px] tracking-wide text-muted-foreground">
@@ -210,7 +210,7 @@ const LotCard = ({
           </div>
           
           {/* Titre */}
-          <h3 className="font-serif text-[13px] leading-tight text-foreground line-clamp-2 group-hover:text-brand-primary transition-colors">
+          <h3 className="text-[13px] leading-tight text-foreground line-clamp-2 group-hover:text-brand-primary transition-colors">
             {title}
           </h3>
         </div>

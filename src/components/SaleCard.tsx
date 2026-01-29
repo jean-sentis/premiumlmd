@@ -73,7 +73,7 @@ const SaleCard = ({ title, date, time, imageUrl, slug, specialty, location, inPr
       </div>
 
       {/* Sale info */}
-      <h3 className="font-serif text-xs font-medium text-center tracking-wide mb-1">
+      <h3 className="text-xs font-medium text-center tracking-wide mb-1">
         {displayTitle}
       </h3>
       <p className="font-sans text-xs text-muted-foreground mb-1">

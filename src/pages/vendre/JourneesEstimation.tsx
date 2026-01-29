@@ -105,7 +105,7 @@ const JourneesEstimation = () => {
                 {expertisesByMonth.map(([month, exps]) => (
                   <div key={month}>
                     {/* Titre du mois */}
-                    <h2 className="font-serif text-xl md:text-2xl text-brand-primary capitalize mb-6 pb-2 border-b border-border">
+                    <h2 className="text-xl md:text-2xl text-brand-primary capitalize mb-6 pb-2 border-b border-border">
                       {month}
                     </h2>
 
@@ -119,7 +119,7 @@ const JourneesEstimation = () => {
                           <div className="flex items-start gap-4">
                             {/* Date badge */}
                             <div className="bg-violet-600 text-white px-4 py-3 text-center shrink-0">
-                              <span className="block text-2xl font-serif font-light">
+                              <span className="block text-2xl font-light">
                                 {format(parseISO(exp.start_date), 'd')}
                               </span>
                               <span className="block text-xs uppercase tracking-wide">
@@ -129,7 +129,7 @@ const JourneesEstimation = () => {
 
                             {/* Details */}
                             <div className="flex-1">
-                              <h3 className="font-serif text-lg font-medium mb-2">
+                              <h3 className="text-lg font-medium mb-2">
                                 {exp.title}
                               </h3>
                               
@@ -179,37 +179,37 @@ const JourneesEstimation = () => {
             
             <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
               <div className="text-center">
-                <h3 className="font-serif text-lg font-medium mb-4">Bijoux & Montres</h3>
+                <h3 className="text-lg font-medium mb-4">Bijoux & Montres</h3>
                 <p className="text-base text-muted-foreground">
                   Haute joaillerie, montres de prestige, pièces anciennes, or et pierres précieuses.
                 </p>
               </div>
               <div className="text-center">
-                <h3 className="font-serif text-lg font-medium mb-4">Art & Tableaux</h3>
+                <h3 className="text-lg font-medium mb-4">Art & Tableaux</h3>
                 <p className="text-base text-muted-foreground">
                   Peintures, dessins, sculptures, estampes de toutes époques et écoles.
                 </p>
               </div>
               <div className="text-center">
-                <h3 className="font-serif text-lg font-medium mb-4">Mobilier & Objets</h3>
+                <h3 className="text-lg font-medium mb-4">Mobilier & Objets</h3>
                 <p className="text-base text-muted-foreground">
                   Meubles anciens, objets d'art, argenterie, céramiques, verrerie.
                 </p>
               </div>
               <div className="text-center">
-                <h3 className="font-serif text-lg font-medium mb-4">Vins & Spiritueux</h3>
+                <h3 className="text-lg font-medium mb-4">Vins & Spiritueux</h3>
                 <p className="text-base text-muted-foreground">
                   Grands crus, millésimes rares, caves complètes, cognacs et whiskies.
                 </p>
               </div>
               <div className="text-center">
-                <h3 className="font-serif text-lg font-medium mb-4">Livres & Manuscrits</h3>
+                <h3 className="text-lg font-medium mb-4">Livres & Manuscrits</h3>
                 <p className="text-base text-muted-foreground">
                   Éditions anciennes, reliures, autographes, documents historiques.
                 </p>
               </div>
               <div className="text-center">
-                <h3 className="font-serif text-lg font-medium mb-4">Collections</h3>
+                <h3 className="text-lg font-medium mb-4">Collections</h3>
                 <p className="text-base text-muted-foreground">
                   Militaria, jouets anciens, instruments scientifiques, objets de curiosité.
                 </p>
@@ -221,7 +221,7 @@ const JourneesEstimation = () => {
         {/* CTA */}
         <section className="pt-10 md:pt-12 pb-0">
           <div className="bg-brand-primary text-brand-primary-foreground p-6 md:p-10 text-center card-shadow">
-            <h2 className="font-serif text-lg md:text-xl font-light mb-6">
+            <h2 className="text-lg md:text-xl font-light mb-6">
               Vous ne pouvez pas vous déplacer ?
             </h2>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">

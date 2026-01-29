@@ -124,7 +124,7 @@ const AfterSale = () => {
                       
                       {/* Infos */}
                       <div className="p-3">
-                        <h3 className="font-serif text-sm line-clamp-2 mb-1">{lot.title}</h3>
+                        <h3 className="text-sm line-clamp-2 mb-1">{lot.title}</h3>
                         
                         {/* Prix */}
                         <p className="text-base font-semibold text-brand-gold mb-2">
@@ -148,7 +148,7 @@ const AfterSale = () => {
             ) : (
               <div className="text-center py-16 bg-background border border-border/50">
                 <ShoppingBag className="w-12 h-12 mx-auto mb-4 text-muted-foreground/50" />
-                <h3 className="font-serif text-xl mb-2">Aucun lot disponible actuellement</h3>
+                <h3 className="text-xl mb-2">Aucun lot disponible actuellement</h3>
                 <p className="text-sm text-muted-foreground max-w-md mx-auto">
                   Les lots After Sale sont proposés après nos ventes aux enchères. 
                   Revenez bientôt ou consultez nos prochaines ventes.

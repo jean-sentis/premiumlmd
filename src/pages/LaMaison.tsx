@@ -189,7 +189,7 @@ const UpcomingSalesSection = () => {
                     <Calendar className="w-4 h-4 text-brand-gold" />
                     <span className="text-xs text-background/60 uppercase tracking-wider">Prochaine vente</span>
                   </div>
-                  <h3 className="font-serif text-sm font-medium text-background line-clamp-2 group-hover:text-brand-gold transition-colors">
+                  <h3 className="text-sm font-medium text-background line-clamp-2 group-hover:text-brand-gold transition-colors">
                     {nextSale.title}
                   </h3>
                   <p className="text-xs text-background/70 mt-1 capitalize">
@@ -217,7 +217,7 @@ const UpcomingSalesSection = () => {
                     <Clock className="w-4 h-4 text-brand-gold" />
                     <span className="text-xs text-brand-gold uppercase tracking-wider font-medium">Vente Chrono</span>
                   </div>
-                  <h3 className="font-serif text-sm font-medium text-background line-clamp-2 group-hover:text-brand-gold transition-colors">
+                  <h3 className="text-sm font-medium text-background line-clamp-2 group-hover:text-brand-gold transition-colors">
                     {chronoSale.title}
                   </h3>
                   <div className="mt-2">

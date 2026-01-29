@@ -145,7 +145,7 @@ const LotsGrid = ({ saleId, saleTitle, specialty }: LotsGridProps) => {
         {/* Header */}
         <div className="flex items-center justify-center mb-8">
           <div className="h-px bg-foreground/30 flex-1 max-w-[100px]"></div>
-          <h2 className="font-serif text-2xl md:text-3xl font-bold tracking-wide px-8 text-center">
+          <h2 className="text-2xl md:text-3xl font-bold tracking-wide px-8 text-center">
             CATALOGUE
           </h2>
           <div className="h-px bg-foreground/30 flex-1 max-w-[100px]"></div>
@@ -164,7 +164,7 @@ const LotsGrid = ({ saleId, saleTitle, specialty }: LotsGridProps) => {
       {/* Header */}
       <div className="flex items-center justify-center mb-8">
         <div className="h-px bg-foreground/30 flex-1 max-w-[100px]"></div>
-        <h2 className="font-serif text-2xl md:text-3xl font-bold tracking-wide px-8 text-center">
+        <h2 className="text-2xl md:text-3xl font-bold tracking-wide px-8 text-center">
           CATALOGUE
         </h2>
         <div className="h-px bg-foreground/30 flex-1 max-w-[100px]"></div>

@@ -208,10 +208,10 @@ const Vendre = () => {
                         {selectedResult.artist}
                       </p>
                     )}
-                    <h3 className="font-serif text-xl font-medium mb-2">
+                    <h3 className="text-xl font-medium mb-2">
                       {selectedResult.title}
                     </h3>
-                    <p className="font-serif text-2xl font-semibold text-brand-primary">
+                    <p className="text-2xl font-semibold text-brand-primary">
                       {selectedResult.price}
                     </p>
                     {selectedResult.date && (
@@ -235,8 +235,8 @@ const Vendre = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
             {/* Étape 1 - VENDRE ? */}
             <div className="bg-background border border-border/50 p-6 transition-all duration-300 hover:-translate-y-2 hover:shadow-xl flex flex-col">
-              <span className="font-serif text-5xl font-light block mb-4 text-primary">1</span>
-              <h3 className="font-serif text-lg font-medium tracking-wide mb-4">VENDRE ?</h3>
+              <span className="text-5xl font-light block mb-4 text-primary">1</span>
+              <h3 className="text-lg font-medium tracking-wide mb-4">VENDRE ?</h3>
               <div className="text-sm text-muted-foreground leading-relaxed space-y-3 flex-1">
                 <p>
                   <strong>Successions :</strong> Le commissaire-priseur crée l'équité entre héritiers grâce à une estimation impartiale et une vente transparente.
@@ -255,8 +255,8 @@ const Vendre = () => {
             
             {/* Étape 2 - ESTIMATION & EXPERTISE */}
             <div className="bg-background border border-border/50 p-6 transition-all duration-300 hover:-translate-y-2 hover:shadow-xl flex flex-col">
-              <span className="font-serif text-5xl font-light block mb-4 text-primary">2</span>
-              <h3 className="font-serif text-lg font-medium tracking-wide mb-4">ESTIMATION & EXPERTISE</h3>
+              <span className="text-5xl font-light block mb-4 text-primary">2</span>
+              <h3 className="text-lg font-medium tracking-wide mb-4">ESTIMATION & EXPERTISE</h3>
               <div className="text-sm text-muted-foreground leading-relaxed space-y-3 flex-1">
                 <p>
                   L'estimation est <strong>toujours gratuite</strong> et sans engagement. Elle reflète le marché actuel, pas une valeur sentimentale.
@@ -275,8 +275,8 @@ const Vendre = () => {
             
             {/* Étape 3 - MISE EN VENTE */}
             <div className="bg-background border border-border/50 p-6 transition-all duration-300 hover:-translate-y-2 hover:shadow-xl flex flex-col">
-              <span className="font-serif text-5xl font-light block mb-4 text-primary">3</span>
-              <h3 className="font-serif text-lg font-medium tracking-wide mb-4">MISE EN VENTE</h3>
+              <span className="text-5xl font-light block mb-4 text-primary">3</span>
+              <h3 className="text-lg font-medium tracking-wide mb-4">MISE EN VENTE</h3>
               <div className="text-sm text-muted-foreground leading-relaxed space-y-3 flex-1">
                 <p>
                   <strong>Le mandat :</strong> Document qui formalise notre collaboration et définit les conditions de vente.
@@ -295,8 +295,8 @@ const Vendre = () => {
             
             {/* Étape 4 - RÈGLEMENT */}
             <div className="bg-background border border-border/50 p-6 transition-all duration-300 hover:-translate-y-2 hover:shadow-xl flex flex-col">
-              <span className="font-serif text-5xl font-light block mb-4 text-primary">4</span>
-              <h3 className="font-serif text-lg font-medium tracking-wide mb-4">RÈGLEMENT</h3>
+              <span className="text-5xl font-light block mb-4 text-primary">4</span>
+              <h3 className="text-lg font-medium tracking-wide mb-4">RÈGLEMENT</h3>
               <div className="text-sm text-muted-foreground leading-relaxed space-y-3 flex-1">
                 <p>
                   Le résultat de la vente vous est communiqué <strong>sous 48 heures</strong> avec le détail des adjudications.
@@ -346,7 +346,7 @@ const Vendre = () => {
                 la succession de ma mère. Les estimations étaient justes et la vente s'est déroulée dans 
                 d'excellentes conditions. Je recommande vivement."
               </p>
-              <p className="font-serif text-sm font-medium">Marie-Claire D.</p>
+              <p className="text-sm font-medium">Marie-Claire D.</p>
               <p className="text-xs text-muted-foreground">Aix-en-Provence</p>
             </div>
 
@@ -364,7 +364,7 @@ const Vendre = () => {
                 une œuvre de qualité qui s'est vendue bien au-delà de mes espérances. Merci pour votre 
                 transparence et votre accompagnement tout au long du processus."
               </p>
-              <p className="font-serif text-sm font-medium">Jean-Pierre M.</p>
+              <p className="text-sm font-medium">Jean-Pierre M.</p>
               <p className="text-xs text-muted-foreground">Marseille</p>
             </div>
 
@@ -382,7 +382,7 @@ const Vendre = () => {
                 pas à pas pour la vente de bijoux de famille. Le règlement a été rapide et conforme 
                 à ce qui était annoncé. Service irréprochable."
               </p>
-              <p className="font-serif text-sm font-medium">Sophie L.</p>
+              <p className="text-sm font-medium">Sophie L.</p>
               <p className="text-xs text-muted-foreground">Ajaccio</p>
             </div>
           </div>
@@ -407,7 +407,7 @@ const Vendre = () => {
               </div>
               <div className="p-6">
                 <p className="font-sans text-xs tracking-widest text-muted-foreground mb-2">12.06.2025 — 10H00</p>
-                <h4 className="font-serif text-lg font-medium mb-1">Joaillerie et Montres</h4>
+                <h4 className="text-lg font-medium mb-1">Joaillerie et Montres</h4>
                 <p className="text-sm text-muted-foreground">À l'étude, avec notre expert spécialisé</p>
               </div>
             </div>
@@ -421,7 +421,7 @@ const Vendre = () => {
               </div>
               <div className="p-6">
                 <p className="font-sans text-xs tracking-widest text-muted-foreground mb-2">26.06.2025 — 13H30</p>
-                <h4 className="font-serif text-lg font-medium mb-1">Expertise à Gap</h4>
+                <h4 className="text-lg font-medium mb-1">Expertise à Gap</h4>
                 <p className="text-sm text-muted-foreground">Place aux Herbes</p>
               </div>
             </div>
