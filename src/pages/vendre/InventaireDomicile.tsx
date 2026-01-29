@@ -6,7 +6,7 @@ import Footer from "@/components/Footer";
 import TimelineLayout from "@/components/TimelineLayout";
 import { Button } from "@/components/ui/button";
 import { COMPANY_INFO } from "@/lib/site-config";
-import successionInventaireIllustration from "@/assets/succession-inventaire-illustration.png";
+import inventaireModerneUrbain from "@/assets/inventaire-moderne-urbain.png";
 
 const InventaireDomicile = () => {
   const handleDemandeRendezVous = () => {
@@ -27,28 +27,29 @@ const InventaireDomicile = () => {
       {/* Introduction */}
       <section className="py-12 md:py-16">
         <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto">
-            <div className="grid md:grid-cols-2 gap-8 md:gap-12 items-center">
+          <div className="max-w-5xl mx-auto">
+            <div className="grid md:grid-cols-3 gap-8 md:gap-12 items-center">
+              {/* Image 2/3 */}
+              <div className="md:col-span-2">
+                <img 
+                  src={inventaireModerneUrbain} 
+                  alt="Inventaire à domicile - expertise de collections"
+                  className="w-full h-auto rounded-sm shadow-lg"
+                />
+              </div>
+              {/* Texte 1/3 */}
               <div>
                 <h2 className="font-serif text-lg font-medium mb-4">
                   Réaliser un inventaire avec notre maison
                 </h2>
                 <p className="text-sm md:text-base leading-relaxed text-muted-foreground mb-3">
-                  Depuis 2012, l'Hôtel des Ventes d'Ajaccio accompagne les familles corses 
-                  dans la valorisation de leur patrimoine. Nous réalisons des inventaires 
-                  complets à domicile, avec le sérieux et la discrétion que ces situations exigent.
+                  Nous réalisons des inventaires complets en Corse ou sur le Continent, 
+                  avec le sérieux et la discrétion que ces situations exigent.
                 </p>
                 <p className="text-sm md:text-base leading-relaxed text-foreground font-medium">
                   Nos commissaires-priseurs et experts mettent leur connaissance du marché 
                   et leur expérience à votre service, en toute confidentialité.
                 </p>
-              </div>
-              <div className="flex justify-center">
-                <img 
-                  src={successionInventaireIllustration} 
-                  alt="Inventaire et estimation à domicile"
-                  className="w-64 md:w-80 h-auto"
-                />
               </div>
             </div>
           </div>
