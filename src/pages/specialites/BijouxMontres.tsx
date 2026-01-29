@@ -19,7 +19,7 @@ const DetailContent = () => (
     <div className="grid md:grid-cols-2 gap-12 mb-16">
       {/* Haute Joaillerie */}
       <div className="bg-[hsl(var(--brand-blue-100))] p-8 border border-[hsl(var(--brand-gold-200))]">
-        <h3 className="text-xl font-serif text-[hsl(var(--brand-primary))] mb-6 pb-4 border-b border-[hsl(var(--brand-gold-300))]">
+        <h3 className="text-xl font-semibold text-[hsl(var(--brand-primary))] mb-6 pb-4 border-b border-[hsl(var(--brand-gold-300))]">
           Haute Joaillerie
         </h3>
         <div className="space-y-4 text-muted-foreground">
@@ -49,7 +49,7 @@ const DetailContent = () => (
 
       {/* Horlogerie */}
       <div className="bg-[hsl(var(--brand-blue-100))] p-8 border border-[hsl(var(--brand-gold-200))]">
-        <h3 className="text-xl font-serif text-[hsl(var(--brand-primary))] mb-6 pb-4 border-b border-[hsl(var(--brand-gold-300))]">
+        <h3 className="text-xl font-semibold text-[hsl(var(--brand-primary))] mb-6 pb-4 border-b border-[hsl(var(--brand-gold-300))]">
           Horlogerie de Prestige
         </h3>
         <div className="space-y-4 text-muted-foreground">
@@ -80,7 +80,7 @@ const DetailContent = () => (
 
     {/* Pierres et certifications */}
     <div className="bg-[hsl(var(--brand-blue-100))] p-8 border border-[hsl(var(--brand-gold-200))]">
-      <h3 className="text-xl font-serif text-[hsl(var(--brand-primary))] mb-6 pb-4 border-b border-[hsl(var(--brand-gold-300))]">
+      <h3 className="text-xl font-semibold text-[hsl(var(--brand-primary))] mb-6 pb-4 border-b border-[hsl(var(--brand-gold-300))]">
         Gemmologie et Certifications
       </h3>
       <div className="grid md:grid-cols-3 gap-8 text-muted-foreground">

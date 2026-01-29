@@ -97,7 +97,7 @@ const VinsSpiriteux = () => {
             
             {/* Contenu central */}
             <div className="flex-1 max-w-3xl text-center">
-              <h2 className="text-2xl font-serif text-[hsl(var(--brand-primary))] mb-8">
+              <h2 className="text-2xl font-semibold text-[hsl(var(--brand-primary))] mb-8">
                 L'Excellence en Bouteille
               </h2>
               <div className="prose prose-lg max-w-none text-muted-foreground">
@@ -149,7 +149,7 @@ const VinsSpiriteux = () => {
           <div className="grid md:grid-cols-2 gap-12 mb-16">
             {/* Vins */}
             <div className="bg-white/90 backdrop-blur-sm p-8 border border-[hsl(var(--brand-gold-200))] shadow-sm">
-              <h3 className="text-xl font-serif text-[hsl(var(--brand-primary))] mb-6 pb-4 border-b border-[hsl(var(--brand-gold-300))]">
+              <h3 className="text-xl font-semibold text-[hsl(var(--brand-primary))] mb-6 pb-4 border-b border-[hsl(var(--brand-gold-300))]">
                 Les Grands Vins
               </h3>
               <div className="space-y-4 text-muted-foreground">
@@ -180,7 +180,7 @@ const VinsSpiriteux = () => {
 
             {/* Spiritueux */}
             <div className="bg-white/90 backdrop-blur-sm p-8 border border-[hsl(var(--brand-gold-200))] shadow-sm">
-              <h3 className="text-xl font-serif text-[hsl(var(--brand-primary))] mb-6 pb-4 border-b border-[hsl(var(--brand-gold-300))]">
+              <h3 className="text-xl font-semibold text-[hsl(var(--brand-primary))] mb-6 pb-4 border-b border-[hsl(var(--brand-gold-300))]">
                 Spiritueux d'Exception
               </h3>
               <div className="space-y-4 text-muted-foreground">
@@ -211,7 +211,7 @@ const VinsSpiriteux = () => {
 
           {/* Conservation et authenticité */}
           <div className="bg-white/90 backdrop-blur-sm p-8 border border-[hsl(var(--brand-gold-200))] shadow-sm">
-            <h3 className="text-xl font-serif text-[hsl(var(--brand-primary))] mb-6 pb-4 border-b border-[hsl(var(--brand-gold-300))]">
+            <h3 className="text-xl font-semibold text-[hsl(var(--brand-primary))] mb-6 pb-4 border-b border-[hsl(var(--brand-gold-300))]">
               Conservation et Authenticité
             </h3>
             <div className="grid md:grid-cols-3 gap-8 text-muted-foreground">
@@ -246,7 +246,7 @@ const VinsSpiriteux = () => {
         <div className="container max-w-4xl">
           <div className="text-center mb-12">
             <Quote className="h-12 w-12 mx-auto mb-6 text-[hsl(var(--brand-gold-400))]" />
-            <h2 className="text-2xl font-serif mb-2">Le Mot de l'Expert</h2>
+            <h2 className="text-2xl font-semibold mb-2">Le Mot de l'Expert</h2>
           </div>
           
           <div className="bg-white/5 border border-[hsl(var(--brand-gold-400)/0.3)] p-8 md:p-12 relative overflow-visible">
@@ -269,7 +269,7 @@ const VinsSpiriteux = () => {
             </blockquote>
             
             <div className="flex items-center gap-4">
-              <div className="w-16 h-16 bg-[hsl(var(--brand-gold-400))] rounded-full flex items-center justify-center text-[hsl(var(--brand-primary))] font-serif text-xl">
+              <div className="w-16 h-16 bg-[hsl(var(--brand-gold-400))] rounded-full flex items-center justify-center text-[hsl(var(--brand-primary))] text-xl">
                 PD
               </div>
               <div>
