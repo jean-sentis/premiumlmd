@@ -120,23 +120,23 @@ const CompteAccueil = () => {
         <div className="space-y-2">
           <NavCard
             icon={<Sparkles className="w-5 h-5" />}
-            title="Dialogue avec l'IA"
-            description={tasteProfileExists ? "Continuez votre conversation" : "Dites-nous ce que vous aimez"}
+            title="Dialogue avec LIA"
+            description={tasteProfileExists ? "Ses analyses au service de mes goûts" : "Ses analyses au service de mes goûts"}
             onClick={() => navigate('/compte/ce-que-jaime')}
             highlight={!tasteProfileExists}
           />
           <NavCard
             icon={<Bell className="w-5 h-5" />}
             title="Mes alertes"
-            description="Soyez prévenu des nouveaux lots"
+            description="Tenez-moi au courant quand ces sujets arrivent dans vos ventes"
             badge={alertsWithResults > 0 ? alertsWithResults : alertsCount > 0 ? `${alertsCount} actives` : undefined}
             badgeColor={alertsWithResults > 0 ? 'gold' : 'green'}
             onClick={() => navigate('/compte/alertes')}
           />
           <NavCard
             icon={<Mail className="w-5 h-5" />}
-            title="Newsletter"
-            description={newsletterSubscribed ? "Vous êtes inscrit" : "Recevez nos actualités"}
+            title="Newsletter sélective"
+            description={newsletterSubscribed ? "Je reçois des actualités sur ce que j'aime" : "Je reçois des actualités sur ce que j'aime"}
             badge={newsletterSubscribed ? "✓" : undefined}
             badgeColor="green"
             onClick={() => navigate('/compte/newsletter')}
@@ -151,14 +151,14 @@ const CompteAccueil = () => {
           <NavCard
             icon={<Heart className="w-5 h-5" />}
             title="Ma sélection"
-            description="Lots mémorisés"
+            description="Les lots dont je veux me souvenir et/ou les partager"
             badge={memorizedLots}
             onClick={() => navigate('/compte/favoris')}
           />
           <NavCard
             icon={<FileText className="w-5 h-5" />}
-            title="Ordres d'achat"
-            description="Vos enchères automatiques"
+            title="Ordres d'achats"
+            description="Mes enchères automatiques"
             badge={purchaseOrders}
             onClick={() => navigate('/compte/ordres')}
           />
