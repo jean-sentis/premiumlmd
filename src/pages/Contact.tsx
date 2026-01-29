@@ -53,7 +53,7 @@ const Contact = () => {
           {/* Two Column Layout: Contact Info Left, Actions Right */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-16 mb-20">
             {/* Left - Contact Info */}
-            <div className="space-y-3 text-sm">
+            <div className="space-y-3 text-sm font-serif">
               <p className="text-base font-medium mb-4">{COMPANY_INFO.name}</p>
               <p>
                 {COMPANY_INFO.address.street}<br />
@@ -178,7 +178,7 @@ const Contact = () => {
           {/* Artwork Section - Text 1/3, Image 2/3 */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12 items-center border-t border-border pt-16">
             {/* Left Column - Text (1/3) - Smaller, centered vertically */}
-            <div className="md:col-span-1 flex flex-col justify-center text-xs text-muted-foreground space-y-3">
+            <div className="md:col-span-1 flex flex-col justify-center text-xs text-muted-foreground space-y-3 font-serif">
               {/* Artist Name - Bigger */}
               <p className="text-lg font-medium text-foreground">
                 Ange LECCIA
