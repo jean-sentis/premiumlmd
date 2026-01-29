@@ -59,8 +59,18 @@ const DemoRdvOverlay = ({
   ctaText = "Prenons rendez-vous pour une démo accompagnée",
 }: DemoRdvOverlayProps) => {
   // DÉSACTIVÉ: plus de blocage pour la démo
-  return null;
-  
+  // Important: on force aussi la remise du scroll, car si l'overlay a déjà bloqué
+  // la page (overflow hidden), l'early-return empêcherait les effets de cleanup.
+  const DISABLE_OVERLAY = true;
+
+  useEffect(() => {
+    if (DISABLE_OVERLAY) {
+      document.body.style.overflow = "";
+    }
+  }, []);
+
+  if (DISABLE_OVERLAY) return null;
+
   const location = useLocation();
   const [isVisible, setIsVisible] = useState(false);
   const [initialPath] = useState(location.pathname);
