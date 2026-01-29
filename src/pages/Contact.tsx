@@ -1,396 +1,277 @@
-import { useState, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { useState } from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { useToast } from "@/hooks/use-toast";
-import { Instagram, Facebook, Upload, X, MapPin, Clock, Phone, Car } from "lucide-react";
-import vlaminckBougival from "@/assets/vlaminck-bougival.jpg";
+import { MapPin, Clock, Phone, Mail, Calendar, Package, Camera, MessageSquare, ChevronDown } from "lucide-react";
+import InventaireFormDialog from "@/components/InventaireFormDialog";
+import { EstimationPhotoDialog } from "@/components/contact/EstimationPhotoDialog";
+import { RendezVousDialog } from "@/components/contact/RendezVousDialog";
+import { ObjetSimilaireDialog } from "@/components/contact/ObjetSimilaireDialog";
+import { COMPANY_INFO } from "@/lib/site-config";
+import angeLeccia from "@/assets/ange-leccia-1983.png";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Link } from "react-router-dom";
+
+const SPECIALITES = [
+  { name: "Bijoux & Montres", href: "/specialites/bijoux-montres" },
+  { name: "Art Moderne & Contemporain", href: "/specialites/art-moderne" },
+  { name: "Art du XXème siècle", href: "/specialites/art-xxeme" },
+  { name: "Mobilier & Objets d'Art", href: "/specialites/mobilier-objets-art" },
+  { name: "Vins & Spiritueux", href: "/specialites/vins-spiritueux" },
+  { name: "Voitures de Collection", href: "/specialites/voitures-collection" },
+  { name: "Céramiques", href: "/specialites/ceramiques" },
+  { name: "Argenterie", href: "/specialites/argenterie" },
+  { name: "Mode & Textile", href: "/specialites/mode-textile" },
+  { name: "Militaria", href: "/specialites/militaria" },
+  { name: "Collections", href: "/specialites/collections" },
+];
 
 const Contact = () => {
-  const { toast } = useToast();
-  const location = useLocation();
-  const [files, setFiles] = useState<File[]>([]);
-  const [formData, setFormData] = useState({
-    nom: "",
-    email: "",
-    telephone: "",
-    origine: "",
-    possession: "",
-    provenance: "",
-    description: ""
-  });
-
-  // Scroll to anchor if present
-  useEffect(() => {
-    if (location.hash) {
-      const element = document.querySelector(location.hash);
-      if (element) {
-        setTimeout(() => {
-          element.scrollIntoView({ behavior: 'smooth' });
-        }, 100);
-      }
-    }
-  }, [location]);
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFiles = Array.from(e.target.files || []);
-    const validFiles = selectedFiles.filter(file => {
-      if (!file.type.includes('jpeg') && !file.type.includes('jpg')) {
-        toast({
-          title: "Format non accepté",
-          description: "Seuls les fichiers JPEG sont acceptés.",
-          variant: "destructive"
-        });
-        return false;
-      }
-      if (file.size > 10 * 1024 * 1024) {
-        toast({
-          title: "Fichier trop volumineux",
-          description: "La taille maximale est de 10 Mo par fichier.",
-          variant: "destructive"
-        });
-        return false;
-      }
-      return true;
-    });
-
-    if (files.length + validFiles.length > 4) {
-      toast({
-        title: "Limite atteinte",
-        description: "Vous pouvez déposer maximum 4 photos.",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    setFiles([...files, ...validFiles]);
-  };
-
-  const removeFile = (index: number) => {
-    setFiles(files.filter((_, i) => i !== index));
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    toast({
-      title: "Demande envoyée",
-      description: "Nous vous répondrons sous 48h.",
-    });
-    // Reset form
-    setFormData({
-      nom: "",
-      email: "",
-      telephone: "",
-      origine: "",
-      possession: "",
-      provenance: "",
-      description: ""
-    });
-    setFiles([]);
-  };
+  const [inventaireDialogOpen, setInventaireDialogOpen] = useState(false);
+  const [estimationDialogOpen, setEstimationDialogOpen] = useState(false);
+  const [rendezVousDialogOpen, setRendezVousDialogOpen] = useState(false);
+  const [objetSimilaireDialogOpen, setObjetSimilaireDialogOpen] = useState(false);
 
   return (
     <div className="min-h-screen bg-background">
       <Header />
       
-      {/* Hero Section with Vlaminck */}
+      {/* Hero Section with Artwork */}
       <section 
-        className="relative min-h-[70vh] flex items-center"
+        className="relative"
         style={{ paddingTop: 'var(--header-height, 145px)' }}
       >
-        <div 
-          className="absolute inset-0 bg-cover bg-center"
-          style={{ backgroundImage: `url(${vlaminckBougival})` }}
-        />
-        <div className="absolute inset-0 bg-gradient-to-r from-background/95 via-background/70 to-transparent" />
-        <div className="container relative z-10 py-16">
-          <div className="max-w-xl">
-            <Link to="/" className="inline-block mb-8">
-              <h1 className="font-serif text-4xl md:text-5xl font-light tracking-tight">
-                DOUZE PAGES & ASSOCIÉS
-              </h1>
-              <p className="text-xs tracking-[0.3em] text-muted-foreground mt-1">
-                MAISON DE VENTES
+        <div className="container py-16 md:py-24">
+          {/* Artwork Display - Museum Style */}
+          <div className="max-w-4xl mx-auto">
+            {/* The Artwork */}
+            <div className="relative">
+              <img 
+                src={angeLeccia} 
+                alt="Ange Leccia - Sans Titre, 1983"
+                className="w-full max-w-2xl mx-auto shadow-2xl"
+              />
+            </div>
+            
+            {/* Museum Label / Cartel */}
+            <div className="mt-8 max-w-xl mx-auto text-center md:text-left md:ml-auto md:mr-0">
+              <p className="font-serif text-xl md:text-2xl font-medium tracking-wide">
+                Ange LECCIA
               </p>
-            </Link>
-            <h2 className="font-serif text-3xl md:text-4xl font-light mt-8">
-              Contactez-nous
-            </h2>
-            <p className="text-muted-foreground mt-4">
-              Notre équipe est à votre disposition pour toute demande d'estimation, 
-              conseil ou information.
-            </p>
+              <p className="text-muted-foreground text-sm mt-1">
+                (Né en 1952)
+              </p>
+              <p className="font-serif text-lg mt-4 italic">
+                SANS TITRE — 1983
+              </p>
+              <p className="text-muted-foreground text-sm mt-2 leading-relaxed">
+                Collage de papiers sur toile<br />
+                Signée, datée, située, dédicacée et annotée au dos<br />
+                <span className="italic">"Ange Leccia, Roma Villa Medici, 83, avant-dernier"</span>
+              </p>
+              <p className="text-muted-foreground text-sm mt-3">
+                h: 200 × l: 180 cm
+              </p>
+              <div className="mt-4 pt-4 border-t border-border">
+                <p className="text-xs text-muted-foreground">
+                  <span className="font-medium">Provenance :</span> Galerie Lucien Durand, Paris
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Vente, Paris, Auction Art, 27 octobre 2008, lot 179
+                </p>
+              </div>
+            </div>
           </div>
-        </div>
-        {/* Artwork caption */}
-        <div className="absolute bottom-4 right-4 bg-background/90 backdrop-blur-sm px-4 py-2 rounded text-xs text-right">
-          <p className="font-medium">Maurice de Vlaminck</p>
-          <p className="text-muted-foreground italic">Restaurant de la Machine à Bougival, 1905</p>
-          <p className="text-muted-foreground">Huile sur toile, 60 × 81,5 cm</p>
-          <p className="text-muted-foreground">186 500 € — Préempté par le Musée d'Orsay, 2005</p>
         </div>
       </section>
 
-      {/* Contact Info */}
-      <section className="py-16">
+      {/* Coordonnées */}
+      <section className="py-12 bg-secondary/30">
         <div className="container">
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 mb-16">
-            {/* Adresse */}
-            <div className="text-center">
-              <div className="w-12 h-12 rounded-full bg-brand-primary/10 flex items-center justify-center mx-auto mb-4">
-                <MapPin className="w-6 h-6 text-brand-primary" />
+          <div className="max-w-3xl mx-auto">
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8 text-center">
+              <div>
+                <MapPin className="w-5 h-5 mx-auto mb-3 text-brand-primary" />
+                <p className="text-sm">
+                  {COMPANY_INFO.address.street}<br />
+                  {COMPANY_INFO.address.postalCode} {COMPANY_INFO.address.city}
+                </p>
               </div>
-              <h3 className="font-serif text-lg mb-2">Adresse</h3>
-              <p className="text-muted-foreground text-sm">
-                12 boulevard Albert 1er<br />
-                20000 Ajaccio
-              </p>
-            </div>
-
-            {/* Horaires */}
-            <div className="text-center">
-              <div className="w-12 h-12 rounded-full bg-brand-primary/10 flex items-center justify-center mx-auto mb-4">
-                <Clock className="w-6 h-6 text-brand-primary" />
+              <div>
+                <Clock className="w-5 h-5 mx-auto mb-3 text-brand-primary" />
+                <p className="text-sm">
+                  Lundi – Vendredi<br />
+                  9h – 12h30 / 14h – 18h
+                </p>
               </div>
-              <h3 className="font-serif text-lg mb-2">Horaires</h3>
-              <p className="text-muted-foreground text-sm">
-                Lundi - Vendredi<br />
-                9h00 - 12h30 / 14h00 - 18h00<br />
-                Samedi sur rendez-vous
-              </p>
-            </div>
-
-            {/* Téléphones */}
-            <div className="text-center">
-              <div className="w-12 h-12 rounded-full bg-brand-primary/10 flex items-center justify-center mx-auto mb-4">
-                <Phone className="w-6 h-6 text-brand-primary" />
+              <div>
+                <Phone className="w-5 h-5 mx-auto mb-3 text-brand-primary" />
+                <a 
+                  href={COMPANY_INFO.phoneLink}
+                  className="text-sm hover:text-brand-primary transition-colors"
+                >
+                  {COMPANY_INFO.phone}
+                </a>
               </div>
-              <h3 className="font-serif text-lg mb-2">Téléphone</h3>
-              <p className="text-muted-foreground text-sm">
-                <a href="tel:+33495121212" className="hover:text-brand-primary transition-colors">04 95 12 12 12</a><br />
-                <a href="mailto:jean@lemarteaudigital.fr" className="hover:text-brand-primary transition-colors text-xs">jean@lemarteaudigital.fr</a>
-              </p>
-            </div>
-
-            {/* Parking */}
-            <div className="text-center">
-              <div className="w-12 h-12 rounded-full bg-brand-primary/10 flex items-center justify-center mx-auto mb-4">
-                <Car className="w-6 h-6 text-brand-primary" />
+              <div>
+                <Mail className="w-5 h-5 mx-auto mb-3 text-brand-primary" />
+                <a 
+                  href={COMPANY_INFO.emailLink}
+                  className="text-sm hover:text-brand-primary transition-colors"
+                >
+                  {COMPANY_INFO.email}
+                </a>
               </div>
-              <h3 className="font-serif text-lg mb-2">Accès</h3>
-              <p className="text-muted-foreground text-sm">
-                Parking gratuit<br />
-                devant l'hôtel des ventes
-              </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Estimation Form */}
-      <section id="formulaire" className="py-16 bg-secondary/30 scroll-mt-32">
-        <div className="container max-w-3xl">
-          <div className="text-center mb-12">
-            <p className="font-sans text-sm tracking-widest text-muted-foreground uppercase mb-2">
-              Estimation gratuite
+      {/* Action Cartouches */}
+      <section className="py-16 md:py-24">
+        <div className="container">
+          <div className="max-w-4xl mx-auto">
+            <p className="text-center text-muted-foreground mb-12 font-serif text-lg">
+              Comment pouvons-nous vous accompagner ?
             </p>
-            <h2 className="font-serif text-3xl md:text-4xl font-light tracking-tight">
-              Demande d'estimation
-            </h2>
-            <p className="text-muted-foreground mt-4">
-              Envoyez-nous les photos de votre objet et nous vous répondrons sous 48h.
-            </p>
-          </div>
-
-          <form onSubmit={handleSubmit} className="space-y-8 bg-card p-8 rounded-lg border">
-            {/* Contact Info */}
-            <div className="grid sm:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <Label htmlFor="nom">Nom complet *</Label>
-                <Input 
-                  id="nom" 
-                  required 
-                  value={formData.nom}
-                  onChange={(e) => setFormData({...formData, nom: e.target.value})}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="email">Email *</Label>
-                <Input 
-                  id="email" 
-                  type="email" 
-                  required 
-                  value={formData.email}
-                  onChange={(e) => setFormData({...formData, email: e.target.value})}
-                />
-              </div>
-              <div className="space-y-2 sm:col-span-2">
-                <Label htmlFor="telephone">Téléphone</Label>
-                <Input 
-                  id="telephone" 
-                  type="tel" 
-                  value={formData.telephone}
-                  onChange={(e) => setFormData({...formData, telephone: e.target.value})}
-                />
-              </div>
-            </div>
-
-            {/* Photo Upload */}
-            <div className="space-y-4">
-              <Label>Photos de l'objet (4 max, JPEG, 10 Mo max chacune)</Label>
-              <div className="border-2 border-dashed border-border rounded-lg p-8 text-center hover:border-brand-primary/50 transition-colors">
-                <input
-                  type="file"
-                  accept=".jpg,.jpeg"
-                  multiple
-                  onChange={handleFileChange}
-                  className="hidden"
-                  id="file-upload"
-                />
-                <label htmlFor="file-upload" className="cursor-pointer">
-                  <Upload className="w-10 h-10 text-muted-foreground mx-auto mb-4" />
-                  <p className="text-muted-foreground">
-                    Cliquez ou glissez vos photos ici
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-2">
-                    {files.length}/4 photos ajoutées
-                  </p>
-                </label>
-              </div>
-              
-              {/* Preview Files */}
-              {files.length > 0 && (
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-4">
-                  {files.map((file, index) => (
-                    <div key={index} className="relative group">
-                      <img 
-                        src={URL.createObjectURL(file)} 
-                        alt={`Upload ${index + 1}`}
-                        className="w-full aspect-square object-cover rounded-lg"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => removeFile(index)}
-                        className="absolute top-2 right-2 w-6 h-6 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-                    </div>
-                  ))}
+            
+            <div className="grid sm:grid-cols-2 gap-4">
+              {/* Demande d'estimation avec IA */}
+              <Button
+                variant="outline"
+                className="h-auto py-6 px-6 flex flex-col items-start text-left gap-2 hover:bg-secondary/50 transition-colors"
+                onClick={() => setEstimationDialogOpen(true)}
+              >
+                <div className="flex items-center gap-3 w-full">
+                  <Camera className="w-5 h-5 text-brand-primary shrink-0" />
+                  <span className="font-serif text-base">Demande d'estimation</span>
                 </div>
-              )}
-            </div>
-
-            {/* Object Information */}
-            <div className="space-y-6">
-              <p className="font-serif text-lg">Informations sur l'objet</p>
-              
-              <div className="space-y-2">
-                <Label htmlFor="origine">D'où vient cet objet ?</Label>
-                <Textarea 
-                  id="origine" 
-                  placeholder="Héritage familial, achat, cadeau..."
-                  value={formData.origine}
-                  onChange={(e) => setFormData({...formData, origine: e.target.value})}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="possession">Depuis combien de temps le possédez-vous ?</Label>
-                <Input 
-                  id="possession" 
-                  placeholder="Ex: Depuis 20 ans, toujours été dans la famille..."
-                  value={formData.possession}
-                  onChange={(e) => setFormData({...formData, possession: e.target.value})}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="provenance">Que savez-vous de sa provenance ?</Label>
-                <Textarea 
-                  id="provenance" 
-                  placeholder="Tout détail sur l'histoire de l'objet, son ancien propriétaire, sa région d'origine..."
-                  value={formData.provenance}
-                  onChange={(e) => setFormData({...formData, provenance: e.target.value})}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="description">Description complémentaire</Label>
-                <Textarea 
-                  id="description" 
-                  placeholder="Dimensions, état, marques ou signatures visibles..."
-                  value={formData.description}
-                  onChange={(e) => setFormData({...formData, description: e.target.value})}
-                />
-              </div>
-            </div>
-
-            <div className="text-center">
-              <Button type="submit" size="lg" className="px-12">
-                ENVOYER MA DEMANDE
+                <p className="text-xs text-muted-foreground pl-8">
+                  Notre IA vérifie la qualité de vos photos pour une estimation optimale
+                </p>
               </Button>
-              <p className="text-xs text-muted-foreground mt-4">
-                Réponse garantie sous 48h ouvrées
-              </p>
-            </div>
-          </form>
-        </div>
-      </section>
 
-      {/* Social Media */}
-      <section className="py-12 bg-background">
-        <div className="container text-center">
-          <p className="text-muted-foreground mb-6">
-            Suivez les aventures de Douze pages & associés sur les réseaux
-          </p>
-          <div className="flex justify-center gap-6">
-            <a 
-              href="https://instagram.com" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="w-12 h-12 rounded-full bg-secondary flex items-center justify-center hover:bg-brand-primary hover:text-brand-primary-foreground transition-colors"
-            >
-              <Instagram className="w-5 h-5" />
-            </a>
-            <a 
-              href="https://facebook.com" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="w-12 h-12 rounded-full bg-secondary flex items-center justify-center hover:bg-brand-primary hover:text-brand-primary-foreground transition-colors"
-            >
-              <Facebook className="w-5 h-5" />
-            </a>
+              {/* Demande d'inventaire à domicile */}
+              <Button
+                variant="outline"
+                className="h-auto py-6 px-6 flex flex-col items-start text-left gap-2 hover:bg-secondary/50 transition-colors"
+                onClick={() => setInventaireDialogOpen(true)}
+              >
+                <div className="flex items-center gap-3 w-full">
+                  <Package className="w-5 h-5 text-brand-primary shrink-0" />
+                  <span className="font-serif text-base">Inventaire à domicile</span>
+                </div>
+                <p className="text-xs text-muted-foreground pl-8">
+                  Succession, assurance, partage : nous nous déplaçons
+                </p>
+              </Button>
+
+              {/* Rendez-vous à l'étude */}
+              <Button
+                variant="outline"
+                className="h-auto py-6 px-6 flex flex-col items-start text-left gap-2 hover:bg-secondary/50 transition-colors"
+                onClick={() => setRendezVousDialogOpen(true)}
+              >
+                <div className="flex items-center gap-3 w-full">
+                  <Calendar className="w-5 h-5 text-brand-primary shrink-0" />
+                  <span className="font-serif text-base">Rendez-vous à l'étude</span>
+                </div>
+                <p className="text-xs text-muted-foreground pl-8">
+                  Apportez votre objet pour une estimation en main propre
+                </p>
+              </Button>
+
+              {/* Objet similaire à un lot */}
+              <Button
+                variant="outline"
+                className="h-auto py-6 px-6 flex flex-col items-start text-left gap-2 hover:bg-secondary/50 transition-colors"
+                onClick={() => setObjetSimilaireDialogOpen(true)}
+              >
+                <div className="flex items-center gap-3 w-full">
+                  <MessageSquare className="w-5 h-5 text-brand-primary shrink-0" />
+                  <span className="font-serif text-base">J'ai un objet similaire</span>
+                </div>
+                <p className="text-xs text-muted-foreground pl-8">
+                  Notre IA vous aide à retrouver un lot comparable en quelques questions
+                </p>
+              </Button>
+            </div>
+
+            {/* Dropdown Spécialités */}
+            <div className="mt-8 flex justify-center">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="gap-2 text-muted-foreground hover:text-foreground">
+                    Explorer nos spécialités
+                    <ChevronDown className="w-4 h-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-64 bg-background z-50">
+                  {SPECIALITES.map((spec) => (
+                    <DropdownMenuItem key={spec.href} asChild>
+                      <Link to={spec.href} className="cursor-pointer">
+                        {spec.name}
+                      </Link>
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="gap-2 text-muted-foreground hover:text-foreground">
+                    Voir les ventes
+                    <ChevronDown className="w-4 h-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56 bg-background z-50">
+                  <DropdownMenuItem asChild>
+                    <Link to="/acheter/ventes-a-venir" className="cursor-pointer">
+                      Ventes à venir
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/acheter/ventes-passees" className="cursor-pointer">
+                      Résultats des ventes
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/acheter/after-sale" className="cursor-pointer">
+                      After Sale
+                    </Link>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Google Maps */}
-      <section className="h-[400px] relative">
-        <iframe
-          src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3019.8!2d8.7369!3d41.9192!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x12da85c3b3d3c3c3%3A0x0!2zNDHCsDU1JzA5LjEiTiA4wrA0NCcxMi44IkU!5e0!3m2!1sfr!2sfr!4v1234567890"
-          width="100%"
-          height="100%"
-          style={{ border: 0 }}
-          allowFullScreen
-          loading="lazy"
-          referrerPolicy="no-referrer-when-downgrade"
-          title="Localisation Douze pages & associés"
-        />
-        <div className="absolute bottom-4 left-4 bg-card p-4 rounded-lg shadow-lg max-w-xs">
-          <p className="font-serif text-sm font-medium">Douze pages & associés</p>
-          <p className="text-xs text-muted-foreground mt-1">
-            12 boulevard Albert 1er, 20000 Ajaccio
-          </p>
-          <p className="text-xs text-muted-foreground mt-2">
-            Parking gratuit devant l'hôtel des ventes
-          </p>
-        </div>
-      </section>
+      {/* Dialogs */}
+      <InventaireFormDialog 
+        open={inventaireDialogOpen} 
+        onOpenChange={setInventaireDialogOpen} 
+      />
+      <EstimationPhotoDialog 
+        open={estimationDialogOpen} 
+        onOpenChange={setEstimationDialogOpen} 
+      />
+      <RendezVousDialog 
+        open={rendezVousDialogOpen} 
+        onOpenChange={setRendezVousDialogOpen} 
+      />
+      <ObjetSimilaireDialog 
+        open={objetSimilaireDialogOpen} 
+        onOpenChange={setObjetSimilaireDialogOpen} 
+      />
 
       <Footer />
     </div>
