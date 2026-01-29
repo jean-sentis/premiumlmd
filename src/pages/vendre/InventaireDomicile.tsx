@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
 import { MapPin, Phone, Mail, ArrowRight, Calendar } from "lucide-react";
@@ -6,17 +7,12 @@ import Footer from "@/components/Footer";
 import TimelineLayout from "@/components/TimelineLayout";
 import { Button } from "@/components/ui/button";
 import { COMPANY_INFO } from "@/lib/site-config";
+import InventaireFormDialog from "@/components/InventaireFormDialog";
 import inventaireModerneUrbain from "@/assets/inventaire-moderne-urbain.png";
 import chasseurInventaireViolet from "@/assets/chasseur-inventaire-violet.png";
 
 const InventaireDomicile = () => {
-  const handleDemandeRendezVous = () => {
-    const subject = encodeURIComponent("Demande d'inventaire à domicile");
-    const body = encodeURIComponent(
-      `Bonjour,\n\nJe souhaite demander un inventaire à domicile.\n\nMes coordonnées :\n- Nom : \n- Téléphone : \n- Adresse : \n\nType de biens à estimer :\n\nObjectif de l'inventaire :\n\n\nMerci de me recontacter pour convenir d'un rendez-vous.\n\nCordialement`
-    );
-    window.location.href = `mailto:${COMPANY_INFO.email}?subject=${subject}&body=${body}`;
-  };
+  const [formDialogOpen, setFormDialogOpen] = useState(false);
 
   return (
     <TimelineLayout pageTitle="Inventaire à Domicile" mode="vendre" hideTimeline>
@@ -52,7 +48,7 @@ const InventaireDomicile = () => {
                   et leur expérience à votre service, en toute confidentialité.
                 </p>
                 <Button 
-                  onClick={handleDemandeRendezVous}
+                  onClick={() => setFormDialogOpen(true)}
                   className="w-full sm:w-auto"
                 >
                   <Mail className="w-4 h-4 mr-2" />
@@ -331,12 +327,12 @@ const InventaireDomicile = () => {
                 </p>
                 
                 <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start mb-8">
-                  <Button 
-                    onClick={handleDemandeRendezVous}
+                <Button 
+                    onClick={() => setFormDialogOpen(true)}
                     className="bg-background text-brand-primary hover:bg-background/90"
                   >
                     <Mail className="w-4 h-4 mr-2" />
-                    Envoyer un email
+                    Demande d'inventaire
                   </Button>
                   <Button 
                     variant="outline"
@@ -366,6 +362,7 @@ const InventaireDomicile = () => {
         </div>
       </section>
 
+      <InventaireFormDialog open={formDialogOpen} onOpenChange={setFormDialogOpen} />
       <Footer />
     </TimelineLayout>
   );
