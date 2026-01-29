@@ -7,6 +7,7 @@ import TimelineLayout from "@/components/TimelineLayout";
 import { Button } from "@/components/ui/button";
 import { COMPANY_INFO } from "@/lib/site-config";
 import inventaireModerneUrbain from "@/assets/inventaire-moderne-urbain.png";
+import chasseurInventaireViolet from "@/assets/chasseur-inventaire-violet.png";
 
 const InventaireDomicile = () => {
   const handleDemandeRendezVous = () => {
@@ -303,44 +304,55 @@ const InventaireDomicile = () => {
       {/* CTA - Nous contacter */}
       <section className="py-16 md:py-20">
         <div className="container mx-auto px-4">
-          <div className="max-w-3xl mx-auto">
-            <div className="bg-brand-primary text-brand-primary-foreground p-8 md:p-12 text-center">
-              <h2 className="font-serif text-lg font-medium mb-4">
-                Demandez un inventaire à domicile
-              </h2>
-              <p className="text-sm text-brand-primary-foreground/80 mb-6 max-w-xl mx-auto">
-                Contactez-nous pour prendre rendez-vous. L'estimation est gratuite et sans engagement.
-              </p>
-              
-              <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
-                <Button 
-                  onClick={handleDemandeRendezVous}
-                  className="bg-background text-brand-primary hover:bg-background/90"
-                >
-                  <Mail className="w-4 h-4 mr-2" />
-                  Envoyer un email
-                </Button>
-                <Button 
-                  variant="outline"
-                  className="border-brand-primary-foreground text-brand-primary-foreground hover:bg-brand-primary-foreground/10"
-                  asChild
-                >
-                  <a href={`tel:${COMPANY_INFO.phone.replace(/\s/g, '')}`}>
-                    <Phone className="w-4 h-4 mr-2" />
-                    {COMPANY_INFO.phone}
-                  </a>
-                </Button>
+          <div className="max-w-5xl mx-auto">
+            <div className="grid md:grid-cols-2 gap-0">
+              {/* Illustration */}
+              <div className="hidden md:block">
+                <img 
+                  src={chasseurInventaireViolet} 
+                  alt="Commissaire-priseur découvrant des trésors"
+                  className="w-full h-full object-cover"
+                />
               </div>
-              
-              <div className="border-t border-brand-primary-foreground/20 pt-6">
-                <p className="text-sm text-brand-primary-foreground/70 mb-4">Vous préférez vous déplacer ?</p>
-                <Link 
-                  to="/vendre/estimation-en-ligne"
-                  className="inline-flex items-center gap-2 text-brand-primary-foreground hover:underline"
-                >
-                  Découvrir nos autres services d'estimation
-                  <ArrowRight className="w-4 h-4" />
-                </Link>
+              {/* CTA Content */}
+              <div className="bg-brand-primary text-brand-primary-foreground p-8 md:p-12 flex flex-col justify-center">
+                <h2 className="font-serif text-lg font-medium mb-4 text-center md:text-left">
+                  Demandez un inventaire à domicile
+                </h2>
+                <p className="text-sm mb-6 text-center md:text-left" style={{ color: '#c4a0ff' }}>
+                  Et souvent, sous le regard d'un commissaire-priseur, les objets révèlent leur véritable valeur.
+                </p>
+                
+                <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start mb-8">
+                  <Button 
+                    onClick={handleDemandeRendezVous}
+                    className="bg-background text-brand-primary hover:bg-background/90"
+                  >
+                    <Mail className="w-4 h-4 mr-2" />
+                    Envoyer un email
+                  </Button>
+                  <Button 
+                    variant="outline"
+                    className="border-brand-primary-foreground text-brand-primary-foreground hover:bg-brand-primary-foreground/10"
+                    asChild
+                  >
+                    <a href={`tel:${COMPANY_INFO.phone.replace(/\s/g, '')}`}>
+                      <Phone className="w-4 h-4 mr-2" />
+                      {COMPANY_INFO.phone}
+                    </a>
+                  </Button>
+                </div>
+                
+                <div className="border-t border-brand-primary-foreground/20 pt-6 text-center md:text-left">
+                  <p className="text-sm text-brand-primary-foreground/70 mb-4">Vous préférez vous déplacer ?</p>
+                  <Link 
+                    to="/vendre/estimation-en-ligne"
+                    className="inline-flex items-center gap-2 text-brand-primary-foreground hover:underline"
+                  >
+                    Découvrir nos autres services d'estimation
+                    <ArrowRight className="w-4 h-4" />
+                  </Link>
+                </div>
               </div>
             </div>
           </div>
