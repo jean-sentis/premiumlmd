@@ -56,7 +56,7 @@ const computeDemoModeSync = (search: string) => {
 
 const DemoRdvOverlay = ({
   rdvUrl = "https://app.cal.eu/votre-lien",
-  ctaText = "Prenons rendez-vous pour une démo accompagnée",
+  ctaText = "Cliquez pour un rendez-vous de démo accompagnée",
 }: DemoRdvOverlayProps) => {
   // Activation du blocage démo avec invitation à prendre RDV
   const DISABLE_OVERLAY = false;
