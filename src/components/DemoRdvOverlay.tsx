@@ -113,17 +113,7 @@ const DemoRdvOverlay = ({
     return () => window.removeEventListener("scroll", handleScroll);
   }, [isDemoMode, isVisible]);
 
-  // Bloquer le scroll quand l'overlay est visible
-  useEffect(() => {
-    if (isVisible && !isDemoMode) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
-    return () => {
-      document.body.style.overflow = "";
-    };
-  }, [isVisible, isDemoMode]);
+  // Ne plus bloquer le scroll - l'utilisateur peut continuer à scroller derrière le blur
 
   // Ne pas rendre en mode démo
   if (isDemoMode) return null;
