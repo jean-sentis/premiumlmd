@@ -153,13 +153,13 @@ const DemoRdvOverlay = ({
             transition={{ duration: 0.4, ease: "easeOut" }}
             className="fixed inset-0 z-[200] flex items-center justify-center p-4"
           >
-            <div className="bg-black text-white p-8 shadow-2xl border-2 border-brand-gold max-w-md w-full">
+            <div className="bg-black text-white p-8 shadow-2xl border-2 border-brand-gold-600 max-w-md w-full">
               <div className="flex flex-col items-center text-center gap-6">
-                <Calendar className="w-10 h-10 text-brand-gold" />
+                <Calendar className="w-10 h-10 text-brand-gold-600" />
                 
                 <button
                   onClick={handleCtaClick}
-                  className="w-full border-2 border-brand-gold bg-brand-gold text-black px-6 py-4 font-serif text-lg tracking-wide hover:bg-transparent hover:text-brand-gold transition-colors font-medium"
+                  className="w-full border-2 border-brand-gold-600 bg-brand-gold-600 text-brand-blue-900 px-6 py-4 font-serif text-lg tracking-wide hover:bg-transparent hover:text-brand-gold-600 transition-colors font-medium"
                 >
                   {ctaText}
                 </button>
