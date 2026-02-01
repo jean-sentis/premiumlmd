@@ -58,10 +58,8 @@ const DemoRdvOverlay = ({
   rdvUrl = "https://app.cal.eu/votre-lien",
   ctaText = "Prenons rendez-vous pour une démo accompagnée",
 }: DemoRdvOverlayProps) => {
-  // DÉSACTIVÉ: plus de blocage pour la démo
-  // Important: on force aussi la remise du scroll, car si l'overlay a déjà bloqué
-  // la page (overflow hidden), l'early-return empêcherait les effets de cleanup.
-  const DISABLE_OVERLAY = true;
+  // Activation du blocage démo avec invitation à prendre RDV
+  const DISABLE_OVERLAY = false;
 
   useEffect(() => {
     if (DISABLE_OVERLAY) {
