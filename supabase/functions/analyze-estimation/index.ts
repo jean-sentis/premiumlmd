@@ -56,18 +56,23 @@ serve(async (req) => {
         role: "system",
         content: `Tu es un expert commissaire-priseur avec 30 ans d'expérience en art, antiquités, bijoux, mobilier, véhicules de collection, vins et spiritueux.
 
-Tu reçois une demande d'estimation d'un particulier. Tu dois analyser les photos et la description fournie pour donner un avis professionnel PRUDENT et NUANCÉ.
+Tu reçois une demande d'estimation d'un particulier. Tu dois analyser les PHOTOS FOURNIES pour donner un avis professionnel PRUDENT et NUANCÉ.
 
-RÈGLES ABSOLUES DE FORMULATION :
-- N'affirme JAMAIS avec certitude l'identité d'un artiste, d'un fabricant ou d'une époque à partir de photos uniquement. Utilise TOUJOURS des formulations comme : "pourrait être", "ressemble à", "évoque le style de", "rappelle la production de", "à confirmer par un examen physique".
+RÈGLE CRITIQUE — ANALYSE DES PHOTOS :
+- Tu dois TOUJOURS analyser les photos de manière INDÉPENDANTE, en te basant UNIQUEMENT sur ce que tu VOIS dans les images.
+- Si un lot de référence est mentionné dans la description (cas "objet similaire"), IGNORE complètement le titre et la description du lot de référence pour ton identification. Le propriétaire dit simplement qu'il possède "un objet similaire" — cela ne signifie PAS que c'est le même objet. Analyse la photo comme si tu la voyais pour la première fois, sans a priori.
+- Utilise tes capacités de reconnaissance visuelle au maximum : identifie le type d'objet, le style, l'époque, les matériaux visibles, les techniques, les marques ou signatures visibles.
+
+RÈGLES DE FORMULATION :
+- N'affirme JAMAIS avec certitude l'identité d'un artiste, d'un fabricant ou d'une époque à partir de photos uniquement. Utilise des formulations comme : "pourrait être", "ressemble à", "évoque le style de", "rappelle la production de", "à confirmer par un examen physique".
 - La SEULE exception où tu peux affirmer : quand une signature, un poinçon ou une marque est CLAIREMENT LISIBLE sur la photo. Dans ce cas, précise "signature lisible" ou "poinçon identifiable".
 - Pour l'estimation chiffrée, donne TOUJOURS une fourchette large et précise qu'elle est indicative et soumise à examen.
 - Ne prétends JAMAIS avoir identifié formellement un objet que tu n'as vu qu'en photo. Un examen physique est toujours nécessaire.
 - Mentionne systématiquement les limites de l'analyse photographique (angles manquants, lumière, résolution, impossibilité de vérifier matériaux/poids/texture).
 
 Ta réponse doit être un JSON structuré avec les champs suivants :
-- summary (string) : Résumé en 2-3 phrases de ce que tu observes et de ton impression générale, en utilisant le conditionnel
-- identified_object (string) : Ce que tu PENSES identifier (type, époque probable, style, artiste/fabricant POSSIBLE). Utilise "pourrait être", "évoque", "rappelle"
+- summary (string) : Résumé en 2-3 phrases de ce que tu VOIS sur les photos et de ton impression générale, en utilisant le conditionnel
+- identified_object (string) : Ce que tu PENSES identifier EN REGARDANT LES PHOTOS (type, époque probable, style, artiste/fabricant POSSIBLE). Utilise "pourrait être", "évoque", "rappelle". NE TE BASE PAS sur le titre du lot de référence.
 - authenticity_assessment (string) : Éléments visuels qui pourraient orienter vers une authenticité ou des réserves — JAMAIS de conclusion définitive
 - condition_notes (string) : Notes sur l'état APPARENT de l'objet d'après les photos, en précisant les limites de l'observation photographique
 - estimated_range (string) : Fourchette d'estimation INDICATIVE (ex: "800 - 1 200 € (sous réserve d'examen)"), ou "Estimation impossible sans examen physique" si tu ne peux pas
@@ -82,26 +87,15 @@ Réponds UNIQUEMENT avec le JSON, sans markdown ni backticks.`,
       },
     ];
 
-    // Build user message with photos
+    // Build user message with photos — PHOTOS FIRST, then context
     const userContent: any[] = [];
 
-    // Add text description
-    let textDescription = `**Demande d'estimation**\n\nDescription du propriétaire : ${estimation.description}`;
-    if (estimation.estimated_value) {
-      textDescription += `\n\nEstimation espérée par le propriétaire : ${estimation.estimated_value}`;
-    }
-    if (estimation.object_category) {
-      textDescription += `\n\nCatégorie indiquée : ${estimation.object_category}`;
-    }
-
-    userContent.push({ type: "text", text: textDescription });
-
-    // Add photos if available
+    // Add photos FIRST so the AI analyzes them before reading any text context
     const photoUrls: string[] = estimation.photo_urls || [];
     if (photoUrls.length > 0) {
       console.log(`[analyze-estimation] Including ${photoUrls.length} photos for vision analysis`);
+      userContent.push({ type: "text", text: "PHOTOS DE L'OBJET À ANALYSER (analyse ces photos en priorité, indépendamment de tout contexte textuel) :" });
       for (const url of photoUrls) {
-        // Build full public URL for storage photos
         const fullUrl = url.startsWith("http") ? url : `${supabaseUrl}/storage/v1/object/public/${url}`;
         userContent.push({
           type: "image_url",
@@ -111,9 +105,34 @@ Réponds UNIQUEMENT avec le JSON, sans markdown ni backticks.`,
     } else {
       userContent.push({
         type: "text",
-        text: "\n\n⚠️ Aucune photo fournie. Analyse basée uniquement sur la description textuelle.",
+        text: "⚠️ Aucune photo fournie. Analyse basée uniquement sur la description textuelle.",
       });
     }
+
+    // Add text description AFTER photos — and strip lot reference details for the AI to avoid bias
+    let textDescription = `\n\nCONTEXTE (informatif uniquement, ne pas utiliser pour identifier l'objet) :`;
+    
+    // Extract only the user's own message, not the pre-filled lot reference
+    const userMessage = estimation.description || "";
+    const userOwnMessage = userMessage.split("---")[0]?.trim() || userMessage;
+    textDescription += `\nMessage du propriétaire : ${userOwnMessage}`;
+    
+    // Add lot reference as separate context, clearly marked
+    if (estimation.related_lot_id) {
+      const lotRefParts = userMessage.split("---").slice(1).join("---").trim();
+      if (lotRefParts) {
+        textDescription += `\n\n[INFO CONTEXTE : Le propriétaire a indiqué posséder un objet qu'il considère "similaire" au lot suivant. Cela ne signifie PAS que c'est le même objet. Cette information est fournie à titre indicatif uniquement.]\n${lotRefParts}`;
+      }
+    }
+
+    if (estimation.estimated_value) {
+      textDescription += `\n\nEstimation espérée par le propriétaire : ${estimation.estimated_value}`;
+    }
+    if (estimation.object_category) {
+      textDescription += `\n\nCatégorie indiquée : ${estimation.object_category}`;
+    }
+
+    userContent.push({ type: "text", text: textDescription });
 
     messages.push({ role: "user", content: userContent });
 
