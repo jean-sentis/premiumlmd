@@ -620,6 +620,7 @@ const LotActionsPanel = ({ lotId, lotNumber, lotTitle, saleTitle, currentDescrip
       <SellSimilarDialog
         open={sellSimilarDialogOpen}
         onOpenChange={setSellSimilarDialogOpen}
+        lotId={lotId}
         lotNumber={lotNumber}
         lotTitle={lotTitle}
         saleTitle={saleTitle}
