@@ -10,15 +10,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Sparkles, Send } from "lucide-react";
+import { Loader2, Send } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { PhotoUploadGrid, PhotoItem } from "./PhotoUploadGrid";
 
@@ -30,20 +23,6 @@ interface EstimationFormDialogProps {
   relatedLotTitle?: string;
 }
 
-const CATEGORIES = [
-  { value: "bijoux-montres", label: "Bijoux & Montres" },
-  { value: "tableaux-peintures", label: "Tableaux & Peintures" },
-  { value: "mobilier", label: "Mobilier & Objets d'art" },
-  { value: "ceramiques", label: "Céramiques & Verrerie" },
-  { value: "argenterie", label: "Argenterie & Orfèvrerie" },
-  { value: "vins-spiritueux", label: "Vins & Spiritueux" },
-  { value: "voitures", label: "Voitures de collection" },
-  { value: "art-moderne", label: "Art moderne & contemporain" },
-  { value: "mode-textile", label: "Mode & Textile" },
-  { value: "militaria", label: "Militaria & Souvenirs historiques" },
-  { value: "collections", label: "Collections & Curiosités" },
-  { value: "autre", label: "Autre" },
-];
 
 export function EstimationFormDialog({
   open,
@@ -60,8 +39,6 @@ export function EstimationFormDialog({
     email: "",
     telephone: "",
     description: "",
-    estimated_value: "",
-    object_category: "",
   });
 
   const uploadPhotos = async (): Promise<string[]> => {
@@ -113,8 +90,6 @@ export function EstimationFormDialog({
           email: formData.email,
           telephone: formData.telephone || null,
           description: formData.description,
-          estimated_value: formData.estimated_value || null,
-          object_category: formData.object_category || null,
           photo_urls: photoUrls,
           source,
           related_lot_id: relatedLotId || null,
@@ -153,7 +128,7 @@ export function EstimationFormDialog({
 
       onOpenChange(false);
       setPhotos([]);
-      setFormData({ nom: "", email: "", telephone: "", description: "", estimated_value: "", object_category: "" });
+      setFormData({ nom: "", email: "", telephone: "", description: "" });
     } catch (error) {
       console.error("Submission error:", error);
       toast({
@@ -170,12 +145,11 @@ export function EstimationFormDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-xl flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-brand-gold" />
+          <DialogTitle className="text-xl">
             Demande d'estimation
           </DialogTitle>
           <DialogDescription>
-            Envoyez vos photos et notre IA analysera votre objet avant transmission à notre commissaire-priseur.
+            Envoyez vos photos et une description de votre objet. Notre commissaire-priseur vous répondra sous 48h.
             {relatedLotTitle && (
               <span className="block mt-1 text-brand-primary font-medium">
                 En référence au lot : {relatedLotTitle}
@@ -202,36 +176,6 @@ export function EstimationFormDialog({
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               rows={3}
             />
-          </div>
-
-          <div className="grid sm:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="est-cat">Catégorie</Label>
-              <Select
-                value={formData.object_category}
-                onValueChange={(v) => setFormData({ ...formData, object_category: v })}
-              >
-                <SelectTrigger id="est-cat">
-                  <SelectValue placeholder="Sélectionner..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {CATEGORIES.map((c) => (
-                    <SelectItem key={c.value} value={c.value}>
-                      {c.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="est-val">Estimation espérée</Label>
-              <Input
-                id="est-val"
-                placeholder="ex: 500 - 1 000 €"
-                value={formData.estimated_value}
-                onChange={(e) => setFormData({ ...formData, estimated_value: e.target.value })}
-              />
-            </div>
           </div>
 
           {/* Contact details */}
@@ -281,7 +225,7 @@ export function EstimationFormDialog({
           </Button>
 
           <p className="text-[10px] text-muted-foreground text-center">
-            Vos photos seront analysées par notre IA pour une première évaluation, puis examinées par notre commissaire-priseur.
+            Vos photos seront examinées par notre commissaire-priseur qui vous répondra avec une estimation personnalisée.
           </p>
         </form>
       </DialogContent>
