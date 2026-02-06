@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
-import { Camera, Upload, Send, CheckCircle, Loader2, MapPin, Calendar } from "lucide-react";
+import { Camera, Upload, Send, CheckCircle, Loader2, MapPin, Calendar, Sparkles } from "lucide-react";
+import { EstimationFormDialog } from "@/components/estimation/EstimationFormDialog";
 
 // Images des villes de passage
 import sarteneImg from "@/assets/villes/sartene.png";
@@ -61,7 +62,10 @@ const EstimationEnLigne = () => {
   } | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   
-  // Form state
+  // Estimation form dialog state
+  const [estimationDialogOpen, setEstimationDialogOpen] = useState(false);
+  
+  // Form state (kept for legacy form if needed)
   const [formData, setFormData] = useState<Partial<EstimationForm>>({});
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [photos, setPhotos] = useState<File[]>([]);
@@ -416,153 +420,25 @@ const EstimationEnLigne = () => {
                 </div>
               </div>
 
-              {/* Colonne droite - Formulaire */}
-              <div id="estimation-form" className="bg-card border border-border p-8 scroll-mt-48">
-                <h2 className="section-title mb-8">DEMANDER UNE ESTIMATION</h2>
-
-                <form onSubmit={handleSubmit} className="space-y-6">
-                  {/* Nom */}
-                  <div>
-                    <Label htmlFor="name">Nom complet *</Label>
-                    <Input
-                      id="name"
-                      value={formData.name || ''}
-                      onChange={(e) => handleInputChange('name', e.target.value)}
-                      className={formErrors.name ? 'border-red-500' : ''}
-                    />
-                    {formErrors.name && <p className="text-red-500 text-xs mt-1">{formErrors.name}</p>}
-                  </div>
-
-                  {/* Email */}
-                  <div>
-                    <Label htmlFor="email">Email *</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={formData.email || ''}
-                      onChange={(e) => handleInputChange('email', e.target.value)}
-                      className={formErrors.email ? 'border-red-500' : ''}
-                    />
-                    {formErrors.email && <p className="text-red-500 text-xs mt-1">{formErrors.email}</p>}
-                  </div>
-
-                  {/* Téléphone */}
-                  <div>
-                    <Label htmlFor="phone">Téléphone *</Label>
-                    <Input
-                      id="phone"
-                      type="tel"
-                      value={formData.phone || ''}
-                      onChange={(e) => handleInputChange('phone', e.target.value)}
-                      className={formErrors.phone ? 'border-red-500' : ''}
-                    />
-                    {formErrors.phone && <p className="text-red-500 text-xs mt-1">{formErrors.phone}</p>}
-                  </div>
-
-                  {/* Description */}
-                  <div>
-                    <Label htmlFor="objectDescription">Description de l'objet *</Label>
-                    <Textarea
-                      id="objectDescription"
-                      rows={4}
-                      placeholder="Décrivez votre objet : type, matière, époque supposée, état..."
-                      value={formData.objectDescription || ''}
-                      onChange={(e) => handleInputChange('objectDescription', e.target.value)}
-                      className={formErrors.objectDescription ? 'border-red-500' : ''}
-                    />
-                    {formErrors.objectDescription && <p className="text-red-500 text-xs mt-1">{formErrors.objectDescription}</p>}
-                  </div>
-
-                  {/* Dimensions */}
-                  <div>
-                    <Label htmlFor="dimensions">Dimensions (optionnel)</Label>
-                    <Input
-                      id="dimensions"
-                      placeholder="Ex: H. 45 cm x L. 30 cm x P. 20 cm"
-                      value={formData.dimensions || ''}
-                      onChange={(e) => handleInputChange('dimensions', e.target.value)}
-                    />
-                  </div>
-
-                  {/* Provenance */}
-                  <div>
-                    <Label htmlFor="provenance">Provenance (optionnel)</Label>
-                    <Textarea
-                      id="provenance"
-                      rows={2}
-                      placeholder="Comment avez-vous acquis cet objet ? Succession, achat, cadeau..."
-                      value={formData.provenance || ''}
-                      onChange={(e) => handleInputChange('provenance', e.target.value)}
-                    />
-                  </div>
-
-                  {/* Photos */}
-                  <div>
-                    <Label>Photos * (max 5)</Label>
-                    <div className="mt-2">
-                      <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors">
-                        <Upload className="w-8 h-8 text-muted-foreground mb-2" />
-                        <span className="text-sm text-muted-foreground">Cliquez pour ajouter des photos</span>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          multiple
-                          onChange={handlePhotoChange}
-                          className="hidden"
-                          disabled={photos.length >= 5}
-                        />
-                      </label>
-                    </div>
-                    
-                    {/* Photo previews */}
-                    {photos.length > 0 && (
-                      <div className="flex flex-wrap gap-2 mt-3">
-                        {photos.map((photo, index) => (
-                          <div key={index} className="relative">
-                            <img
-                              src={URL.createObjectURL(photo)}
-                              alt={`Photo ${index + 1}`}
-                              className="w-20 h-20 object-cover rounded border"
-                            />
-                            <button
-                              type="button"
-                              onClick={() => removePhoto(index)}
-                              className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white rounded-full text-xs flex items-center justify-center"
-                            >
-                              ×
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    <p className="text-xs text-muted-foreground mt-2">
-                      {photos.length}/5 photos ajoutées
-                    </p>
-                  </div>
-
-                  {/* Submit */}
-                  <Button 
-                    type="submit" 
-                    className="w-full" 
-                    disabled={isSubmitting}
-                  >
-                    {isSubmitting ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Envoi en cours...
-                      </>
-                    ) : (
-                      <>
-                        <Send className="w-4 h-4 mr-2" />
-                        Envoyer ma demande
-                      </>
-                    )}
-                  </Button>
-
-                  <p className="text-xs text-muted-foreground text-center">
-                    * Champs obligatoires. Réponse sous 48h ouvrés.
-                  </p>
-                </form>
+              {/* Colonne droite - CTA vers formulaire */}
+              <div id="estimation-form" className="bg-card border border-border p-8 scroll-mt-48 flex flex-col items-center justify-center text-center">
+                <Sparkles className="w-12 h-12 text-brand-gold mb-6" />
+                <h2 className="section-title mb-4">DEMANDER UNE ESTIMATION</h2>
+                <p className="text-sm text-muted-foreground mb-6 max-w-md">
+                  Envoyez vos photos et recevez une première analyse par notre IA, 
+                  puis l'avis de notre commissaire-priseur sous 48h.
+                </p>
+                <Button 
+                  size="lg"
+                  className="gap-2"
+                  onClick={() => setEstimationDialogOpen(true)}
+                >
+                  <Camera className="w-5 h-5" />
+                  Envoyer mes photos
+                </Button>
+                <p className="text-xs text-muted-foreground mt-4">
+                  Gratuit et sans engagement · Réponse sous 48h
+                </p>
               </div>
             </div>
           </div>
@@ -595,6 +471,12 @@ const EstimationEnLigne = () => {
       </main>
 
       <Footer />
+      
+      {/* Dialog estimation IA */}
+      <EstimationFormDialog
+        open={estimationDialogOpen}
+        onOpenChange={setEstimationDialogOpen}
+      />
       
       {/* Dialog pour expertise itinérante */}
       <EventDetailDialog
