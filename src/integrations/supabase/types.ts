@@ -119,6 +119,89 @@ export type Database = {
           },
         ]
       }
+      estimation_requests: {
+        Row: {
+          ai_analysis: Json | null
+          ai_analyzed_at: string | null
+          auctioneer_decision: string | null
+          auctioneer_notes: string | null
+          created_at: string
+          decided_at: string | null
+          description: string
+          email: string
+          estimated_value: string | null
+          id: string
+          nom: string
+          object_category: string | null
+          photo_urls: string[] | null
+          related_lot_id: string | null
+          responded_at: string | null
+          response_message: string | null
+          response_template: string | null
+          source: string
+          status: string
+          telephone: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          ai_analysis?: Json | null
+          ai_analyzed_at?: string | null
+          auctioneer_decision?: string | null
+          auctioneer_notes?: string | null
+          created_at?: string
+          decided_at?: string | null
+          description: string
+          email: string
+          estimated_value?: string | null
+          id?: string
+          nom: string
+          object_category?: string | null
+          photo_urls?: string[] | null
+          related_lot_id?: string | null
+          responded_at?: string | null
+          response_message?: string | null
+          response_template?: string | null
+          source?: string
+          status?: string
+          telephone?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          ai_analysis?: Json | null
+          ai_analyzed_at?: string | null
+          auctioneer_decision?: string | null
+          auctioneer_notes?: string | null
+          created_at?: string
+          decided_at?: string | null
+          description?: string
+          email?: string
+          estimated_value?: string | null
+          id?: string
+          nom?: string
+          object_category?: string | null
+          photo_urls?: string[] | null
+          related_lot_id?: string | null
+          responded_at?: string | null
+          response_message?: string | null
+          response_template?: string | null
+          source?: string
+          status?: string
+          telephone?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "estimation_requests_related_lot_id_fkey"
+            columns: ["related_lot_id"]
+            isOneToOne: false
+            referencedRelation: "interencheres_lots"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       info_requests: {
         Row: {
           created_at: string

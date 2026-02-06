@@ -1,1 +1,4 @@
 project_id = "rfyxdxecaxfosskkmxmh"
+
+[functions.analyze-estimation]
+verify_jwt = false
