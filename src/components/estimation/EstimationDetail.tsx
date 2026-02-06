@@ -20,6 +20,9 @@ import {
   Loader2,
   Send,
   RefreshCw,
+  Search,
+  AlertTriangle,
+  ShieldCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -260,18 +263,32 @@ export function EstimationDetail({ estimation, onBack, onUpdate }: EstimationDet
 
         {/* Photos */}
         {estimation.photo_urls?.length > 0 && (
-          <div className="grid grid-cols-3 gap-2">
-            {estimation.photo_urls.map((url, i) => (
-              <a
-                key={i}
-                href={getPhotoUrl(url)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="aspect-square rounded-lg overflow-hidden border hover:opacity-90 transition-opacity"
-              >
-                <img src={getPhotoUrl(url)} alt={`Photo ${i + 1}`} className="w-full h-full object-cover" />
-              </a>
-            ))}
+          <div className="space-y-2">
+            <div className="grid grid-cols-3 gap-2">
+              {estimation.photo_urls.map((url, i) => (
+                <a
+                  key={i}
+                  href={getPhotoUrl(url)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="aspect-square rounded-lg overflow-hidden border hover:opacity-90 transition-opacity"
+                >
+                  <img src={getPhotoUrl(url)} alt={`Photo ${i + 1}`} className="w-full h-full object-cover" />
+                </a>
+              ))}
+            </div>
+            {/* Google Lens button */}
+            <a
+              href={`https://lens.google.com/uploadbyurl?url=${encodeURIComponent(getPhotoUrl(estimation.photo_urls[0]))}`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Button variant="outline" size="sm" className="w-full gap-2 text-xs">
+                <Search className="w-3 h-3" />
+                Rechercher avec Google Lens
+                <ExternalLink className="w-3 h-3 ml-auto" />
+              </Button>
+            </a>
           </div>
         )}
 
@@ -379,6 +396,34 @@ export function EstimationDetail({ estimation, onBack, onUpdate }: EstimationDet
                       <li key={i}>{q}</li>
                     ))}
                   </ul>
+                </div>
+              )}
+
+              {/* Confidence level & Limitations */}
+              {(ai.confidence_level || ai.limitations) && (
+                <div className="p-3 bg-background/80 rounded border border-border/30 space-y-2">
+                  {ai.confidence_level && (
+                    <div className="flex items-center gap-2">
+                      <ShieldCheck className="w-3.5 h-3.5 text-muted-foreground" />
+                      <p className="font-medium text-xs text-muted-foreground">Confiance :</p>
+                      <Badge variant="outline" className={
+                        ai.confidence_level === "élevée" ? "border-green-400 text-green-700" :
+                        ai.confidence_level === "moyenne" ? "border-amber-400 text-amber-700" :
+                        "border-red-400 text-red-700"
+                      }>
+                        {ai.confidence_level}
+                      </Badge>
+                    </div>
+                  )}
+                  {ai.limitations && (
+                    <div className="flex items-start gap-2">
+                      <AlertTriangle className="w-3.5 h-3.5 text-amber-500 mt-0.5 shrink-0" />
+                      <div>
+                        <p className="font-medium text-xs text-muted-foreground mb-0.5">Limitations</p>
+                        <p className="text-xs text-muted-foreground">{ai.limitations}</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
