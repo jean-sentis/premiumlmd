@@ -59,7 +59,7 @@ const DemoRdvOverlay = ({
   ctaText = "Cliquez pour prendre un rendez-vous démo",
 }: DemoRdvOverlayProps) => {
   // Activation du blocage démo avec invitation à prendre RDV
-  const DISABLE_OVERLAY = false;
+  const DISABLE_OVERLAY = true;
 
   useEffect(() => {
     if (DISABLE_OVERLAY) {
