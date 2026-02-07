@@ -19,12 +19,12 @@ import { getInterestStyle, INTEREST_LEVELS, type InterestLevel } from "./interes
 
 /* ── Fiabilité options ── */
 const FIABILITE_OPTIONS = [
-  { value: 1, label: "1/5" },
-  { value: 2, label: "2/5" },
-  { value: 3, label: "3/5" },
-  { value: 4, label: "4/5" },
-  { value: 5, label: "5/5" },
-  { value: 0, label: "Erreur" },
+  { value: 0, label: "0 — Faux" },
+  { value: 1, label: "1 — Très incertain" },
+  { value: 2, label: "2 — Hypothèse fragile" },
+  { value: 3, label: "3 — Probable" },
+  { value: 4, label: "4 — Forte convergence" },
+  { value: 5, label: "5 — Confirmé" },
 ] as const;
 
 const FIABILITE_STYLES: Record<number, string> = {
@@ -41,6 +41,13 @@ const CONFIDENCE_TO_SCORE: Record<string, number> = {
   "moyenne": 3,
   "faible": 1,
 };
+
+/** Map new confidence_score (1-4) from AI, or fallback to legacy confidence_level string */
+function getInitialFiabilite(ai: any): number {
+  if (typeof ai?.confidence_score === "number") return ai.confidence_score;
+  if (ai?.confidence_level) return CONFIDENCE_TO_SCORE[ai.confidence_level] ?? 3;
+  return 3;
+}
 
 interface AnalysisPanelProps {
   ai: any;
@@ -61,9 +68,7 @@ export function AnalysisPanel({
   const [saving, setSaving] = useState(false);
 
   // Editable state — initialized from AI data
-  const initialScore = ai?.confidence_level
-    ? CONFIDENCE_TO_SCORE[ai.confidence_level] ?? 3
-    : 3;
+  const initialScore = getInitialFiabilite(ai);
 
   const [recommendation, setRecommendation] = useState<string>(ai?.recommendation || "");
   const [fiabilite, setFiabilite] = useState<number>(initialScore);
@@ -92,10 +97,11 @@ export function AnalysisPanel({
   const handleSave = useCallback(async () => {
     setSaving(true);
     try {
-      const scoreToLevel: Record<number, string> = { 5: "élevée", 4: "élevée", 3: "moyenne", 2: "faible", 1: "faible", 0: "erreur" };
+      const scoreToLevel: Record<number, string> = { 5: "élevée", 4: "élevée", 3: "moyenne", 2: "faible", 1: "faible", 0: "faux" };
       const updatedAi = {
         ...ai,
         recommendation,
+        confidence_score: fiabilite,
         confidence_level: scoreToLevel[fiabilite] || "moyenne",
         identified_object: identifiedObject,
         summary,
