@@ -127,6 +127,7 @@ export type Database = {
           auctioneer_notes: string | null
           created_at: string
           decided_at: string | null
+          delegate_to: string | null
           description: string
           email: string
           estimated_value: string | null
@@ -137,6 +138,7 @@ export type Database = {
           related_lot_id: string | null
           responded_at: string | null
           response_message: string | null
+          response_mode: string | null
           response_template: string | null
           source: string
           status: string
@@ -151,6 +153,7 @@ export type Database = {
           auctioneer_notes?: string | null
           created_at?: string
           decided_at?: string | null
+          delegate_to?: string | null
           description: string
           email: string
           estimated_value?: string | null
@@ -161,6 +164,7 @@ export type Database = {
           related_lot_id?: string | null
           responded_at?: string | null
           response_message?: string | null
+          response_mode?: string | null
           response_template?: string | null
           source?: string
           status?: string
@@ -175,6 +179,7 @@ export type Database = {
           auctioneer_notes?: string | null
           created_at?: string
           decided_at?: string | null
+          delegate_to?: string | null
           description?: string
           email?: string
           estimated_value?: string | null
@@ -185,6 +190,7 @@ export type Database = {
           related_lot_id?: string | null
           responded_at?: string | null
           response_message?: string | null
+          response_mode?: string | null
           response_template?: string | null
           source?: string
           status?: string

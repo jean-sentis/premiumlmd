@@ -1,35 +1,13 @@
 import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
-import {
-  ArrowLeft,
-  User,
-  Mail,
-  Phone,
-  Tag,
-  Euro,
-  ExternalLink,
-  CheckCircle2,
-  XCircle,
-  HelpCircle,
-  Bookmark,
-  Loader2,
-  Send,
-  Search,
-} from "lucide-react";
+import { ArrowLeft, User, Mail, Phone, Tag, Euro } from "lucide-react";
 import { Button } from "@/components/ui/button";
-
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { AnalysisSynthesis } from "./AnalysisSynthesis";
+import { supabase } from "@/integrations/supabase/client";
+import { AnalysisPanel } from "./detail/AnalysisPanel";
+import { ResponsePanel } from "./detail/ResponsePanel";
 
 interface EstimationRequest {
   id: string;
@@ -60,76 +38,14 @@ interface EstimationDetailProps {
   onUpdate: () => void;
 }
 
-const RESPONSE_TEMPLATES: Record<string, { label: string; message: string }> = {
-  interested: {
-    label: "Pièce intéressante",
-    message: `Madame, Monsieur,
-
-Nous avons bien reçu votre demande d'estimation et avons examiné votre objet avec attention.
-
-Votre pièce présente un réel intérêt et nous souhaiterions l'examiner de plus près. Pourriez-vous nous contacter afin de convenir d'un rendez-vous ?
-
-Nous restons à votre disposition.
-
-Cordialement,
-L'équipe Douze pages & associés`,
-  },
-  need_info: {
-    label: "Besoin d'informations",
-    message: `Madame, Monsieur,
-
-Nous avons bien reçu votre demande d'estimation. Pour affiner notre analyse, nous aurions besoin d'informations complémentaires :
-
-- Des photos supplémentaires (dos, dessous, signatures, marques)
-- La provenance exacte de l'objet
-- Tout document d'authenticité ou facture d'achat
-
-Merci de nous transmettre ces éléments.
-
-Cordialement,
-L'équipe Douze pages & associés`,
-  },
-  declined: {
-    label: "Hors spécialité / pas intéressant",
-    message: `Madame, Monsieur,
-
-Nous avons bien reçu votre demande d'estimation et vous en remercions.
-
-Après examen, cet objet ne correspond pas à notre domaine de spécialité ou ne présente pas un intérêt suffisant pour une mise en vente aux enchères dans les conditions actuelles du marché.
-
-Nous vous conseillons de contacter [suggestion alternative].
-
-Cordialement,
-L'équipe Douze pages & associés`,
-  },
-  follow_up: {
-    label: "À suivre",
-    message: `Madame, Monsieur,
-
-Nous avons bien reçu votre demande d'estimation. Votre pièce pourrait trouver sa place dans l'une de nos prochaines ventes thématiques.
-
-Nous revenons vers vous prochainement avec une proposition concrète.
-
-Cordialement,
-L'équipe Douze pages & associés`,
-  },
-};
-
-const DECISION_OPTIONS = [
-  { value: "interested", label: "Intéressant", icon: CheckCircle2, color: "text-green-600" },
-  { value: "to_follow", label: "À suivre", icon: Bookmark, color: "text-blue-600" },
-  { value: "need_more_info", label: "Besoin d'infos", icon: HelpCircle, color: "text-amber-600" },
-  { value: "not_interested", label: "Pas intéressant", icon: XCircle, color: "text-red-600" },
-];
-
-
-export function EstimationDetail({ estimation, onBack, onUpdate }: EstimationDetailProps) {
+export function EstimationDetail({
+  estimation,
+  onBack,
+  onUpdate,
+}: EstimationDetailProps) {
   const { toast } = useToast();
-  const [decision, setDecision] = useState(estimation.auctioneer_decision || "");
   const [notes, setNotes] = useState(estimation.auctioneer_notes || "");
-  const [responseTemplate, setResponseTemplate] = useState(estimation.response_template || "");
-  const [responseMessage, setResponseMessage] = useState(estimation.response_message || "");
-  const [saving, setSaving] = useState(false);
+  const [savingNotes, setSavingNotes] = useState(false);
   const [reanalyzing, setReanalyzing] = useState(false);
 
   const ai = estimation.ai_analysis;
@@ -137,62 +53,6 @@ export function EstimationDetail({ estimation, onBack, onUpdate }: EstimationDet
   const getPhotoUrl = (path: string) => {
     if (path.startsWith("http")) return path;
     return `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/${path}`;
-  };
-
-  const handleTemplateChange = (templateKey: string) => {
-    setResponseTemplate(templateKey);
-    const template = RESPONSE_TEMPLATES[templateKey];
-    if (template) {
-      setResponseMessage(template.message);
-    }
-  };
-
-  const handleSaveDecision = async () => {
-    setSaving(true);
-    try {
-      const { error } = await supabase
-        .from("estimation_requests")
-        .update({
-          auctioneer_decision: decision || null,
-          auctioneer_notes: notes || null,
-          status: "in_review",
-          decided_at: new Date().toISOString(),
-        } as any)
-        .eq("id", estimation.id);
-
-      if (error) throw error;
-      toast({ title: "Décision enregistrée" });
-      onUpdate();
-    } catch (err) {
-      toast({ title: "Erreur", description: "Impossible d'enregistrer", variant: "destructive" });
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleSendResponse = async () => {
-    setSaving(true);
-    try {
-      const { error } = await supabase
-        .from("estimation_requests")
-        .update({
-          auctioneer_decision: decision || null,
-          auctioneer_notes: notes || null,
-          response_template: responseTemplate || null,
-          response_message: responseMessage || null,
-          status: "responded",
-          responded_at: new Date().toISOString(),
-        } as any)
-        .eq("id", estimation.id);
-
-      if (error) throw error;
-      toast({ title: "Réponse envoyée ✓", description: `Email simulé à ${estimation.email}` });
-      onUpdate();
-    } catch (err) {
-      toast({ title: "Erreur", description: "Impossible d'envoyer", variant: "destructive" });
-    } finally {
-      setSaving(false);
-    }
   };
 
   const handleReanalyze = async () => {
@@ -210,49 +70,99 @@ export function EstimationDetail({ estimation, onBack, onUpdate }: EstimationDet
         }
       );
       if (!resp.ok) throw new Error("Erreur d'analyse");
-      toast({ title: "Ré-analyse lancée", description: "Rafraîchissez dans quelques secondes" });
+      toast({
+        title: "Ré-analyse lancée",
+        description: "Rafraîchissez dans quelques secondes",
+      });
       setTimeout(onUpdate, 3000);
-    } catch (err) {
+    } catch {
       toast({ title: "Erreur", variant: "destructive" });
     } finally {
       setReanalyzing(false);
     }
   };
 
+  const handleSaveNotes = async () => {
+    setSavingNotes(true);
+    try {
+      const { error } = await supabase
+        .from("estimation_requests")
+        .update({
+          auctioneer_notes: notes || null,
+        } as any)
+        .eq("id", estimation.id);
+      if (error) throw error;
+      toast({ title: "Notes enregistrées ✓" });
+    } catch {
+      toast({ title: "Erreur", variant: "destructive" });
+    } finally {
+      setSavingNotes(false);
+    }
+  };
+
   return (
     <div className="flex flex-col h-full overflow-y-auto">
-      {/* Header */}
+      {/* ── Header ── */}
       <div className="p-4 border-b flex items-center gap-3 sticky top-0 bg-background z-10">
-        <Button variant="ghost" size="icon" onClick={onBack} className="h-8 w-8">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onBack}
+          className="h-8 w-8"
+        >
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div className="flex-1 min-w-0">
           <h2 className="font-semibold text-sm truncate">{estimation.nom}</h2>
           <p className="text-xs text-muted-foreground">
-            {format(new Date(estimation.created_at), "dd MMMM yyyy à HH:mm", { locale: fr })}
+            {format(new Date(estimation.created_at), "dd MMMM yyyy à HH:mm", {
+              locale: fr,
+            })}
           </p>
         </div>
       </div>
 
       <div className="p-4 space-y-6">
-        {/* Contact info */}
-        <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
-          <span className="flex items-center gap-1"><User className="w-3 h-3" />{estimation.nom}</span>
-          <span className="flex items-center gap-1"><Mail className="w-3 h-3" />{estimation.email}</span>
-          {estimation.telephone && (
-            <span className="flex items-center gap-1"><Phone className="w-3 h-3" />{estimation.telephone}</span>
-          )}
-          {estimation.object_category && (
-            <span className="flex items-center gap-1"><Tag className="w-3 h-3" />{estimation.object_category}</span>
-          )}
-          {estimation.estimated_value && (
-            <span className="flex items-center gap-1"><Euro className="w-3 h-3" />{estimation.estimated_value}</span>
-          )}
-        </div>
+        {/* ══════════════════════════════════════ */}
+        {/* SECTION 1 — Informations du vendeur   */}
+        {/* ══════════════════════════════════════ */}
+        <div className="space-y-3">
+          <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            Informations du vendeur
+          </h3>
 
-        {/* Photos */}
-        {estimation.photo_urls?.length > 0 && (
-          <div className="space-y-2">
+          {/* Contact details */}
+          <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
+            <span className="flex items-center gap-1">
+              <User className="w-3 h-3" />
+              {estimation.nom}
+            </span>
+            <span className="flex items-center gap-1">
+              <Mail className="w-3 h-3" />
+              {estimation.email}
+            </span>
+            {estimation.telephone && (
+              <span className="flex items-center gap-1">
+                <Phone className="w-3 h-3" />
+                {estimation.telephone}
+              </span>
+            )}
+            {estimation.object_category && (
+              <span className="flex items-center gap-1">
+                <Tag className="w-3 h-3" />
+                {estimation.object_category}
+              </span>
+            )}
+            {estimation.estimated_value && (
+              <span className="flex items-center gap-1">
+                <Euro className="w-3 h-3" />
+                {estimation.estimated_value}
+              </span>
+            )}
+          </div>
+
+          {/* Photos */}
+          {estimation.photo_urls?.length > 0 && (
             <div className="grid grid-cols-3 gap-2">
               {estimation.photo_urls.map((url, i) => (
                 <a
@@ -262,125 +172,76 @@ export function EstimationDetail({ estimation, onBack, onUpdate }: EstimationDet
                   rel="noopener noreferrer"
                   className="aspect-square rounded-lg overflow-hidden border hover:opacity-90 transition-opacity"
                 >
-                  <img src={getPhotoUrl(url)} alt={`Photo ${i + 1}`} className="w-full h-full object-cover" />
+                  <img
+                    src={getPhotoUrl(url)}
+                    alt={`Photo ${i + 1}`}
+                    className="w-full h-full object-cover"
+                  />
                 </a>
               ))}
             </div>
-            {/* Google Lens button */}
-            <a
-              href={`https://lens.google.com/uploadbyurl?url=${encodeURIComponent(getPhotoUrl(estimation.photo_urls[0]))}`}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <Button variant="outline" size="sm" className="w-full gap-2 text-xs">
-                <Search className="w-3 h-3" />
-                Rechercher avec Google Lens
-                <ExternalLink className="w-3 h-3 ml-auto" />
-              </Button>
-            </a>
-          </div>
-        )}
+          )}
 
-        {/* Description */}
-        <div className="space-y-1">
-          <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Description du demandeur</h3>
-          <p className="text-sm bg-muted/30 p-3 rounded-lg border border-border/30">{estimation.description}</p>
+          {/* Description */}
+          <div className="space-y-1">
+            <p className="text-xs font-medium text-muted-foreground">
+              Description
+            </p>
+            <p className="text-sm bg-muted/30 p-3 rounded-lg border border-border/30">
+              {estimation.description}
+            </p>
+          </div>
         </div>
 
-        {/* Analyse — Niveau 1 : Synthèse */}
-        <AnalysisSynthesis
-          ai={ai}
-          reanalyzing={reanalyzing}
-          onReanalyze={handleReanalyze}
-        />
+        {/* Separator */}
+        <div className="border-t" />
 
-        {/* Auctioneer decision */}
-        <div className="space-y-3 border rounded-lg p-4">
-          <h3 className="text-sm font-semibold flex items-center gap-2">
-            <User className="w-4 h-4" />
-            Décision du commissaire-priseur
+        {/* ══════════════════════════════════════ */}
+        {/* SECTION 2 — Analyse                   */}
+        {/* ══════════════════════════════════════ */}
+        <div className="space-y-2">
+          <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            Analyse
           </h3>
+          <AnalysisPanel
+            ai={ai}
+            reanalyzing={reanalyzing}
+            onReanalyze={handleReanalyze}
+          />
+        </div>
 
-          <div className="grid grid-cols-2 gap-2">
-            {DECISION_OPTIONS.map((opt) => {
-              const Icon = opt.icon;
-              return (
-                <Button
-                  key={opt.value}
-                  variant={decision === opt.value ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setDecision(opt.value)}
-                  className={`justify-start gap-2 ${decision === opt.value ? "" : opt.color}`}
-                >
-                  <Icon className="w-4 h-4" />
-                  {opt.label}
-                </Button>
-              );
-            })}
-          </div>
-
+        {/* Notes privées */}
+        <div className="space-y-2">
+          <p className="text-xs font-medium text-muted-foreground">
+            Notes privées
+          </p>
           <Textarea
-            placeholder="Notes personnelles (non visibles par le demandeur)..."
+            placeholder="Vos observations (non visibles par le vendeur)…"
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             rows={2}
+            className="text-xs"
           />
-
-          <Button
-            variant="outline"
-            size="sm"
-            className="w-full"
-            disabled={saving || !decision}
-            onClick={handleSaveDecision}
-          >
-            {saving ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : null}
-            Enregistrer la décision
-          </Button>
-        </div>
-
-        {/* Response */}
-        <div className="space-y-3 border rounded-lg p-4">
-          <h3 className="text-sm font-semibold flex items-center gap-2">
-            <Send className="w-4 h-4" />
-            Réponse au demandeur
-          </h3>
-
-          <Select value={responseTemplate} onValueChange={handleTemplateChange}>
-            <SelectTrigger>
-              <SelectValue placeholder="Choisir un modèle de réponse..." />
-            </SelectTrigger>
-            <SelectContent>
-              {Object.entries(RESPONSE_TEMPLATES).map(([key, tpl]) => (
-                <SelectItem key={key} value={key}>
-                  {tpl.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <Textarea
-            placeholder="Personnalisez votre réponse..."
-            value={responseMessage}
-            onChange={(e) => setResponseMessage(e.target.value)}
-            rows={8}
-            className="text-sm"
-          />
-
-          <div className="flex items-center justify-between">
-            <p className="text-xs text-muted-foreground">
-              Envoi simulé à : {estimation.email}
-            </p>
+          {notes !== (estimation.auctioneer_notes || "") && (
             <Button
+              variant="outline"
               size="sm"
-              disabled={saving || !responseMessage}
-              onClick={handleSendResponse}
-              className="gap-2"
+              onClick={handleSaveNotes}
+              disabled={savingNotes}
+              className="text-xs"
             >
-              {saving ? <Loader2 className="w-3 h-3 animate-spin" /> : <Send className="w-3 h-3" />}
-              Envoyer la réponse
+              Enregistrer les notes
             </Button>
-          </div>
+          )}
         </div>
+
+        {/* Separator */}
+        <div className="border-t" />
+
+        {/* ══════════════════════════════════════ */}
+        {/* SECTION 3 — Réponse                   */}
+        {/* ══════════════════════════════════════ */}
+        <ResponsePanel estimation={estimation} onUpdate={onUpdate} />
       </div>
     </div>
   );
