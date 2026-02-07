@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
-import { Camera, Upload, Send, CheckCircle, Loader2, MapPin, Calendar, Sparkles } from "lucide-react";
+import { Camera, Upload, Send, CheckCircle, Loader2, MapPin, Calendar } from "lucide-react";
 import { EstimationFormDialog } from "@/components/estimation/EstimationFormDialog";
 
 // Images des villes de passage
@@ -422,11 +422,11 @@ const EstimationEnLigne = () => {
 
               {/* Colonne droite - CTA vers formulaire */}
               <div id="estimation-form" className="bg-card border border-border p-8 scroll-mt-48 flex flex-col items-center justify-center text-center">
-                <Sparkles className="w-12 h-12 text-brand-gold mb-6" />
-                <h2 className="section-title mb-4">DEMANDER UNE ESTIMATION</h2>
+                <Camera className="w-12 h-12 text-brand-gold mb-6" />
+                <h2 className="section-title mb-4">ESTIMATION EN LIGNE</h2>
                 <p className="text-sm text-muted-foreground mb-6 max-w-md">
-                  Envoyez vos photos et recevez une première analyse par notre IA, 
-                  puis l'avis de notre commissaire-priseur sous 48h.
+                  Envoyez vos photos et une description de votre objet. 
+                  Notre commissaire-priseur vous répondra sous 48h.
                 </p>
                 <Button 
                   size="lg"
