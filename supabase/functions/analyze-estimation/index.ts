@@ -179,11 +179,10 @@ async function runGoogleLens(
   return result;
 }
 
-// ── Step 2: Search the web using Google Custom Search API ──
+// ── Step 2: Search the web using SerpAPI Google Search ──
 async function searchWebReferences(
   searchTerms: string[],
-  googleApiKey: string,
-  searchCx: string,
+  serpApiKey: string,
 ): Promise<Array<{ title: string; url: string; description: string }>> {
   const allResults: Array<{ title: string; url: string; description: string }> = [];
 
@@ -192,30 +191,31 @@ async function searchWebReferences(
     `${term} enchères estimation prix`
   );
 
-  console.log("[analyze-estimation] Step 2: Searching web with Google Custom Search...", queries);
+  console.log("[analyze-estimation] Step 2: Searching web with SerpAPI Google Search...", queries);
 
   const searchPromises = queries.map(async (query) => {
     try {
       const params = new URLSearchParams({
-        key: googleApiKey,
-        cx: searchCx,
+        engine: "google",
         q: query,
+        api_key: serpApiKey,
+        hl: "fr",
+        gl: "fr",
         num: "5",
-        lr: "lang_fr",
       });
 
       const response = await fetch(
-        `https://www.googleapis.com/customsearch/v1?${params.toString()}`,
+        `https://serpapi.com/search?${params.toString()}`,
       );
 
       if (!response.ok) {
         const errText = await response.text();
-        console.error(`[analyze-estimation] Google Search failed for "${query}":`, response.status, errText);
+        console.error(`[analyze-estimation] SerpAPI Search failed for "${query}":`, response.status, errText);
         return [];
       }
 
       const data = await response.json();
-      return (data.items || []).map((item: any) => ({
+      return (data.organic_results || []).map((item: any) => ({
         title: item.title || "",
         url: item.link || "",
         description: item.snippet || "",
@@ -435,8 +435,7 @@ serve(async (req) => {
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const lovableApiKey = Deno.env.get("LOVABLE_API_KEY");
     const serpApiKey = Deno.env.get("SERPAPI_API_KEY");
-    const googleApiKey = Deno.env.get("GOOGLE_CLOUD_VISION_API_KEY");
-    const googleSearchCx = Deno.env.get("GOOGLE_SEARCH_CX");
+    // Google API keys no longer needed for search
 
     if (!lovableApiKey) {
       throw new Error("LOVABLE_API_KEY is not configured");
@@ -494,23 +493,21 @@ serve(async (req) => {
       console.warn("[analyze-estimation] SERPAPI_API_KEY not configured, skipping Google Lens");
     }
 
-    // Google Custom Search (runs in parallel with Lens using initial terms from Step 1)
-    if (searchTerms.length > 0 && googleApiKey && googleSearchCx) {
+    // Google Search via SerpAPI (runs in parallel with Lens using initial terms from Step 1)
+    if (searchTerms.length > 0 && serpApiKey) {
       parallelTasks.push(
-        searchWebReferences(searchTerms, googleApiKey, googleSearchCx).then((r) => {
+        searchWebReferences(searchTerms, serpApiKey).then((r) => {
           webResults = r;
         }),
       );
-    } else if (!googleSearchCx) {
-      console.warn("[analyze-estimation] GOOGLE_SEARCH_CX not configured, skipping web search");
     }
 
     await Promise.all(parallelTasks);
 
     // If Lens gave us new terms and search had no results, retry with Lens labels
-    if (webResults.length === 0 && lensResults && lensResults.bestGuessLabels.length > 0 && googleApiKey && googleSearchCx) {
-      console.log("[analyze-estimation] Retrying Google Search with Lens labels:", lensResults.bestGuessLabels);
-      webResults = await searchWebReferences(lensResults.bestGuessLabels, googleApiKey, googleSearchCx);
+    if (webResults.length === 0 && lensResults && lensResults.bestGuessLabels.length > 0 && serpApiKey) {
+      console.log("[analyze-estimation] Retrying SerpAPI Search with Lens labels:", lensResults.bestGuessLabels);
+      webResults = await searchWebReferences(lensResults.bestGuessLabels, serpApiKey);
     }
 
     // ── STEP 3: Final cross-referenced analysis ──
