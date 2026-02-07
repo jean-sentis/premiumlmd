@@ -56,7 +56,7 @@ export function AnalysisSynthesis({ ai, reanalyzing, onReanalyze }: AnalysisSynt
   // Count available sources for the badge
   const sourceCount =
     (ai?.web_sources?.length || 0) +
-    (ai?.vision_detection?.matchingPages?.length || 0);
+    (ai?.lens_detection?.visualMatches?.length || 0);
 
   return (
     <div className="space-y-3 border border-border rounded-lg p-4">
@@ -178,50 +178,41 @@ export function AnalysisSynthesis({ ai, reanalyzing, onReanalyze }: AnalysisSynt
                   </div>
                 )}
 
-                {/* Matching pages from vision (shown as "Pages correspondantes") */}
-                {ai.vision_detection?.matchingPages?.length > 0 && (
-                  <div className="p-3 bg-muted/30 rounded border border-border/30">
-                    <p className="font-medium text-xs text-muted-foreground mb-2">Correspondances visuelles en ligne</p>
-                    <div className="space-y-1">
-                      {ai.vision_detection.matchingPages.map((page: { url: string; title: string }, i: number) => (
-                        <a
-                          key={i}
-                          href={page.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-1.5 text-xs text-primary hover:underline truncate"
-                        >
-                          <ExternalLink className="w-3 h-3 shrink-0" />
-                          {page.title || new URL(page.url).hostname}
-                        </a>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Visually similar images */}
-                {ai.vision_detection?.visuallySimilarImages?.length > 0 && (
+                {/* Google Lens visual matches */}
+                {ai.lens_detection?.visualMatches?.length > 0 && (
                   <div className="p-3 bg-muted/30 rounded border border-border/30">
                     <p className="font-medium text-xs text-muted-foreground mb-2 flex items-center gap-1">
                       <Image className="w-3 h-3" />
-                      Objets similaires trouvés
+                      Correspondances visuelles ({ai.lens_detection.visualMatches.length})
                     </p>
-                    <div className="grid grid-cols-4 gap-1.5">
-                      {ai.vision_detection.visuallySimilarImages.map((imgUrl: string, i: number) => (
-                        <a
-                          key={i}
-                          href={imgUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="aspect-square rounded overflow-hidden border hover:opacity-80 transition-opacity"
-                        >
-                          <img
-                            src={imgUrl}
-                            alt={`Similaire ${i + 1}`}
-                            className="w-full h-full object-cover"
-                            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                          />
-                        </a>
+                    <div className="space-y-1.5">
+                      {ai.lens_detection.visualMatches.map((match: { title: string; link: string; source: string; thumbnail?: string; price?: string }, i: number) => (
+                        <div key={i} className="flex items-start gap-2">
+                          {match.thumbnail && (
+                            <a href={match.link} target="_blank" rel="noopener noreferrer" className="shrink-0">
+                              <img
+                                src={match.thumbnail}
+                                alt={match.title}
+                                className="w-10 h-10 object-cover rounded border"
+                                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                              />
+                            </a>
+                          )}
+                          <div className="min-w-0 flex-1">
+                            <a
+                              href={match.link}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-xs font-medium text-primary hover:underline line-clamp-1"
+                            >
+                              {match.title}
+                            </a>
+                            <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
+                              <span>{match.source}</span>
+                              {match.price && <span className="font-medium text-foreground">{match.price}</span>}
+                            </div>
+                          </div>
+                        </div>
                       ))}
                     </div>
                   </div>

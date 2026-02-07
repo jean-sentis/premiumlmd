@@ -74,109 +74,106 @@ Réponds UNIQUEMENT en JSON valide, sans markdown ni backticks.`,
   }
 }
 
-// ── Step 1b: Google Cloud Vision Web Detection (reverse image search) ──
-interface VisionWebResult {
+// ── Step 1b: SerpAPI Google Lens (reverse image search) ──
+interface LensResult {
   bestGuessLabels: string[];
-  webEntities: Array<{ description: string; score: number }>;
-  matchingPages: Array<{ url: string; title: string }>;
-  visuallySimilarImages: string[];
+  visualMatches: Array<{ title: string; link: string; source: string; thumbnail?: string; price?: string }>;
+  searchTermsFromLens: string[];
 }
 
-async function runVisionWebDetection(
+async function runGoogleLens(
   photoUrls: string[],
   supabaseUrl: string,
-  visionApiKey: string,
-): Promise<VisionWebResult> {
-  const result: VisionWebResult = {
+  serpApiKey: string,
+): Promise<LensResult> {
+  const result: LensResult = {
     bestGuessLabels: [],
-    webEntities: [],
-    matchingPages: [],
-    visuallySimilarImages: [],
+    visualMatches: [],
+    searchTermsFromLens: [],
   };
 
-  // Process up to 3 photos
-  const urls = photoUrls.slice(0, 3).map((url) =>
-    url.startsWith("http") ? url : `${supabaseUrl}/storage/v1/object/public/${url}`
-  );
+  // Process only the first photo (most important, saves API quota)
+  const imageUrl = photoUrls[0].startsWith("http")
+    ? photoUrls[0]
+    : `${supabaseUrl}/storage/v1/object/public/${photoUrls[0]}`;
 
-  console.log("[analyze-estimation] Step 1b: Running Google Vision Web Detection on", urls.length, "photos");
-
-  const requests = urls.map((imageUrl) => ({
-    image: { source: { imageUri: imageUrl } },
-    features: [{ type: "WEB_DETECTION", maxResults: 10 }],
-  }));
+  console.log("[analyze-estimation] Step 1b: Running SerpAPI Google Lens on", imageUrl);
 
   try {
-    const response = await fetch(
-      `https://vision.googleapis.com/v1/images:annotate?key=${visionApiKey}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ requests }),
-      },
-    );
+    const params = new URLSearchParams({
+      engine: "google_lens",
+      url: imageUrl,
+      api_key: serpApiKey,
+      hl: "fr",
+      country: "fr",
+    });
+
+    const response = await fetch(`https://serpapi.com/search?${params.toString()}`);
 
     if (!response.ok) {
       const errText = await response.text();
-      console.error("[analyze-estimation] Vision API error:", response.status, errText);
+      console.error("[analyze-estimation] SerpAPI error:", response.status, errText);
       return result;
     }
 
     const data = await response.json();
-    const seenEntities = new Set<string>();
-    const seenPages = new Set<string>();
 
-    for (const resp of data.responses || []) {
-      const wd = resp.webDetection;
-      if (!wd) continue;
+    // Extract knowledge graph / best guess
+    if (data.knowledge_graph) {
+      const kg = data.knowledge_graph;
+      if (kg.title) {
+        result.bestGuessLabels.push(kg.title);
+        result.searchTermsFromLens.push(kg.title);
+      }
+      if (kg.subtitle) {
+        result.bestGuessLabels.push(kg.subtitle);
+      }
+    }
 
-      // Best guess labels
-      for (const label of wd.bestGuessLabels || []) {
-        if (label.label && !result.bestGuessLabels.includes(label.label)) {
-          result.bestGuessLabels.push(label.label);
-        }
+    // Extract visual matches (the core value - what Google Lens shows)
+    const visualMatches = data.visual_matches || [];
+    const seenTitles = new Set<string>();
+
+    for (const match of visualMatches.slice(0, 15)) {
+      const title = match.title || "";
+      if (title && !seenTitles.has(title)) {
+        seenTitles.add(title);
+        result.visualMatches.push({
+          title,
+          link: match.link || "",
+          source: match.source || "",
+          thumbnail: match.thumbnail || "",
+          price: match.price?.extracted_value ? `${match.price.extracted_value} ${match.price.currency || "€"}` : undefined,
+        });
       }
 
-      // Web entities (scored)
-      for (const entity of wd.webEntities || []) {
-        if (entity.description && !seenEntities.has(entity.description)) {
-          seenEntities.add(entity.description);
-          result.webEntities.push({
-            description: entity.description,
-            score: entity.score || 0,
-          });
-        }
+      // Extract search terms from the first few strong matches
+      if (result.searchTermsFromLens.length < 5 && title.length > 5) {
+        result.searchTermsFromLens.push(title);
       }
+    }
 
-      // Pages with matching images
-      for (const page of wd.pagesWithMatchingImages || []) {
-        if (page.url && !seenPages.has(page.url)) {
-          seenPages.add(page.url);
-          result.matchingPages.push({
-            url: page.url,
-            title: page.pageTitle || "",
-          });
-        }
-      }
-
-      // Visually similar images (just URLs)
-      for (const img of wd.visuallySimilarImages || []) {
-        if (img.url && result.visuallySimilarImages.length < 5) {
-          result.visuallySimilarImages.push(img.url);
+    // Also check for text results / search suggestions
+    if (data.text_results) {
+      for (const tr of data.text_results.slice(0, 3)) {
+        if (tr.text && !result.bestGuessLabels.includes(tr.text)) {
+          result.bestGuessLabels.push(tr.text);
         }
       }
     }
 
-    // Sort entities by score descending
-    result.webEntities.sort((a, b) => b.score - a.score);
-
-    console.log("[analyze-estimation] Vision Web Detection results:",
+    console.log("[analyze-estimation] Google Lens results:",
       result.bestGuessLabels.length, "labels,",
-      result.webEntities.length, "entities,",
-      result.matchingPages.length, "matching pages",
+      result.visualMatches.length, "visual matches,",
+      result.searchTermsFromLens.length, "search terms",
     );
+
+    // Log top 3 matches for debugging
+    for (const vm of result.visualMatches.slice(0, 3)) {
+      console.log(`  → "${vm.title}" (${vm.source}) ${vm.price || ""}`);
+    }
   } catch (err) {
-    console.error("[analyze-estimation] Vision API exception:", err);
+    console.error("[analyze-estimation] SerpAPI exception:", err);
   }
 
   return result;
@@ -254,12 +251,12 @@ async function runFinalAnalysis(
   lovableApiKey: string,
   visualDescription: string,
   webResults: Array<{ title: string; url: string; description: string }>,
-  visionResults: VisionWebResult | null,
+  lensResults: LensResult | null,
 ): Promise<any> {
   const messages: any[] = [
     {
       role: "system",
-      content: `Expert commissaire-priseur. Analyse croisée : photos → Vision Google → recherche web.
+      content: `Expert commissaire-priseur. Analyse croisée : photos → correspondances visuelles → recherche web.
 
 RÈGLES :
 - Analyse visuelle INDÉPENDANTE d'abord, puis confronte aux sources web.
@@ -312,29 +309,24 @@ JSON sans backticks :
     });
   }
 
-  // Google Vision Web Detection results
-  if (visionResults && (visionResults.bestGuessLabels.length > 0 || visionResults.webEntities.length > 0 || visionResults.matchingPages.length > 0)) {
-    let visionContext = "\n\nRÉSULTATS GOOGLE VISION WEB DETECTION (recherche visuelle inversée) :\n";
+  // Google Lens visual matches (SerpAPI)
+  if (lensResults && (lensResults.bestGuessLabels.length > 0 || lensResults.visualMatches.length > 0)) {
+    let lensContext = "\n\nCORRESPONDANCES VISUELLES (recherche visuelle inversée) :\n";
     
-    if (visionResults.bestGuessLabels.length > 0) {
-      visionContext += `\nIdentification automatique (best guess) : ${visionResults.bestGuessLabels.join(", ")}\n`;
+    if (lensResults.bestGuessLabels.length > 0) {
+      lensContext += `\nIdentification automatique : ${lensResults.bestGuessLabels.join(", ")}\n`;
     }
     
-    if (visionResults.webEntities.length > 0) {
-      visionContext += `\nEntités web détectées (par score de pertinence) :\n`;
-      for (const entity of visionResults.webEntities.slice(0, 10)) {
-        visionContext += `- ${entity.description} (score: ${entity.score.toFixed(2)})\n`;
+    if (lensResults.visualMatches.length > 0) {
+      lensContext += `\nObjets similaires trouvés sur le web :\n`;
+      for (const match of lensResults.visualMatches.slice(0, 10)) {
+        lensContext += `- "${match.title}" (source: ${match.source}) ${match.link}`;
+        if (match.price) lensContext += ` — Prix: ${match.price}`;
+        lensContext += `\n`;
       }
     }
     
-    if (visionResults.matchingPages.length > 0) {
-      visionContext += `\nPages web contenant cette image ou une image similaire :\n`;
-      for (const page of visionResults.matchingPages.slice(0, 5)) {
-        visionContext += `- ${page.title || "Sans titre"} : ${page.url}\n`;
-      }
-    }
-    
-    userContent.push({ type: "text", text: visionContext });
+    userContent.push({ type: "text", text: lensContext });
   }
 
   // Web search results (Google Custom Search)
@@ -345,7 +337,7 @@ JSON sans backticks :
       if (r.description) webContext += `Résumé : ${r.description}\n`;
     }
     userContent.push({ type: "text", text: webContext });
-  } else if (!visionResults || visionResults.matchingPages.length === 0) {
+  } else if (!lensResults || lensResults.visualMatches.length === 0) {
     userContent.push({
       type: "text",
       text: "\n\n⚠️ Aucun résultat de recherche web trouvé. Base ton analyse uniquement sur les photos.",
@@ -440,7 +432,8 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const lovableApiKey = Deno.env.get("LOVABLE_API_KEY");
-    const visionApiKey = Deno.env.get("GOOGLE_CLOUD_VISION_API_KEY");
+    const serpApiKey = Deno.env.get("SERPAPI_API_KEY");
+    const googleApiKey = Deno.env.get("GOOGLE_CLOUD_VISION_API_KEY");
     const googleSearchCx = Deno.env.get("GOOGLE_SEARCH_CX");
 
     if (!lovableApiKey) {
@@ -478,31 +471,31 @@ serve(async (req) => {
       searchTerms = step1.searchTerms;
     }
 
-    // ── STEP 1b + STEP 2: Vision Web Detection + Google Search in parallel ──
-    let visionResults: VisionWebResult | null = null;
+    // ── STEP 1b + STEP 2: Google Lens + Google Search in parallel ──
+    let lensResults: LensResult | null = null;
     let webResults: Array<{ title: string; url: string; description: string }> = [];
 
     const parallelTasks: Promise<void>[] = [];
 
-    // Vision API (reverse image search)
-    if (photoUrls.length > 0 && visionApiKey) {
+    // SerpAPI Google Lens (reverse image search — replaces Vision API)
+    if (photoUrls.length > 0 && serpApiKey) {
       parallelTasks.push(
-        runVisionWebDetection(photoUrls, supabaseUrl, visionApiKey).then((r) => {
-          visionResults = r;
-          // Augment search terms with Vision best guess labels
+        runGoogleLens(photoUrls, supabaseUrl, serpApiKey).then((r) => {
+          lensResults = r;
+          // Augment search terms with Lens labels
           if (r.bestGuessLabels.length > 0) {
             searchTerms.push(...r.bestGuessLabels.filter((l) => !searchTerms.includes(l)));
           }
         }),
       );
-    } else if (!visionApiKey) {
-      console.warn("[analyze-estimation] GOOGLE_CLOUD_VISION_API_KEY not configured, skipping Vision");
+    } else if (!serpApiKey) {
+      console.warn("[analyze-estimation] SERPAPI_API_KEY not configured, skipping Google Lens");
     }
 
-    // Google Custom Search (runs in parallel with Vision using initial terms)
-    if (searchTerms.length > 0 && visionApiKey && googleSearchCx) {
+    // Google Custom Search (runs in parallel with Lens using initial terms from Step 1)
+    if (searchTerms.length > 0 && googleApiKey && googleSearchCx) {
       parallelTasks.push(
-        searchWebReferences(searchTerms, visionApiKey, googleSearchCx).then((r) => {
+        searchWebReferences(searchTerms, googleApiKey, googleSearchCx).then((r) => {
           webResults = r;
         }),
       );
@@ -512,10 +505,10 @@ serve(async (req) => {
 
     await Promise.all(parallelTasks);
 
-    // If Vision gave us new terms and search had no results, retry with Vision labels
-    if (webResults.length === 0 && visionResults && visionResults.bestGuessLabels.length > 0 && visionApiKey && googleSearchCx) {
-      console.log("[analyze-estimation] Retrying Google Search with Vision labels:", visionResults.bestGuessLabels);
-      webResults = await searchWebReferences(visionResults.bestGuessLabels, visionApiKey, googleSearchCx);
+    // If Lens gave us new terms and search had no results, retry with Lens labels
+    if (webResults.length === 0 && lensResults && lensResults.bestGuessLabels.length > 0 && googleApiKey && googleSearchCx) {
+      console.log("[analyze-estimation] Retrying Google Search with Lens labels:", lensResults.bestGuessLabels);
+      webResults = await searchWebReferences(lensResults.bestGuessLabels, googleApiKey, googleSearchCx);
     }
 
     // ── STEP 3: Final cross-referenced analysis ──
@@ -526,18 +519,16 @@ serve(async (req) => {
       lovableApiKey,
       visualDescription,
       webResults,
-      visionResults,
+      lensResults,
     );
 
     console.log("[analyze-estimation] Analysis complete:", analysis.recommendation, "| confidence:", analysis.confidence_level);
 
-    // Attach Vision detection metadata to analysis for display
-    if (visionResults) {
-      analysis.vision_detection = {
-        bestGuessLabels: visionResults.bestGuessLabels,
-        webEntities: visionResults.webEntities.slice(0, 8),
-        matchingPages: visionResults.matchingPages.slice(0, 5),
-        visuallySimilarImages: visionResults.visuallySimilarImages.slice(0, 4),
+    // Attach Google Lens metadata to analysis for display
+    if (lensResults) {
+      analysis.lens_detection = {
+        bestGuessLabels: lensResults.bestGuessLabels,
+        visualMatches: lensResults.visualMatches.slice(0, 8),
       };
     }
 
