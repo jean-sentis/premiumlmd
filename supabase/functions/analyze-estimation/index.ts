@@ -74,6 +74,114 @@ Réponds UNIQUEMENT en JSON valide, sans markdown ni backticks.`,
   }
 }
 
+// ── Step 1b: Google Cloud Vision Web Detection (reverse image search) ──
+interface VisionWebResult {
+  bestGuessLabels: string[];
+  webEntities: Array<{ description: string; score: number }>;
+  matchingPages: Array<{ url: string; title: string }>;
+  visuallySimilarImages: string[];
+}
+
+async function runVisionWebDetection(
+  photoUrls: string[],
+  supabaseUrl: string,
+  visionApiKey: string,
+): Promise<VisionWebResult> {
+  const result: VisionWebResult = {
+    bestGuessLabels: [],
+    webEntities: [],
+    matchingPages: [],
+    visuallySimilarImages: [],
+  };
+
+  // Process up to 3 photos
+  const urls = photoUrls.slice(0, 3).map((url) =>
+    url.startsWith("http") ? url : `${supabaseUrl}/storage/v1/object/public/${url}`
+  );
+
+  console.log("[analyze-estimation] Step 1b: Running Google Vision Web Detection on", urls.length, "photos");
+
+  const requests = urls.map((imageUrl) => ({
+    image: { source: { imageUri: imageUrl } },
+    features: [{ type: "WEB_DETECTION", maxResults: 10 }],
+  }));
+
+  try {
+    const response = await fetch(
+      `https://vision.googleapis.com/v1/images:annotate?key=${visionApiKey}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ requests }),
+      },
+    );
+
+    if (!response.ok) {
+      const errText = await response.text();
+      console.error("[analyze-estimation] Vision API error:", response.status, errText);
+      return result;
+    }
+
+    const data = await response.json();
+    const seenEntities = new Set<string>();
+    const seenPages = new Set<string>();
+
+    for (const resp of data.responses || []) {
+      const wd = resp.webDetection;
+      if (!wd) continue;
+
+      // Best guess labels
+      for (const label of wd.bestGuessLabels || []) {
+        if (label.label && !result.bestGuessLabels.includes(label.label)) {
+          result.bestGuessLabels.push(label.label);
+        }
+      }
+
+      // Web entities (scored)
+      for (const entity of wd.webEntities || []) {
+        if (entity.description && !seenEntities.has(entity.description)) {
+          seenEntities.add(entity.description);
+          result.webEntities.push({
+            description: entity.description,
+            score: entity.score || 0,
+          });
+        }
+      }
+
+      // Pages with matching images
+      for (const page of wd.pagesWithMatchingImages || []) {
+        if (page.url && !seenPages.has(page.url)) {
+          seenPages.add(page.url);
+          result.matchingPages.push({
+            url: page.url,
+            title: page.pageTitle || "",
+          });
+        }
+      }
+
+      // Visually similar images (just URLs)
+      for (const img of wd.visuallySimilarImages || []) {
+        if (img.url && result.visuallySimilarImages.length < 5) {
+          result.visuallySimilarImages.push(img.url);
+        }
+      }
+    }
+
+    // Sort entities by score descending
+    result.webEntities.sort((a, b) => b.score - a.score);
+
+    console.log("[analyze-estimation] Vision Web Detection results:",
+      result.bestGuessLabels.length, "labels,",
+      result.webEntities.length, "entities,",
+      result.matchingPages.length, "matching pages",
+    );
+  } catch (err) {
+    console.error("[analyze-estimation] Vision API exception:", err);
+  }
+
+  return result;
+}
+
 // ── Step 2: Search the web using Firecrawl ──
 async function searchWebReferences(
   searchTerms: string[],
@@ -149,20 +257,22 @@ async function runFinalAnalysis(
   lovableApiKey: string,
   visualDescription: string,
   webResults: Array<{ title: string; url: string; description: string; markdown?: string }>,
+  visionResults: VisionWebResult | null,
 ): Promise<any> {
   const messages: any[] = [
     {
       role: "system",
       content: `Tu es un expert commissaire-priseur avec 30 ans d'expérience en art, antiquités, bijoux, mobilier, véhicules de collection, vins et spiritueux.
 
-Tu reçois une demande d'estimation d'un particulier. Tu dois analyser les PHOTOS FOURNIES et les RÉSULTATS DE RECHERCHE WEB pour donner un avis professionnel croisé et sourcé.
+Tu reçois une demande d'estimation d'un particulier. Tu dois analyser les PHOTOS FOURNIES, les RÉSULTATS GOOGLE VISION (recherche visuelle inversée) et les RÉSULTATS DE RECHERCHE WEB pour donner un avis professionnel croisé et sourcé.
 
 MÉTHODE D'ANALYSE CROISÉE :
 1. Analyse visuelle INDÉPENDANTE des photos (ce que tu vois réellement)
-2. Confrontation avec les résultats de recherche web (objets similaires trouvés, prix en enchères, artistes identifiés)
-3. Si les sources web confirment ton analyse visuelle, augmente ta confiance
-4. Si les sources web contredisent ou apportent des éléments nouveaux, intègre-les avec nuance
-5. Cite tes sources web quand elles sont pertinentes (nom du site, URL)
+2. Confrontation avec les résultats Google Vision Web Detection (entités identifiées, pages correspondantes, labels automatiques)
+3. Confrontation avec les résultats de recherche web Firecrawl (objets similaires trouvés, prix en enchères, artistes identifiés)
+4. Si les sources confirment ton analyse visuelle, augmente ta confiance
+5. Si les sources contredisent ou apportent des éléments nouveaux, intègre-les avec nuance
+6. Cite tes sources quand elles sont pertinentes (nom du site, URL)
 
 RÈGLE CRITIQUE — ANALYSE DES PHOTOS :
 - Analyse les photos de manière INDÉPENDANTE d'abord, puis confronte avec les sources web.
@@ -216,16 +326,41 @@ Réponds UNIQUEMENT avec le JSON, sans markdown ni backticks.`,
     });
   }
 
-  // Web search results
+  // Google Vision Web Detection results
+  if (visionResults && (visionResults.bestGuessLabels.length > 0 || visionResults.webEntities.length > 0 || visionResults.matchingPages.length > 0)) {
+    let visionContext = "\n\nRÉSULTATS GOOGLE VISION WEB DETECTION (recherche visuelle inversée) :\n";
+    
+    if (visionResults.bestGuessLabels.length > 0) {
+      visionContext += `\nIdentification automatique (best guess) : ${visionResults.bestGuessLabels.join(", ")}\n`;
+    }
+    
+    if (visionResults.webEntities.length > 0) {
+      visionContext += `\nEntités web détectées (par score de pertinence) :\n`;
+      for (const entity of visionResults.webEntities.slice(0, 10)) {
+        visionContext += `- ${entity.description} (score: ${entity.score.toFixed(2)})\n`;
+      }
+    }
+    
+    if (visionResults.matchingPages.length > 0) {
+      visionContext += `\nPages web contenant cette image ou une image similaire :\n`;
+      for (const page of visionResults.matchingPages.slice(0, 5)) {
+        visionContext += `- ${page.title || "Sans titre"} : ${page.url}\n`;
+      }
+    }
+    
+    userContent.push({ type: "text", text: visionContext });
+  }
+
+  // Web search results (Firecrawl)
   if (webResults.length > 0) {
-    let webContext = "\n\nRÉSULTATS DE RECHERCHE WEB (à croiser avec l'analyse visuelle) :\n";
+    let webContext = "\n\nRÉSULTATS DE RECHERCHE WEB FIRECRAWL (à croiser avec l'analyse visuelle) :\n";
     for (const r of webResults) {
       webContext += `\n--- Source : ${r.title} (${r.url}) ---\n`;
       if (r.description) webContext += `Résumé : ${r.description}\n`;
       if (r.markdown) webContext += `Contenu : ${r.markdown.substring(0, 800)}\n`;
     }
     userContent.push({ type: "text", text: webContext });
-  } else {
+  } else if (!visionResults || visionResults.matchingPages.length === 0) {
     userContent.push({
       type: "text",
       text: "\n\n⚠️ Aucun résultat de recherche web trouvé. Base ton analyse uniquement sur les photos.",
@@ -315,12 +450,13 @@ serve(async (req) => {
       });
     }
 
-    console.log(`[analyze-estimation] Starting 3-step analysis for ${estimation_id}`);
+    console.log(`[analyze-estimation] Starting 4-step analysis for ${estimation_id}`);
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const lovableApiKey = Deno.env.get("LOVABLE_API_KEY");
     const firecrawlApiKey = Deno.env.get("FIRECRAWL_API_KEY");
+    const visionApiKey = Deno.env.get("GOOGLE_CLOUD_VISION_API_KEY");
 
     if (!lovableApiKey) {
       throw new Error("LOVABLE_API_KEY is not configured");
@@ -357,13 +493,44 @@ serve(async (req) => {
       searchTerms = step1.searchTerms;
     }
 
-    // ── STEP 2: Web search via Firecrawl ──
+    // ── STEP 1b + STEP 2: Vision Web Detection + Firecrawl in parallel ──
+    let visionResults: VisionWebResult | null = null;
     let webResults: Array<{ title: string; url: string; description: string; markdown?: string }> = [];
 
+    const parallelTasks: Promise<void>[] = [];
+
+    // Vision API (reverse image search)
+    if (photoUrls.length > 0 && visionApiKey) {
+      parallelTasks.push(
+        runVisionWebDetection(photoUrls, supabaseUrl, visionApiKey).then((r) => {
+          visionResults = r;
+          // Augment search terms with Vision best guess labels
+          if (r.bestGuessLabels.length > 0) {
+            searchTerms.push(...r.bestGuessLabels.filter((l) => !searchTerms.includes(l)));
+          }
+        }),
+      );
+    } else if (!visionApiKey) {
+      console.warn("[analyze-estimation] GOOGLE_CLOUD_VISION_API_KEY not configured, skipping Vision");
+    }
+
+    // Firecrawl web search (runs after Vision if sequential, but we start it in parallel with initial terms)
     if (searchTerms.length > 0 && firecrawlApiKey) {
-      webResults = await searchWebReferences(searchTerms, firecrawlApiKey);
+      parallelTasks.push(
+        searchWebReferences(searchTerms, firecrawlApiKey).then((r) => {
+          webResults = r;
+        }),
+      );
     } else if (!firecrawlApiKey) {
       console.warn("[analyze-estimation] FIRECRAWL_API_KEY not configured, skipping web search");
+    }
+
+    await Promise.all(parallelTasks);
+
+    // If Vision gave us new terms and Firecrawl had no results, try again
+    if (webResults.length === 0 && visionResults && visionResults.bestGuessLabels.length > 0 && firecrawlApiKey) {
+      console.log("[analyze-estimation] Retrying Firecrawl with Vision labels:", visionResults.bestGuessLabels);
+      webResults = await searchWebReferences(visionResults.bestGuessLabels, firecrawlApiKey);
     }
 
     // ── STEP 3: Final cross-referenced analysis ──
@@ -374,9 +541,20 @@ serve(async (req) => {
       lovableApiKey,
       visualDescription,
       webResults,
+      visionResults,
     );
 
     console.log("[analyze-estimation] Analysis complete:", analysis.recommendation, "| confidence:", analysis.confidence_level);
+
+    // Attach Vision detection metadata to analysis for display
+    if (visionResults) {
+      analysis.vision_detection = {
+        bestGuessLabels: visionResults.bestGuessLabels,
+        webEntities: visionResults.webEntities.slice(0, 8),
+        matchingPages: visionResults.matchingPages.slice(0, 5),
+        visuallySimilarImages: visionResults.visuallySimilarImages.slice(0, 4),
+      };
+    }
 
     // Save to database
     const { error: updateError } = await supabase
