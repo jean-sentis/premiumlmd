@@ -272,12 +272,18 @@ RÈGLES IMPÉRATIVES :
 - Analyse visuelle INDÉPENDANTE d'abord, puis confronte aux sources web.
 - Ignore le titre d'un éventuel "lot similaire" mentionné par le propriétaire.
 - Jamais de certitude sur un artiste sauf signature lisible ou sources convergentes.
-- PRUDENCE OBLIGATOIRE : Ne JAMAIS écrire "il s'agit de", toujours utiliser des formulations conditionnelles : "il pourrait s'agir de", "cet objet évoque", "pourrait être attribué à", "rappelle le style de", "présente les caractéristiques de".
-- FIABILITÉ : Note ta confiance de 1 à 4. Tu ne peux JAMAIS donner 0 (= faux, réservé au commissaire-priseur) ni 5 (= confirmé, réservé au commissaire-priseur). Échelle : 1=très incertain, 2=hypothèse fragile, 3=probable, 4=forte convergence des sources.
+- PRUDENCE OBLIGATOIRE : Ne JAMAIS écrire "il s'agit de", toujours utiliser des formulations conditionnelles.
+- FIABILITÉ : Note ta confiance de 1 à 4 (0 et 5 réservés au commissaire-priseur).
+
+TRAITEMENT DES NOMS MENTIONNÉS PAR LE PROPRIÉTAIRE :
+- Si le propriétaire mentionne un nom d'artiste, une signature ou un poinçon, tu DOIS en tenir compte même si les correspondances visuelles ne confirment pas ce nom.
+- Si le nom mentionné N'APPARAÎT PAS dans les résultats visuels ou web : signale-le explicitement. Ex: "Le propriétaire mentionne une signature 'Claudio', mais aucune correspondance n'a été trouvée dans les bases d'enchères consultées. Il pourrait s'agir d'un artiste peu référencé ou d'une lecture incertaine."
+- Inclus le nom mentionné dans tes questions au propriétaire (photo de la signature, orthographe exacte, etc.).
+- Ne JAMAIS ignorer silencieusement un nom fourni par le propriétaire.
 
 CONCISION OBLIGATOIRE :
-- "identified_object" = UNE seule ligne (type, matériau, style/époque). Formuler au conditionnel.
-- "summary" = 2-3 phrases courtes MAXIMUM. C'est l'avis préliminaire affiché par défaut. Toujours au conditionnel.
+- "identified_object" = UNE seule ligne (type, matériau, style/époque). Au conditionnel.
+- "summary" = 2-3 phrases courtes MAX. Au conditionnel.
 - Les détails longs vont dans authenticity_assessment, condition_notes, market_insights.
 - Ne JAMAIS mentionner les outils techniques utilisés (Google Vision, Google Lens, API, etc.).
 
@@ -572,34 +578,53 @@ serve(async (req) => {
     }
 
     // ── EXTRA: Search based on user text clues (signatures, artist names) ──
-    if (serpApiKey && userOwnMessage.length > 10) {
-      // Extract potential proper nouns/names from user description
-      const namePatterns = userOwnMessage.match(/(?:signature|signé|marqué|poinçon|inscrit|écrit)\s+(?:comme\s+)?["']?([A-ZÀ-Ü][a-zà-ü]+(?:\s+[A-ZÀ-Ü][a-zà-ü]+)*)/gi);
+    if (serpApiKey && userOwnMessage.length > 5) {
       const extraTerms: string[] = [];
-      
-      if (namePatterns) {
-        for (const match of namePatterns) {
-          const namePart = match.replace(/^(?:signature|signé|marqué|poinçon|inscrit|écrit)\s+(?:comme\s+)?["']?/i, "").trim();
-          if (namePart.length >= 3) {
-            extraTerms.push(`${namePart} artiste enchères`);
-            extraTerms.push(`${namePart} sculpture art`);
+
+      // Flexible regex: handles text between keyword and name, case-insensitive
+      const flexiblePatterns = [
+        /(?:signature|signé|marqué|poinçon|inscrit|écrit)[\s\w,''éèêëàâäùûüîïôö]*?(?:comme\s+)?([a-zà-üA-ZÀ-Ü][a-zà-ü]{2,}(?:\s+[a-zà-üA-ZÀ-Ü][a-zà-ü]{2,})*)/gi,
+        /(?:artiste|par|de|auteur)\s+([A-ZÀ-Ü][a-zà-ü]{2,}(?:\s+[A-ZÀ-Ü][a-zà-ü]{2,})*)/g,
+      ];
+
+      const stopWords = new Set([
+        "derriere", "derrière", "devant", "dessus", "dessous", "comme", "très",
+        "pas", "peu", "assez", "plutôt", "bien", "mal", "une", "lisible",
+        "illisible", "visible", "invisible", "quelque", "chose", "objet",
+      ]);
+
+      const extractedNames = new Set<string>();
+
+      for (const pattern of flexiblePatterns) {
+        let match;
+        while ((match = pattern.exec(userOwnMessage)) !== null) {
+          const name = match[1]?.trim();
+          if (name && name.length >= 3 && !stopWords.has(name.toLowerCase())) {
+            extractedNames.add(name);
           }
         }
       }
 
+      // Also check for capitalized words that could be proper names
       const commonWords = new Set(["Le", "La", "Les", "Un", "Une", "Des", "Du", "De", "En", "Au", "Il", "Je", "Mon", "Mes", "Son", "Ses", "Est", "Pas", "Très", "Comme", "Bonjour", "Merci"]);
       const capitalizedWords = userOwnMessage.match(/[A-ZÀ-Ü][a-zà-ü]{2,}/g) || [];
-      const potentialNames = capitalizedWords.filter(w => !commonWords.has(w));
-      
-      if (potentialNames.length > 0 && extraTerms.length === 0) {
-        for (const name of potentialNames.slice(0, 2)) {
-          extraTerms.push(`${name} artiste enchères estimation`);
+      for (const w of capitalizedWords) {
+        if (!commonWords.has(w) && !stopWords.has(w.toLowerCase())) {
+          extractedNames.add(w);
         }
       }
 
+      for (const name of extractedNames) {
+        extraTerms.push(`${name} artiste enchères`);
+        extraTerms.push(`${name} artiste sculpture peinture`);
+        extraTerms.push(`site:drouot.com ${name}`);
+        extraTerms.push(`site:interencheres.com ${name}`);
+      }
+
       if (extraTerms.length > 0) {
-        console.log("[analyze-estimation] Extra search from user text:", extraTerms);
-        const extraResults = await searchWebReferences(extraTerms, serpApiKey);
+        console.log("[analyze-estimation] Extracted names from user text:", Array.from(extractedNames));
+        console.log("[analyze-estimation] Extra search terms:", extraTerms);
+        const extraResults = await searchWebReferences(extraTerms.slice(0, 6), serpApiKey);
         const existingUrls = new Set(webResults.map(r => r.url));
         for (const r of extraResults) {
           if (!existingUrls.has(r.url)) {
