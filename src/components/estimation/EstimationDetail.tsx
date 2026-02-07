@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
@@ -54,8 +54,23 @@ export function EstimationDetail({
   const [notes, setNotes] = useState(estimation.auctioneer_notes || "");
   const [savingNotes, setSavingNotes] = useState(false);
   const [reanalyzing, setReanalyzing] = useState(false);
+  const [freshData, setFreshData] = useState<EstimationRequest | null>(null);
 
-  const ai = estimation.ai_analysis;
+  // Re-fetch fresh data on mount to get latest ai_analysis
+  useEffect(() => {
+    const fetchFresh = async () => {
+      const { data } = await supabase
+        .from("estimation_requests")
+        .select("*")
+        .eq("id", estimation.id)
+        .maybeSingle();
+      if (data) setFreshData(data as any);
+    };
+    fetchFresh();
+  }, [estimation.id]);
+
+  const current = freshData || estimation;
+  const ai = current.ai_analysis;
 
   const getPhotoUrl = (path: string) => {
     if (path.startsWith("http")) return path;
@@ -137,9 +152,9 @@ export function EstimationDetail({
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div className="flex-1 min-w-0">
-          <h2 className="font-semibold text-sm truncate">{estimation.nom}</h2>
+          <h2 className="font-semibold text-sm truncate">{current.nom}</h2>
           <p className="text-xs text-muted-foreground">
-            {format(new Date(estimation.created_at), "dd MMMM yyyy à HH:mm", {
+            {format(new Date(current.created_at), "dd MMMM yyyy à HH:mm", {
               locale: fr,
             })}
           </p>
@@ -159,36 +174,36 @@ export function EstimationDetail({
           <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
             <span className="flex items-center gap-1">
               <User className="w-3 h-3" />
-              {estimation.nom}
+              {current.nom}
             </span>
             <span className="flex items-center gap-1">
               <Mail className="w-3 h-3" />
-              {estimation.email}
+              {current.email}
             </span>
-            {estimation.telephone && (
+            {current.telephone && (
               <span className="flex items-center gap-1">
                 <Phone className="w-3 h-3" />
-                {estimation.telephone}
+                {current.telephone}
               </span>
             )}
-            {estimation.object_category && (
+            {current.object_category && (
               <span className="flex items-center gap-1">
                 <Tag className="w-3 h-3" />
-                {estimation.object_category}
+                {current.object_category}
               </span>
             )}
-            {estimation.estimated_value && (
+            {current.estimated_value && (
               <span className="flex items-center gap-1">
                 <Euro className="w-3 h-3" />
-                {estimation.estimated_value}
+                {current.estimated_value}
               </span>
             )}
           </div>
 
           {/* Photos */}
-          {estimation.photo_urls?.length > 0 && (
+          {current.photo_urls?.length > 0 && (
             <div className="grid grid-cols-3 gap-2">
-              {estimation.photo_urls.map((url, i) => (
+              {current.photo_urls.map((url, i) => (
                 <a
                   key={i}
                   href={getPhotoUrl(url)}
@@ -213,12 +228,12 @@ export function EstimationDetail({
                 Description
               </p>
               <p className="text-sm bg-muted/30 p-3 rounded-lg border border-border/30">
-                {formatDescription(estimation.description)}
+                {formatDescription(current.description)}
               </p>
             </div>
-            {estimation.related_lot_id && (
+            {current.related_lot_id && (
               <a
-                href={`/lot/${estimation.related_lot_id}`}
+                href={`/lot/${current.related_lot_id}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline"
@@ -280,7 +295,7 @@ export function EstimationDetail({
         {/* ══════════════════════════════════════ */}
         {/* SECTION 3 — Réponse                   */}
         {/* ══════════════════════════════════════ */}
-        <ResponsePanel estimation={estimation} onUpdate={onUpdate} />
+        <ResponsePanel estimation={current} onUpdate={onUpdate} />
       </div>
     </div>
   );
