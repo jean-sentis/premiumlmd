@@ -7,6 +7,300 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+// ── Step 1: Ask Gemini for a visual description + search terms ──
+async function extractVisualSearchTerms(
+  photoUrls: string[],
+  supabaseUrl: string,
+  lovableApiKey: string,
+): Promise<{ description: string; searchTerms: string[] }> {
+  const imageContent: any[] = [];
+  for (const url of photoUrls) {
+    const fullUrl = url.startsWith("http") ? url : `${supabaseUrl}/storage/v1/object/public/${url}`;
+    imageContent.push({ type: "image_url", image_url: { url: fullUrl } });
+  }
+
+  const messages = [
+    {
+      role: "system",
+      content: `Tu es un expert en art et antiquités. Analyse les photos et produis un JSON avec :
+- "description" : description visuelle factuelle de l'objet (type, style, matériaux, signatures/poinçons visibles, époque probable). 3-4 phrases maximum.
+- "searchTerms" : un tableau de 3 à 5 termes de recherche web pertinents pour identifier cet objet ou trouver des objets similaires sur des sites d'enchères. Chaque terme doit être une combinaison utile (ex: "vase art nouveau Gallé", "pendule bronze Empire", "huile sur toile paysage Barbizon"). Inclus des variantes si pertinent (nom d'artiste potentiel, technique, style).
+
+Réponds UNIQUEMENT en JSON valide, sans markdown ni backticks.`,
+    },
+    {
+      role: "user",
+      content: [
+        { type: "text", text: "Analyse ces photos et génère les termes de recherche :" },
+        ...imageContent,
+      ],
+    },
+  ];
+
+  console.log("[analyze-estimation] Step 1: Extracting visual search terms...");
+
+  const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${lovableApiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: "google/gemini-2.5-flash",
+      messages,
+    }),
+  });
+
+  if (!response.ok) {
+    const errText = await response.text();
+    console.error("[analyze-estimation] Step 1 failed:", response.status, errText);
+    return { description: "", searchTerms: [] };
+  }
+
+  const data = await response.json();
+  const raw = data.choices?.[0]?.message?.content || "";
+
+  try {
+    const cleaned = raw.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+    const parsed = JSON.parse(cleaned);
+    console.log("[analyze-estimation] Step 1 result:", parsed.searchTerms);
+    return {
+      description: parsed.description || "",
+      searchTerms: Array.isArray(parsed.searchTerms) ? parsed.searchTerms : [],
+    };
+  } catch {
+    console.error("[analyze-estimation] Step 1 JSON parse failed, raw:", raw.substring(0, 200));
+    return { description: raw, searchTerms: [] };
+  }
+}
+
+// ── Step 2: Search the web using Firecrawl ──
+async function searchWebReferences(
+  searchTerms: string[],
+  firecrawlApiKey: string,
+): Promise<Array<{ title: string; url: string; description: string; markdown?: string }>> {
+  const allResults: Array<{ title: string; url: string; description: string; markdown?: string }> = [];
+
+  // Run up to 3 search queries in parallel
+  const queries = searchTerms.slice(0, 3).map((term) =>
+    `${term} enchères estimation prix`
+  );
+
+  console.log("[analyze-estimation] Step 2: Searching web with Firecrawl...", queries);
+
+  const searchPromises = queries.map(async (query) => {
+    try {
+      const response = await fetch("https://api.firecrawl.dev/v1/search", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${firecrawlApiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          query,
+          limit: 3,
+          scrapeOptions: {
+            formats: ["markdown"],
+            onlyMainContent: true,
+          },
+        }),
+      });
+
+      if (!response.ok) {
+        console.error(`[analyze-estimation] Firecrawl search failed for "${query}":`, response.status);
+        return [];
+      }
+
+      const data = await response.json();
+      return (data.data || []).map((r: any) => ({
+        title: r.title || "",
+        url: r.url || "",
+        description: r.description || "",
+        markdown: r.markdown?.substring(0, 1500) || "", // Limit to avoid token overflow
+      }));
+    } catch (err) {
+      console.error(`[analyze-estimation] Search error for "${query}":`, err);
+      return [];
+    }
+  });
+
+  const results = await Promise.all(searchPromises);
+  for (const batch of results) {
+    allResults.push(...batch);
+  }
+
+  // Deduplicate by URL
+  const seen = new Set<string>();
+  const unique = allResults.filter((r) => {
+    if (seen.has(r.url)) return false;
+    seen.add(r.url);
+    return true;
+  });
+
+  console.log(`[analyze-estimation] Step 2: Found ${unique.length} unique web results`);
+  return unique.slice(0, 8); // Max 8 results
+}
+
+// ── Step 3: Final AI analysis with cross-referenced sources ──
+async function runFinalAnalysis(
+  estimation: any,
+  photoUrls: string[],
+  supabaseUrl: string,
+  lovableApiKey: string,
+  visualDescription: string,
+  webResults: Array<{ title: string; url: string; description: string; markdown?: string }>,
+): Promise<any> {
+  const messages: any[] = [
+    {
+      role: "system",
+      content: `Tu es un expert commissaire-priseur avec 30 ans d'expérience en art, antiquités, bijoux, mobilier, véhicules de collection, vins et spiritueux.
+
+Tu reçois une demande d'estimation d'un particulier. Tu dois analyser les PHOTOS FOURNIES et les RÉSULTATS DE RECHERCHE WEB pour donner un avis professionnel croisé et sourcé.
+
+MÉTHODE D'ANALYSE CROISÉE :
+1. Analyse visuelle INDÉPENDANTE des photos (ce que tu vois réellement)
+2. Confrontation avec les résultats de recherche web (objets similaires trouvés, prix en enchères, artistes identifiés)
+3. Si les sources web confirment ton analyse visuelle, augmente ta confiance
+4. Si les sources web contredisent ou apportent des éléments nouveaux, intègre-les avec nuance
+5. Cite tes sources web quand elles sont pertinentes (nom du site, URL)
+
+RÈGLE CRITIQUE — ANALYSE DES PHOTOS :
+- Analyse les photos de manière INDÉPENDANTE d'abord, puis confronte avec les sources web.
+- Si un lot de référence est mentionné dans la description (cas "objet similaire"), IGNORE le titre du lot de référence pour ton identification. Analyse la photo comme si tu la voyais pour la première fois.
+- Utilise tes capacités de reconnaissance visuelle au maximum.
+
+RÈGLES DE FORMULATION :
+- N'affirme JAMAIS avec certitude l'identité d'un artiste SAUF si (a) une signature est clairement lisible OU (b) plusieurs sources web convergent vers la même identification.
+- Quand les sources web confirment, utilise : "L'analyse visuelle, corroborée par [source], suggère..."
+- Quand c'est incertain : "pourrait être", "évoque le style de", "à confirmer par un examen physique"
+- Pour l'estimation chiffrée, appuie-toi sur les prix comparables trouvés en ligne quand disponibles.
+- Mentionne les limites de l'analyse photographique.
+
+Ta réponse doit être un JSON structuré avec les champs suivants :
+- summary (string) : Résumé de ce que tu VOIS et ce que les sources web confirment/infirment
+- identified_object (string) : Identification croisée photo + web. Cite les sources qui confirment.
+- authenticity_assessment (string) : Éléments visuels et contextuels orientant vers authenticité ou réserves
+- condition_notes (string) : État apparent + limites de l'observation photo
+- estimated_range (string) : Fourchette basée sur comparables trouvés en ligne si possible (ex: "800 - 1 200 € (basé sur ventes similaires sur [site])"), ou "Estimation impossible sans examen physique"
+- market_insights (string) : Contexte marché avec données web réelles (ventes récentes, tendances, cotes)
+- web_sources (array of {title: string, url: string, relevance: string}) : Les 2-5 sources web les plus pertinentes utilisées, avec une phrase expliquant leur pertinence
+- recommendation (string) : "très_intéressant" | "intéressant" | "à_examiner" | "peu_intéressant" | "hors_spécialité"
+- recommendation_text (string) : Explication de la recommandation (1-2 phrases)
+- questions_for_owner (string[]) : Questions pour affiner l'estimation (2-4 questions)
+- confidence_level (string) : "élevée" | "moyenne" | "faible" — basée sur convergence vision + web
+- limitations (string) : Ce qui manque pour une analyse fiable
+
+Réponds UNIQUEMENT avec le JSON, sans markdown ni backticks.`,
+    },
+  ];
+
+  // Build user content: photos first, then web context, then user description
+  const userContent: any[] = [];
+
+  // Photos
+  if (photoUrls.length > 0) {
+    userContent.push({ type: "text", text: "PHOTOS DE L'OBJET À ANALYSER :" });
+    for (const url of photoUrls) {
+      const fullUrl = url.startsWith("http") ? url : `${supabaseUrl}/storage/v1/object/public/${url}`;
+      userContent.push({ type: "image_url", image_url: { url: fullUrl } });
+    }
+  } else {
+    userContent.push({ type: "text", text: "⚠️ Aucune photo fournie." });
+  }
+
+  // Visual description from Step 1
+  if (visualDescription) {
+    userContent.push({
+      type: "text",
+      text: `\n\nDESCRIPTION VISUELLE PRÉLIMINAIRE (étape 1) :\n${visualDescription}`,
+    });
+  }
+
+  // Web search results
+  if (webResults.length > 0) {
+    let webContext = "\n\nRÉSULTATS DE RECHERCHE WEB (à croiser avec l'analyse visuelle) :\n";
+    for (const r of webResults) {
+      webContext += `\n--- Source : ${r.title} (${r.url}) ---\n`;
+      if (r.description) webContext += `Résumé : ${r.description}\n`;
+      if (r.markdown) webContext += `Contenu : ${r.markdown.substring(0, 800)}\n`;
+    }
+    userContent.push({ type: "text", text: webContext });
+  } else {
+    userContent.push({
+      type: "text",
+      text: "\n\n⚠️ Aucun résultat de recherche web trouvé. Base ton analyse uniquement sur les photos.",
+    });
+  }
+
+  // User context
+  let textDescription = "\n\nCONTEXTE PROPRIÉTAIRE :";
+  const userMessage = estimation.description || "";
+  const userOwnMessage = userMessage.split("---")[0]?.trim() || userMessage;
+  textDescription += `\nMessage : ${userOwnMessage}`;
+
+  if (estimation.related_lot_id) {
+    const lotRefParts = userMessage.split("---").slice(1).join("---").trim();
+    if (lotRefParts) {
+      textDescription += `\n\n[INFO : Le propriétaire dit posséder un objet "similaire" au lot suivant — cela ne signifie PAS que c'est le même objet.]\n${lotRefParts}`;
+    }
+  }
+  if (estimation.estimated_value) {
+    textDescription += `\nEstimation espérée : ${estimation.estimated_value}`;
+  }
+  if (estimation.object_category) {
+    textDescription += `\nCatégorie : ${estimation.object_category}`;
+  }
+
+  userContent.push({ type: "text", text: textDescription });
+  messages.push({ role: "user", content: userContent });
+
+  console.log("[analyze-estimation] Step 3: Running final cross-referenced analysis...");
+
+  const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${lovableApiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: "google/gemini-2.5-pro",
+      messages,
+    }),
+  });
+
+  if (!aiResponse.ok) {
+    const errorText = await aiResponse.text();
+    console.error("[analyze-estimation] Step 3 AI error:", aiResponse.status, errorText);
+
+    if (aiResponse.status === 429) {
+      throw { status: 429, message: "Rate limit exceeded, please try again later" };
+    }
+    if (aiResponse.status === 402) {
+      throw { status: 402, message: "AI credits exhausted" };
+    }
+    throw new Error(`AI gateway returned ${aiResponse.status}: ${errorText}`);
+  }
+
+  const aiData = await aiResponse.json();
+  const rawContent = aiData.choices?.[0]?.message?.content || "";
+
+  try {
+    const cleaned = rawContent.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+    return JSON.parse(cleaned);
+  } catch {
+    console.error("[analyze-estimation] Step 3 JSON parse error, using fallback");
+    return {
+      summary: rawContent,
+      identified_object: "Analyse non structurée",
+      estimated_range: "Non déterminé",
+      recommendation: "à_examiner",
+      recommendation_text: "L'analyse IA n'a pas pu être structurée correctement.",
+      web_sources: [],
+    };
+  }
+}
+
+// ── Main handler ──
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -21,11 +315,12 @@ serve(async (req) => {
       });
     }
 
-    console.log(`[analyze-estimation] Starting analysis for ${estimation_id}`);
+    console.log(`[analyze-estimation] Starting 3-step analysis for ${estimation_id}`);
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const lovableApiKey = Deno.env.get("LOVABLE_API_KEY");
+    const firecrawlApiKey = Deno.env.get("FIRECRAWL_API_KEY");
 
     if (!lovableApiKey) {
       throw new Error("LOVABLE_API_KEY is not configured");
@@ -48,151 +343,42 @@ serve(async (req) => {
       });
     }
 
-    console.log(`[analyze-estimation] Found estimation: ${estimation.nom} - ${estimation.description?.substring(0, 50)}`);
+    console.log(`[analyze-estimation] Found: ${estimation.nom} - ${estimation.description?.substring(0, 50)}`);
 
-    // Build messages for AI analysis
-    const messages: any[] = [
-      {
-        role: "system",
-        content: `Tu es un expert commissaire-priseur avec 30 ans d'expérience en art, antiquités, bijoux, mobilier, véhicules de collection, vins et spiritueux.
-
-Tu reçois une demande d'estimation d'un particulier. Tu dois analyser les PHOTOS FOURNIES pour donner un avis professionnel PRUDENT et NUANCÉ.
-
-RÈGLE CRITIQUE — ANALYSE DES PHOTOS :
-- Tu dois TOUJOURS analyser les photos de manière INDÉPENDANTE, en te basant UNIQUEMENT sur ce que tu VOIS dans les images.
-- Si un lot de référence est mentionné dans la description (cas "objet similaire"), IGNORE complètement le titre et la description du lot de référence pour ton identification. Le propriétaire dit simplement qu'il possède "un objet similaire" — cela ne signifie PAS que c'est le même objet. Analyse la photo comme si tu la voyais pour la première fois, sans a priori.
-- Utilise tes capacités de reconnaissance visuelle au maximum : identifie le type d'objet, le style, l'époque, les matériaux visibles, les techniques, les marques ou signatures visibles.
-
-RÈGLES DE FORMULATION :
-- N'affirme JAMAIS avec certitude l'identité d'un artiste, d'un fabricant ou d'une époque à partir de photos uniquement. Utilise des formulations comme : "pourrait être", "ressemble à", "évoque le style de", "rappelle la production de", "à confirmer par un examen physique".
-- La SEULE exception où tu peux affirmer : quand une signature, un poinçon ou une marque est CLAIREMENT LISIBLE sur la photo. Dans ce cas, précise "signature lisible" ou "poinçon identifiable".
-- Pour l'estimation chiffrée, donne TOUJOURS une fourchette large et précise qu'elle est indicative et soumise à examen.
-- Ne prétends JAMAIS avoir identifié formellement un objet que tu n'as vu qu'en photo. Un examen physique est toujours nécessaire.
-- Mentionne systématiquement les limites de l'analyse photographique (angles manquants, lumière, résolution, impossibilité de vérifier matériaux/poids/texture).
-
-Ta réponse doit être un JSON structuré avec les champs suivants :
-- summary (string) : Résumé en 2-3 phrases de ce que tu VOIS sur les photos et de ton impression générale, en utilisant le conditionnel
-- identified_object (string) : Ce que tu PENSES identifier EN REGARDANT LES PHOTOS (type, époque probable, style, artiste/fabricant POSSIBLE). Utilise "pourrait être", "évoque", "rappelle". NE TE BASE PAS sur le titre du lot de référence.
-- authenticity_assessment (string) : Éléments visuels qui pourraient orienter vers une authenticité ou des réserves — JAMAIS de conclusion définitive
-- condition_notes (string) : Notes sur l'état APPARENT de l'objet d'après les photos, en précisant les limites de l'observation photographique
-- estimated_range (string) : Fourchette d'estimation INDICATIVE (ex: "800 - 1 200 € (sous réserve d'examen)"), ou "Estimation impossible sans examen physique" si tu ne peux pas
-- market_insights (string) : Contexte marché (demande actuelle, tendances, comparables récents si pertinent)
-- recommendation (string) : "très_intéressant" | "intéressant" | "à_examiner" | "peu_intéressant" | "hors_spécialité"
-- recommendation_text (string) : Explication de ta recommandation au commissaire-priseur (1-2 phrases)
-- questions_for_owner (string[]) : Questions à poser au propriétaire pour affiner l'estimation (2-4 questions). Inclure systématiquement : provenance, historique de propriété, existence de certificats/factures
-- confidence_level (string) : "élevée" | "moyenne" | "faible" — ton niveau de confiance dans cette analyse à distance
-- limitations (string) : Ce qui manque pour une analyse fiable (ex: "vue du dos nécessaire", "signature à vérifier en main", "matériau à tester")
-
-Réponds UNIQUEMENT avec le JSON, sans markdown ni backticks.`,
-      },
-    ];
-
-    // Build user message with photos — PHOTOS FIRST, then context
-    const userContent: any[] = [];
-
-    // Add photos FIRST so the AI analyzes them before reading any text context
     const photoUrls: string[] = estimation.photo_urls || [];
+
+    // ── STEP 1: Visual description + search terms ──
+    let visualDescription = "";
+    let searchTerms: string[] = [];
+
     if (photoUrls.length > 0) {
-      console.log(`[analyze-estimation] Including ${photoUrls.length} photos for vision analysis`);
-      userContent.push({ type: "text", text: "PHOTOS DE L'OBJET À ANALYSER (analyse ces photos en priorité, indépendamment de tout contexte textuel) :" });
-      for (const url of photoUrls) {
-        const fullUrl = url.startsWith("http") ? url : `${supabaseUrl}/storage/v1/object/public/${url}`;
-        userContent.push({
-          type: "image_url",
-          image_url: { url: fullUrl },
-        });
-      }
-    } else {
-      userContent.push({
-        type: "text",
-        text: "⚠️ Aucune photo fournie. Analyse basée uniquement sur la description textuelle.",
-      });
+      const step1 = await extractVisualSearchTerms(photoUrls, supabaseUrl, lovableApiKey);
+      visualDescription = step1.description;
+      searchTerms = step1.searchTerms;
     }
 
-    // Add text description AFTER photos — and strip lot reference details for the AI to avoid bias
-    let textDescription = `\n\nCONTEXTE (informatif uniquement, ne pas utiliser pour identifier l'objet) :`;
-    
-    // Extract only the user's own message, not the pre-filled lot reference
-    const userMessage = estimation.description || "";
-    const userOwnMessage = userMessage.split("---")[0]?.trim() || userMessage;
-    textDescription += `\nMessage du propriétaire : ${userOwnMessage}`;
-    
-    // Add lot reference as separate context, clearly marked
-    if (estimation.related_lot_id) {
-      const lotRefParts = userMessage.split("---").slice(1).join("---").trim();
-      if (lotRefParts) {
-        textDescription += `\n\n[INFO CONTEXTE : Le propriétaire a indiqué posséder un objet qu'il considère "similaire" au lot suivant. Cela ne signifie PAS que c'est le même objet. Cette information est fournie à titre indicatif uniquement.]\n${lotRefParts}`;
-      }
+    // ── STEP 2: Web search via Firecrawl ──
+    let webResults: Array<{ title: string; url: string; description: string; markdown?: string }> = [];
+
+    if (searchTerms.length > 0 && firecrawlApiKey) {
+      webResults = await searchWebReferences(searchTerms, firecrawlApiKey);
+    } else if (!firecrawlApiKey) {
+      console.warn("[analyze-estimation] FIRECRAWL_API_KEY not configured, skipping web search");
     }
 
-    if (estimation.estimated_value) {
-      textDescription += `\n\nEstimation espérée par le propriétaire : ${estimation.estimated_value}`;
-    }
-    if (estimation.object_category) {
-      textDescription += `\n\nCatégorie indiquée : ${estimation.object_category}`;
-    }
+    // ── STEP 3: Final cross-referenced analysis ──
+    const analysis = await runFinalAnalysis(
+      estimation,
+      photoUrls,
+      supabaseUrl,
+      lovableApiKey,
+      visualDescription,
+      webResults,
+    );
 
-    userContent.push({ type: "text", text: textDescription });
+    console.log("[analyze-estimation] Analysis complete:", analysis.recommendation, "| confidence:", analysis.confidence_level);
 
-    messages.push({ role: "user", content: userContent });
-
-    console.log("[analyze-estimation] Calling Lovable AI Gateway with Vision...");
-
-    // Call Lovable AI Gateway
-    const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${lovableApiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-pro",
-        messages,
-      }),
-    });
-
-    if (!aiResponse.ok) {
-      const errorText = await aiResponse.text();
-      console.error("[analyze-estimation] AI gateway error:", aiResponse.status, errorText);
-      
-      if (aiResponse.status === 429) {
-        return new Response(JSON.stringify({ error: "Rate limit exceeded, please try again later" }), {
-          status: 429,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      if (aiResponse.status === 402) {
-        return new Response(JSON.stringify({ error: "AI credits exhausted" }), {
-          status: 402,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      throw new Error(`AI gateway returned ${aiResponse.status}: ${errorText}`);
-    }
-
-    const aiData = await aiResponse.json();
-    const rawContent = aiData.choices?.[0]?.message?.content || "";
-    console.log("[analyze-estimation] AI response received, parsing...");
-
-    // Parse the JSON response (handle potential markdown wrapping)
-    let analysis;
-    try {
-      const cleaned = rawContent.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
-      analysis = JSON.parse(cleaned);
-    } catch (parseErr) {
-      console.error("[analyze-estimation] JSON parse error:", parseErr);
-      analysis = {
-        summary: rawContent,
-        identified_object: "Analyse non structurée",
-        estimated_range: "Non déterminé",
-        recommendation: "à_examiner",
-        recommendation_text: "L'analyse IA n'a pas pu être structurée correctement.",
-      };
-    }
-
-    console.log("[analyze-estimation] Analysis parsed successfully:", analysis.recommendation);
-
-    // Update the estimation request with AI analysis
+    // Save to database
     const { error: updateError } = await supabase
       .from("estimation_requests")
       .update({
@@ -210,25 +396,16 @@ Réponds UNIQUEMENT avec le JSON, sans markdown ni backticks.`,
     console.log("[analyze-estimation] Estimation updated successfully");
 
     return new Response(
-      JSON.stringify({
-        success: true,
-        analysis,
-        estimation_id,
-      }),
-      {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      }
+      JSON.stringify({ success: true, analysis, estimation_id }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error("[analyze-estimation] Error:", error);
+
+    const status = error?.status || 500;
     return new Response(
-      JSON.stringify({
-        error: error instanceof Error ? error.message : "Unknown error",
-      }),
-      {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      }
+      JSON.stringify({ error: error?.message || (error instanceof Error ? error.message : "Unknown error") }),
+      { status, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   }
 });
