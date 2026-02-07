@@ -524,7 +524,7 @@ serve(async (req) => {
       lensResults,
     );
 
-    console.log("[analyze-estimation] Analysis complete:", analysis.recommendation, "| confidence:", analysis.confidence_level);
+    console.log("[analyze-estimation] Analysis complete:", analysis.recommendation, "| confidence_score:", analysis.confidence_score);
 
     // Attach Google Lens metadata to analysis for display
     if (lensResults) {
