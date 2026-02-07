@@ -2,7 +2,7 @@ import { useState } from "react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, User, Mail, Phone, Tag, Euro } from "lucide-react";
+import { ArrowLeft, User, Mail, Phone, Tag, Euro, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
@@ -36,6 +36,12 @@ interface EstimationDetailProps {
   estimation: EstimationRequest;
   onBack: () => void;
   onUpdate: () => void;
+}
+
+// Strip raw URLs from description, keep only the user's message
+function formatDescription(desc: string) {
+  const parts = desc.split("---");
+  return parts[0]?.trim() || desc;
 }
 
 export function EstimationDetail({
@@ -182,14 +188,27 @@ export function EstimationDetail({
             </div>
           )}
 
-          {/* Description */}
-          <div className="space-y-1">
-            <p className="text-xs font-medium text-muted-foreground">
-              Description
-            </p>
-            <p className="text-sm bg-muted/30 p-3 rounded-lg border border-border/30">
-              {estimation.description}
-            </p>
+          {/* Description + lien lot */}
+          <div className="space-y-2">
+            <div className="space-y-1">
+              <p className="text-xs font-medium text-muted-foreground">
+                Description
+              </p>
+              <p className="text-sm bg-muted/30 p-3 rounded-lg border border-border/30">
+                {formatDescription(estimation.description)}
+              </p>
+            </div>
+            {estimation.related_lot_id && (
+              <a
+                href={`/lot/${estimation.related_lot_id}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline"
+              >
+                <ExternalLink className="w-3 h-3" />
+                Voir le lot référencé
+              </a>
+            )}
           </div>
         </div>
 
