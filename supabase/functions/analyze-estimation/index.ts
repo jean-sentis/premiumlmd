@@ -12,6 +12,7 @@ async function extractVisualSearchTerms(
   photoUrls: string[],
   supabaseUrl: string,
   lovableApiKey: string,
+  userDescription?: string,
 ): Promise<{ description: string; searchTerms: string[] }> {
   const imageContent: any[] = [];
   for (const url of photoUrls) {
@@ -19,25 +20,34 @@ async function extractVisualSearchTerms(
     imageContent.push({ type: "image_url", image_url: { url: fullUrl } });
   }
 
+  // Include user description context if available
+  const userContext = userDescription
+    ? `\n\nLe propriétaire a fourni cette description : "${userDescription}"\nTiens-en compte pour affiner les termes de recherche (noms propres, signatures mentionnées, artistes, matériaux, époques, etc.).`
+    : "";
+
   const messages = [
     {
       role: "system",
       content: `Tu es un expert en art et antiquités. Analyse les photos et produis un JSON avec :
 - "description" : description visuelle factuelle de l'objet (type, style, matériaux, signatures/poinçons visibles, époque probable). 3-4 phrases maximum.
 - "searchTerms" : un tableau de 3 à 5 termes de recherche web pertinents pour identifier cet objet ou trouver des objets similaires sur des sites d'enchères. Chaque terme doit être une combinaison utile (ex: "vase art nouveau Gallé", "pendule bronze Empire", "huile sur toile paysage Barbizon"). Inclus des variantes si pertinent (nom d'artiste potentiel, technique, style).
+- Si le propriétaire mentionne un nom d'artiste, une signature ou un poinçon, INCLURE ce nom dans les termes de recherche même si tu ne le reconnais pas visuellement.
 
 Réponds UNIQUEMENT en JSON valide, sans markdown ni backticks.`,
     },
     {
       role: "user",
       content: [
-        { type: "text", text: "Analyse ces photos et génère les termes de recherche :" },
+        { type: "text", text: `Analyse ces photos et génère les termes de recherche :${userContext}` },
         ...imageContent,
       ],
     },
   ];
 
   console.log("[analyze-estimation] Step 1: Extracting visual search terms...");
+  if (userDescription) {
+    console.log("[analyze-estimation] Step 1: Including user description context");
+  }
 
   const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
     method: "POST",
@@ -466,8 +476,11 @@ serve(async (req) => {
     let visualDescription = "";
     let searchTerms: string[] = [];
 
+    // Extract user text for search enrichment
+    const userOwnMessage = (estimation.description || "").split("---")[0]?.trim() || "";
+
     if (photoUrls.length > 0) {
-      const step1 = await extractVisualSearchTerms(photoUrls, supabaseUrl, lovableApiKey);
+      const step1 = await extractVisualSearchTerms(photoUrls, supabaseUrl, lovableApiKey, userOwnMessage);
       visualDescription = step1.description;
       searchTerms = step1.searchTerms;
     }
@@ -508,6 +521,49 @@ serve(async (req) => {
     if (webResults.length === 0 && lensResults && lensResults.bestGuessLabels.length > 0 && serpApiKey) {
       console.log("[analyze-estimation] Retrying SerpAPI Search with Lens labels:", lensResults.bestGuessLabels);
       webResults = await searchWebReferences(lensResults.bestGuessLabels, serpApiKey);
+    }
+
+    // ── EXTRA: Search based on user text clues (signatures, artist names) ──
+    if (serpApiKey && userOwnMessage.length > 10) {
+      // Extract potential proper nouns/names from user description
+      const namePatterns = userOwnMessage.match(/(?:signature|signé|marqué|poinçon|inscrit|écrit)\s+(?:comme\s+)?["']?([A-ZÀ-Ü][a-zà-ü]+(?:\s+[A-ZÀ-Ü][a-zà-ü]+)*)/gi);
+      const extraTerms: string[] = [];
+      
+      if (namePatterns) {
+        for (const match of namePatterns) {
+          // Extract the name part after the keyword
+          const namePart = match.replace(/^(?:signature|signé|marqué|poinçon|inscrit|écrit)\s+(?:comme\s+)?["']?/i, "").trim();
+          if (namePart.length >= 3) {
+            extraTerms.push(`${namePart} artiste enchères`);
+            extraTerms.push(`${namePart} sculpture art`);
+          }
+        }
+      }
+
+      // Also check for any capitalized words that could be names (not common French words)
+      const commonWords = new Set(["Le", "La", "Les", "Un", "Une", "Des", "Du", "De", "En", "Au", "Il", "Je", "Mon", "Mes", "Son", "Ses", "Est", "Pas", "Très", "Comme", "Bonjour", "Merci"]);
+      const capitalizedWords = userOwnMessage.match(/[A-ZÀ-Ü][a-zà-ü]{2,}/g) || [];
+      const potentialNames = capitalizedWords.filter(w => !commonWords.has(w));
+      
+      if (potentialNames.length > 0 && extraTerms.length === 0) {
+        for (const name of potentialNames.slice(0, 2)) {
+          extraTerms.push(`${name} artiste enchères estimation`);
+        }
+      }
+
+      if (extraTerms.length > 0) {
+        console.log("[analyze-estimation] Extra search from user text:", extraTerms);
+        const extraResults = await searchWebReferences(extraTerms, serpApiKey);
+        // Merge with existing results, dedup by URL
+        const existingUrls = new Set(webResults.map(r => r.url));
+        for (const r of extraResults) {
+          if (!existingUrls.has(r.url)) {
+            webResults.push(r);
+            existingUrls.add(r.url);
+          }
+        }
+        console.log(`[analyze-estimation] After text-based search: ${webResults.length} total web results`);
+      }
     }
 
     // ── STEP 3: Final cross-referenced analysis ──
