@@ -2,12 +2,13 @@ import { useState } from "react";
 import {
   RefreshCw,
   Loader2,
-  ChevronRight,
+  ChevronDown,
   Shield,
   Wrench,
   TrendingUp,
   ExternalLink,
   Image,
+  FileText,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -18,6 +19,13 @@ import {
 } from "@/components/ui/collapsible";
 import { getInterestStyle, CONFIDENCE_CONFIG } from "./interest-config";
 
+/* ── Fiabilité 1→5 mapping ── */
+const CONFIDENCE_SCORE: Record<string, number> = {
+  "élevée": 5,
+  "moyenne": 3,
+  "faible": 1,
+};
+
 interface AnalysisPanelProps {
   ai: any;
   reanalyzing: boolean;
@@ -25,9 +33,7 @@ interface AnalysisPanelProps {
 }
 
 export function AnalysisPanel({ ai, reanalyzing, onReanalyze }: AnalysisPanelProps) {
-  const [authOpen, setAuthOpen] = useState(false);
-  const [conditionOpen, setConditionOpen] = useState(false);
-  const [marketOpen, setMarketOpen] = useState(false);
+  const [openSection, setOpenSection] = useState<string | null>(null);
 
   if (!ai) {
     return (
@@ -39,35 +45,39 @@ export function AnalysisPanel({ ai, reanalyzing, onReanalyze }: AnalysisPanelPro
   }
 
   const interestStyle = getInterestStyle(ai.recommendation);
+  const confidenceScore = ai.confidence_level
+    ? CONFIDENCE_SCORE[ai.confidence_level as keyof typeof CONFIDENCE_SCORE] || 3
+    : null;
   const confidenceConfig = ai.confidence_level
     ? CONFIDENCE_CONFIG[ai.confidence_level as keyof typeof CONFIDENCE_CONFIG]
     : null;
 
-  const sourceCount =
-    (ai.web_sources?.length || 0) +
-    (ai.vision_detection?.matchingPages?.length || 0);
+  const toggleSection = (key: string) => {
+    setOpenSection((prev) => (prev === key ? null : key));
+  };
 
   return (
     <div className="space-y-4">
-      {/* ── Interest level + Reliability + Re-analyze ── */}
+      {/* ── Badges recommandation + fiabilité (même taille) + Re-analyze ── */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex items-center gap-2">
           {interestStyle && (
             <Badge
-              className={`${interestStyle.bg} ${interestStyle.text} ${interestStyle.border} border text-sm px-3 py-1`}
+              className={`${interestStyle.bg} ${interestStyle.text} ${interestStyle.border} border text-xs px-3 py-1`}
             >
               <span
-                className={`inline-block w-2.5 h-2.5 rounded-full ${interestStyle.dot} mr-2`}
+                className={`inline-block w-2 h-2 rounded-full ${interestStyle.dot} mr-1.5`}
               />
               {interestStyle.label}
             </Badge>
           )}
-          {confidenceConfig && (
-            <span
-              className={`text-xs px-2 py-1 rounded-full border ${confidenceConfig.color}`}
+          {confidenceScore !== null && confidenceConfig && (
+            <Badge
+              variant="outline"
+              className={`text-xs px-3 py-1 ${confidenceConfig.color}`}
             >
-              {confidenceConfig.label}
-            </span>
+              Fiabilité {confidenceScore}/5
+            </Badge>
           )}
         </div>
         <Button
@@ -86,7 +96,7 @@ export function AnalysisPanel({ ai, reanalyzing, onReanalyze }: AnalysisPanelPro
         </Button>
       </div>
 
-      {/* ── Synthèse unifiée (3-5 lignes, une seule typo) ── */}
+      {/* ── Synthèse ── */}
       <div className="p-4 bg-muted/30 rounded-lg border border-border/30 space-y-2">
         {ai.identified_object && (
           <p className="text-sm font-medium">{ai.identified_object}</p>
@@ -104,37 +114,48 @@ export function AnalysisPanel({ ai, reanalyzing, onReanalyze }: AnalysisPanelPro
         )}
       </div>
 
-      {/* ── Boutons collapsibles ── */}
-      <div className="space-y-2">
-        {ai.authenticity_assessment && (
-          <CollapsibleCriterion
-            open={authOpen}
-            onOpenChange={setAuthOpen}
-            icon={<Shield className="w-4 h-4" />}
-            title="Authenticité"
-            content={ai.authenticity_assessment}
-          />
-        )}
+      {/* ── 3 boutons sur une ligne : Authenticité / État / Marché ── */}
+      {(ai.authenticity_assessment || ai.condition_notes || ai.market_insights) && (
+        <div className="space-y-0">
+          <div className="grid grid-cols-3 gap-1.5">
+            {ai.authenticity_assessment && (
+              <DetailButton
+                icon={<Shield className="w-3.5 h-3.5" />}
+                label="Authenticité"
+                isOpen={openSection === "auth"}
+                onClick={() => toggleSection("auth")}
+              />
+            )}
+            {ai.condition_notes && (
+              <DetailButton
+                icon={<Wrench className="w-3.5 h-3.5" />}
+                label="État"
+                isOpen={openSection === "condition"}
+                onClick={() => toggleSection("condition")}
+              />
+            )}
+            {ai.market_insights && (
+              <DetailButton
+                icon={<TrendingUp className="w-3.5 h-3.5" />}
+                label="Marché"
+                isOpen={openSection === "market"}
+                onClick={() => toggleSection("market")}
+              />
+            )}
+          </div>
 
-        {ai.condition_notes && (
-          <CollapsibleCriterion
-            open={conditionOpen}
-            onOpenChange={setConditionOpen}
-            icon={<Wrench className="w-4 h-4" />}
-            title="État"
-            content={ai.condition_notes}
-          />
-        )}
-
-        {(ai.market_insights || sourceCount > 0) && (
-          <MarketSection
-            open={marketOpen}
-            onOpenChange={setMarketOpen}
-            ai={ai}
-            sourceCount={sourceCount}
-          />
-        )}
-      </div>
+          {/* Contenu dépliable sous les boutons */}
+          {openSection === "auth" && ai.authenticity_assessment && (
+            <DetailContent content={ai.authenticity_assessment} />
+          )}
+          {openSection === "condition" && ai.condition_notes && (
+            <DetailContent content={ai.condition_notes} />
+          )}
+          {openSection === "market" && (
+            <MarketContent ai={ai} />
+          )}
+        </div>
+      )}
 
       {/* Limitations - discret */}
       {ai.limitations && (
@@ -146,167 +167,143 @@ export function AnalysisPanel({ ai, reanalyzing, onReanalyze }: AnalysisPanelPro
   );
 }
 
-/* ── Critère collapsible générique ── */
-function CollapsibleCriterion({
-  open,
-  onOpenChange,
+/* ── Bouton de détail ── */
+function DetailButton({
   icon,
-  title,
-  content,
+  label,
+  isOpen,
+  onClick,
 }: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
   icon: React.ReactNode;
-  title: string;
-  content: string;
+  label: string;
+  isOpen: boolean;
+  onClick: () => void;
 }) {
   return (
-    <Collapsible open={open} onOpenChange={onOpenChange}>
-      <CollapsibleTrigger asChild>
-        <button className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg border border-border/50 hover:bg-muted/30 transition-colors text-left">
-          <span className="text-muted-foreground">{icon}</span>
-          <span className="text-sm font-medium flex-1">{title}</span>
-          <ChevronRight
-            className={`w-4 h-4 text-muted-foreground transition-transform ${
-              open ? "rotate-90" : ""
-            }`}
-          />
-        </button>
-      </CollapsibleTrigger>
-      <CollapsibleContent className="pt-2 pl-6">
-        <p className="text-sm text-muted-foreground leading-relaxed">{content}</p>
-      </CollapsibleContent>
-    </Collapsible>
+    <button
+      onClick={onClick}
+      className={`flex items-center justify-center gap-1.5 px-2 py-2 rounded-lg border text-xs font-medium transition-colors ${
+        isOpen
+          ? "bg-muted border-border text-foreground"
+          : "border-border/50 text-muted-foreground hover:bg-muted/30"
+      }`}
+    >
+      {icon}
+      <span className="hidden sm:inline">{label}</span>
+      <ChevronDown
+        className={`w-3 h-3 transition-transform ${isOpen ? "rotate-180" : ""}`}
+      />
+    </button>
   );
 }
 
-/* ── Section Contexte marché ── */
-function MarketSection({
-  open,
-  onOpenChange,
-  ai,
-  sourceCount,
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  ai: any;
-  sourceCount: number;
-}) {
+/* ── Contenu texte dépliable ── */
+function DetailContent({ content }: { content: string }) {
   return (
-    <Collapsible open={open} onOpenChange={onOpenChange}>
-      <CollapsibleTrigger asChild>
-        <button className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg border border-border/50 hover:bg-muted/30 transition-colors text-left">
-          <TrendingUp className="w-4 h-4 text-muted-foreground" />
-          <span className="text-sm font-medium flex-1">Contexte marché</span>
-          {sourceCount > 0 && (
-            <span className="text-xs text-muted-foreground">
-              {sourceCount} source{sourceCount > 1 ? "s" : ""}
-            </span>
-          )}
-          <ChevronRight
-            className={`w-4 h-4 text-muted-foreground transition-transform ${
-              open ? "rotate-90" : ""
-            }`}
-          />
-        </button>
-      </CollapsibleTrigger>
-      <CollapsibleContent className="pt-2 pl-6 space-y-3">
-        {ai.market_insights && (
-          <p className="text-sm text-muted-foreground leading-relaxed">
-            {ai.market_insights}
+    <div className="mt-1.5 p-3 bg-muted/30 rounded-lg border border-border/30 animate-in slide-in-from-top-1 duration-200">
+      <p className="text-sm text-muted-foreground leading-relaxed">{content}</p>
+    </div>
+  );
+}
+
+/* ── Section Marché avec sources ── */
+function MarketContent({ ai }: { ai: any }) {
+  const sourceCount =
+    (ai.web_sources?.length || 0) +
+    (ai.vision_detection?.matchingPages?.length || 0);
+
+  return (
+    <div className="mt-1.5 p-3 bg-muted/30 rounded-lg border border-border/30 space-y-3 animate-in slide-in-from-top-1 duration-200">
+      {ai.market_insights && (
+        <p className="text-sm text-muted-foreground leading-relaxed">
+          {ai.market_insights}
+        </p>
+      )}
+
+      {/* Résultats de ventes référencés */}
+      {ai.web_sources?.length > 0 && (
+        <div className="space-y-1.5">
+          <p className="text-xs font-medium text-muted-foreground">
+            Résultats de ventes référencés
           </p>
-        )}
-
-        {/* Résultats de ventes référencés */}
-        {ai.web_sources?.length > 0 && (
-          <div className="space-y-1.5">
-            <p className="text-xs font-medium text-muted-foreground">
-              Résultats de ventes référencés
-            </p>
-            {ai.web_sources.map(
-              (
-                src: { title: string; url: string; relevance: string },
-                i: number
-              ) => (
-                <div key={i} className="flex items-start gap-2">
-                  <ExternalLink className="w-3 h-3 mt-0.5 shrink-0 text-muted-foreground" />
-                  <div className="min-w-0">
-                    <a
-                      href={src.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-xs font-medium text-primary hover:underline truncate block"
-                    >
-                      {src.title || safeHostname(src.url)}
-                    </a>
-                    {src.relevance && (
-                      <p className="text-xs text-muted-foreground">
-                        {src.relevance}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              )
-            )}
-          </div>
-        )}
-
-        {/* Objets similaires trouvés visuellement */}
-        {ai.vision_detection?.visuallySimilarImages?.length > 0 && (
-          <div>
-            <p className="text-xs font-medium text-muted-foreground mb-1.5 flex items-center gap-1">
-              <Image className="w-3 h-3" />
-              Objets similaires identifiés
-            </p>
-            <div className="grid grid-cols-4 gap-1.5">
-              {ai.vision_detection.visuallySimilarImages.map(
-                (imgUrl: string, i: number) => (
+          {ai.web_sources.map(
+            (src: { title: string; url: string; relevance: string }, i: number) => (
+              <div key={i} className="flex items-start gap-2">
+                <ExternalLink className="w-3 h-3 mt-0.5 shrink-0 text-muted-foreground" />
+                <div className="min-w-0">
                   <a
-                    key={i}
-                    href={imgUrl}
+                    href={src.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="aspect-square rounded overflow-hidden border hover:opacity-80 transition-opacity"
+                    className="text-xs font-medium text-primary hover:underline truncate block"
                   >
-                    <img
-                      src={imgUrl}
-                      alt={`Similaire ${i + 1}`}
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).style.display = "none";
-                      }}
-                    />
+                    {src.title || safeHostname(src.url)}
                   </a>
-                )
-              )}
-            </div>
-          </div>
-        )}
+                  {src.relevance && (
+                    <p className="text-xs text-muted-foreground">{src.relevance}</p>
+                  )}
+                </div>
+              </div>
+            )
+          )}
+        </div>
+      )}
 
-        {/* Pages correspondantes */}
-        {ai.vision_detection?.matchingPages?.length > 0 && (
-          <div className="space-y-1">
-            <p className="text-xs font-medium text-muted-foreground">
-              Pages correspondantes
-            </p>
-            {ai.vision_detection.matchingPages.map(
-              (page: { url: string; title: string }, i: number) => (
+      {/* Objets similaires trouvés visuellement */}
+      {ai.vision_detection?.visuallySimilarImages?.length > 0 && (
+        <div>
+          <p className="text-xs font-medium text-muted-foreground mb-1.5 flex items-center gap-1">
+            <Image className="w-3 h-3" />
+            Objets similaires identifiés
+          </p>
+          <div className="grid grid-cols-4 gap-1.5">
+            {ai.vision_detection.visuallySimilarImages.map(
+              (imgUrl: string, i: number) => (
                 <a
                   key={i}
-                  href={page.url}
+                  href={imgUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 text-xs text-primary hover:underline truncate"
+                  className="aspect-square rounded overflow-hidden border hover:opacity-80 transition-opacity"
                 >
-                  <ExternalLink className="w-3 h-3 shrink-0" />
-                  {page.title || safeHostname(page.url)}
+                  <img
+                    src={imgUrl}
+                    alt={`Similaire ${i + 1}`}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).style.display = "none";
+                    }}
+                  />
                 </a>
               )
             )}
           </div>
-        )}
-      </CollapsibleContent>
-    </Collapsible>
+        </div>
+      )}
+
+      {/* Pages correspondantes */}
+      {ai.vision_detection?.matchingPages?.length > 0 && (
+        <div className="space-y-1">
+          <p className="text-xs font-medium text-muted-foreground">
+            Pages correspondantes
+          </p>
+          {ai.vision_detection.matchingPages.map(
+            (page: { url: string; title: string }, i: number) => (
+              <a
+                key={i}
+                href={page.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1.5 text-xs text-primary hover:underline truncate"
+              >
+                <ExternalLink className="w-3 h-3 shrink-0" />
+                {page.title || safeHostname(page.url)}
+              </a>
+            )
+          )}
+        </div>
+      )}
+    </div>
   );
 }
 
