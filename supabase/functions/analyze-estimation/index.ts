@@ -182,49 +182,46 @@ async function runVisionWebDetection(
   return result;
 }
 
-// ── Step 2: Search the web using Firecrawl ──
+// ── Step 2: Search the web using Google Custom Search API ──
 async function searchWebReferences(
   searchTerms: string[],
-  firecrawlApiKey: string,
-): Promise<Array<{ title: string; url: string; description: string; markdown?: string }>> {
-  const allResults: Array<{ title: string; url: string; description: string; markdown?: string }> = [];
+  googleApiKey: string,
+  searchCx: string,
+): Promise<Array<{ title: string; url: string; description: string }>> {
+  const allResults: Array<{ title: string; url: string; description: string }> = [];
 
   // Run up to 3 search queries in parallel
   const queries = searchTerms.slice(0, 3).map((term) =>
     `${term} enchères estimation prix`
   );
 
-  console.log("[analyze-estimation] Step 2: Searching web with Firecrawl...", queries);
+  console.log("[analyze-estimation] Step 2: Searching web with Google Custom Search...", queries);
 
   const searchPromises = queries.map(async (query) => {
     try {
-      const response = await fetch("https://api.firecrawl.dev/v1/search", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${firecrawlApiKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          query,
-          limit: 3,
-          scrapeOptions: {
-            formats: ["markdown"],
-            onlyMainContent: true,
-          },
-        }),
+      const params = new URLSearchParams({
+        key: googleApiKey,
+        cx: searchCx,
+        q: query,
+        num: "5",
+        lr: "lang_fr",
       });
 
+      const response = await fetch(
+        `https://www.googleapis.com/customsearch/v1?${params.toString()}`,
+      );
+
       if (!response.ok) {
-        console.error(`[analyze-estimation] Firecrawl search failed for "${query}":`, response.status);
+        const errText = await response.text();
+        console.error(`[analyze-estimation] Google Search failed for "${query}":`, response.status, errText);
         return [];
       }
 
       const data = await response.json();
-      return (data.data || []).map((r: any) => ({
-        title: r.title || "",
-        url: r.url || "",
-        description: r.description || "",
-        markdown: r.markdown?.substring(0, 1500) || "", // Limit to avoid token overflow
+      return (data.items || []).map((item: any) => ({
+        title: item.title || "",
+        url: item.link || "",
+        description: item.snippet || "",
       }));
     } catch (err) {
       console.error(`[analyze-estimation] Search error for "${query}":`, err);
@@ -246,7 +243,7 @@ async function searchWebReferences(
   });
 
   console.log(`[analyze-estimation] Step 2: Found ${unique.length} unique web results`);
-  return unique.slice(0, 8); // Max 8 results
+  return unique.slice(0, 10);
 }
 
 // ── Step 3: Final AI analysis with cross-referenced sources ──
@@ -256,7 +253,7 @@ async function runFinalAnalysis(
   supabaseUrl: string,
   lovableApiKey: string,
   visualDescription: string,
-  webResults: Array<{ title: string; url: string; description: string; markdown?: string }>,
+  webResults: Array<{ title: string; url: string; description: string }>,
   visionResults: VisionWebResult | null,
 ): Promise<any> {
   const messages: any[] = [
@@ -351,13 +348,12 @@ Réponds UNIQUEMENT avec le JSON, sans markdown ni backticks.`,
     userContent.push({ type: "text", text: visionContext });
   }
 
-  // Web search results (Firecrawl)
+  // Web search results (Google Custom Search)
   if (webResults.length > 0) {
-    let webContext = "\n\nRÉSULTATS DE RECHERCHE WEB FIRECRAWL (à croiser avec l'analyse visuelle) :\n";
+    let webContext = "\n\nRÉSULTATS DE RECHERCHE WEB GOOGLE (à croiser avec l'analyse visuelle) :\n";
     for (const r of webResults) {
       webContext += `\n--- Source : ${r.title} (${r.url}) ---\n`;
       if (r.description) webContext += `Résumé : ${r.description}\n`;
-      if (r.markdown) webContext += `Contenu : ${r.markdown.substring(0, 800)}\n`;
     }
     userContent.push({ type: "text", text: webContext });
   } else if (!visionResults || visionResults.matchingPages.length === 0) {
@@ -455,8 +451,8 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const lovableApiKey = Deno.env.get("LOVABLE_API_KEY");
-    const firecrawlApiKey = Deno.env.get("FIRECRAWL_API_KEY");
     const visionApiKey = Deno.env.get("GOOGLE_CLOUD_VISION_API_KEY");
+    const googleSearchCx = Deno.env.get("GOOGLE_SEARCH_CX");
 
     if (!lovableApiKey) {
       throw new Error("LOVABLE_API_KEY is not configured");
@@ -493,9 +489,9 @@ serve(async (req) => {
       searchTerms = step1.searchTerms;
     }
 
-    // ── STEP 1b + STEP 2: Vision Web Detection + Firecrawl in parallel ──
+    // ── STEP 1b + STEP 2: Vision Web Detection + Google Search in parallel ──
     let visionResults: VisionWebResult | null = null;
-    let webResults: Array<{ title: string; url: string; description: string; markdown?: string }> = [];
+    let webResults: Array<{ title: string; url: string; description: string }> = [];
 
     const parallelTasks: Promise<void>[] = [];
 
@@ -514,23 +510,23 @@ serve(async (req) => {
       console.warn("[analyze-estimation] GOOGLE_CLOUD_VISION_API_KEY not configured, skipping Vision");
     }
 
-    // Firecrawl web search (runs after Vision if sequential, but we start it in parallel with initial terms)
-    if (searchTerms.length > 0 && firecrawlApiKey) {
+    // Google Custom Search (runs in parallel with Vision using initial terms)
+    if (searchTerms.length > 0 && visionApiKey && googleSearchCx) {
       parallelTasks.push(
-        searchWebReferences(searchTerms, firecrawlApiKey).then((r) => {
+        searchWebReferences(searchTerms, visionApiKey, googleSearchCx).then((r) => {
           webResults = r;
         }),
       );
-    } else if (!firecrawlApiKey) {
-      console.warn("[analyze-estimation] FIRECRAWL_API_KEY not configured, skipping web search");
+    } else if (!googleSearchCx) {
+      console.warn("[analyze-estimation] GOOGLE_SEARCH_CX not configured, skipping web search");
     }
 
     await Promise.all(parallelTasks);
 
-    // If Vision gave us new terms and Firecrawl had no results, try again
-    if (webResults.length === 0 && visionResults && visionResults.bestGuessLabels.length > 0 && firecrawlApiKey) {
-      console.log("[analyze-estimation] Retrying Firecrawl with Vision labels:", visionResults.bestGuessLabels);
-      webResults = await searchWebReferences(visionResults.bestGuessLabels, firecrawlApiKey);
+    // If Vision gave us new terms and search had no results, retry with Vision labels
+    if (webResults.length === 0 && visionResults && visionResults.bestGuessLabels.length > 0 && visionApiKey && googleSearchCx) {
+      console.log("[analyze-estimation] Retrying Google Search with Vision labels:", visionResults.bestGuessLabels);
+      webResults = await searchWebReferences(visionResults.bestGuessLabels, visionApiKey, googleSearchCx);
     }
 
     // ── STEP 3: Final cross-referenced analysis ──
