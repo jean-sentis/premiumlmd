@@ -24,6 +24,8 @@ import {
   AlertTriangle,
   ShieldCheck,
   Globe,
+  Eye,
+  Image,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -427,6 +429,91 @@ export function EstimationDetail({ estimation, onBack, onUpdate }: EstimationDet
                       </div>
                     ))}
                   </div>
+                </div>
+              )}
+
+              {/* Google Vision Web Detection */}
+              {ai.vision_detection && (
+                <div className="p-3 bg-background/80 rounded border border-border/30 space-y-2">
+                  <p className="font-medium text-xs text-muted-foreground mb-2 flex items-center gap-1.5">
+                    <Eye className="w-3.5 h-3.5" />
+                    Google Vision — Détection web
+                  </p>
+
+                  {/* Best guess labels */}
+                  {ai.vision_detection.bestGuessLabels?.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5">
+                      {ai.vision_detection.bestGuessLabels.map((label: string, i: number) => (
+                        <Badge key={i} variant="secondary" className="text-xs">
+                          {label}
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Top web entities */}
+                  {ai.vision_detection.webEntities?.length > 0 && (
+                    <div>
+                      <p className="text-xs text-muted-foreground mb-1">Entités identifiées :</p>
+                      <div className="flex flex-wrap gap-1">
+                        {ai.vision_detection.webEntities.slice(0, 6).map((e: { description: string; score: number }, i: number) => (
+                          <Badge key={i} variant="outline" className="text-xs">
+                            {e.description}
+                            <span className="ml-1 opacity-50">{(e.score * 100).toFixed(0)}%</span>
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Matching pages */}
+                  {ai.vision_detection.matchingPages?.length > 0 && (
+                    <div>
+                      <p className="text-xs text-muted-foreground mb-1">Pages correspondantes :</p>
+                      <div className="space-y-1">
+                        {ai.vision_detection.matchingPages.map((page: { url: string; title: string }, i: number) => (
+                          <a
+                            key={i}
+                            href={page.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-1.5 text-xs text-primary hover:underline truncate"
+                          >
+                            <ExternalLink className="w-3 h-3 shrink-0" />
+                            {page.title || page.url}
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Visually similar images */}
+                  {ai.vision_detection.visuallySimilarImages?.length > 0 && (
+                    <div>
+                      <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
+                        <Image className="w-3 h-3" />
+                        Images visuellement similaires
+                      </p>
+                      <div className="grid grid-cols-4 gap-1.5">
+                        {ai.vision_detection.visuallySimilarImages.map((imgUrl: string, i: number) => (
+                          <a
+                            key={i}
+                            href={imgUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="aspect-square rounded overflow-hidden border hover:opacity-80 transition-opacity"
+                          >
+                            <img
+                              src={imgUrl}
+                              alt={`Similaire ${i + 1}`}
+                              className="w-full h-full object-cover"
+                              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                            />
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
