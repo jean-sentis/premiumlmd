@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import {
   RefreshCw,
   Loader2,
@@ -8,18 +8,35 @@ import {
   TrendingUp,
   ExternalLink,
   Image,
+  Save,
+  Pencil,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
-import { getInterestStyle, CONFIDENCE_CONFIG } from "./interest-config";
+import { Textarea } from "@/components/ui/textarea";
+import { getInterestStyle, INTEREST_LEVELS, type InterestLevel } from "./interest-config";
 
-/* ── Fiabilité 1→5 mapping ── */
-const CONFIDENCE_SCORE: Record<string, number> = {
+/* ── Fiabilité options ── */
+const FIABILITE_OPTIONS = [
+  { value: 1, label: "1/5" },
+  { value: 2, label: "2/5" },
+  { value: 3, label: "3/5" },
+  { value: 4, label: "4/5" },
+  { value: 5, label: "5/5" },
+  { value: 0, label: "Erreur" },
+] as const;
+
+const FIABILITE_STYLES: Record<number, string> = {
+  5: "text-green-700 bg-green-50 border-green-200",
+  4: "text-green-700 bg-green-50 border-green-200",
+  3: "text-amber-700 bg-amber-50 border-amber-200",
+  2: "text-orange-700 bg-orange-50 border-orange-200",
+  1: "text-red-700 bg-red-50 border-red-200",
+  0: "text-red-700 bg-red-50 border-red-300",
+};
+
+const CONFIDENCE_TO_SCORE: Record<string, number> = {
   "élevée": 5,
   "moyenne": 3,
   "faible": 1,
@@ -29,10 +46,69 @@ interface AnalysisPanelProps {
   ai: any;
   reanalyzing: boolean;
   onReanalyze: () => void;
+  estimationId: string;
+  onSaveAnalysis: (updatedAi: any, decision?: string) => Promise<void>;
 }
 
-export function AnalysisPanel({ ai, reanalyzing, onReanalyze }: AnalysisPanelProps) {
+export function AnalysisPanel({
+  ai,
+  reanalyzing,
+  onReanalyze,
+  estimationId,
+  onSaveAnalysis,
+}: AnalysisPanelProps) {
   const [openSection, setOpenSection] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  // Editable state — initialized from AI data
+  const initialScore = ai?.confidence_level
+    ? CONFIDENCE_TO_SCORE[ai.confidence_level] ?? 3
+    : 3;
+
+  const [recommendation, setRecommendation] = useState<string>(ai?.recommendation || "");
+  const [fiabilite, setFiabilite] = useState<number>(initialScore);
+  const [identifiedObject, setIdentifiedObject] = useState<string>(ai?.identified_object || "");
+  const [summary, setSummary] = useState<string>(ai?.summary || "");
+  const [estimatedRange, setEstimatedRange] = useState<string>(ai?.estimated_range || "");
+  const [authText, setAuthText] = useState<string>(ai?.authenticity_assessment || "");
+  const [conditionText, setConditionText] = useState<string>(ai?.condition_notes || "");
+  const [marketText, setMarketText] = useState<string>(ai?.market_insights || "");
+
+  const [showRecommendationPicker, setShowRecommendationPicker] = useState(false);
+  const [showFiabilitePicker, setShowFiabilitePicker] = useState(false);
+  const [editingField, setEditingField] = useState<string | null>(null);
+
+  // Detect changes
+  const hasChanges =
+    recommendation !== (ai?.recommendation || "") ||
+    fiabilite !== initialScore ||
+    identifiedObject !== (ai?.identified_object || "") ||
+    summary !== (ai?.summary || "") ||
+    estimatedRange !== (ai?.estimated_range || "") ||
+    authText !== (ai?.authenticity_assessment || "") ||
+    conditionText !== (ai?.condition_notes || "") ||
+    marketText !== (ai?.market_insights || "");
+
+  const handleSave = useCallback(async () => {
+    setSaving(true);
+    try {
+      const scoreToLevel: Record<number, string> = { 5: "élevée", 4: "élevée", 3: "moyenne", 2: "faible", 1: "faible", 0: "erreur" };
+      const updatedAi = {
+        ...ai,
+        recommendation,
+        confidence_level: scoreToLevel[fiabilite] || "moyenne",
+        identified_object: identifiedObject,
+        summary,
+        estimated_range: estimatedRange,
+        authenticity_assessment: authText,
+        condition_notes: conditionText,
+        market_insights: marketText,
+      };
+      await onSaveAnalysis(updatedAi, recommendation);
+    } finally {
+      setSaving(false);
+    }
+  }, [ai, recommendation, fiabilite, identifiedObject, summary, estimatedRange, authText, conditionText, marketText, onSaveAnalysis]);
 
   if (!ai) {
     return (
@@ -43,13 +119,7 @@ export function AnalysisPanel({ ai, reanalyzing, onReanalyze }: AnalysisPanelPro
     );
   }
 
-  const interestStyle = getInterestStyle(ai.recommendation);
-  const confidenceScore = ai.confidence_level
-    ? CONFIDENCE_SCORE[ai.confidence_level as keyof typeof CONFIDENCE_SCORE] || 3
-    : null;
-  const confidenceConfig = ai.confidence_level
-    ? CONFIDENCE_CONFIG[ai.confidence_level as keyof typeof CONFIDENCE_CONFIG]
-    : null;
+  const interestStyle = getInterestStyle(recommendation);
 
   const sourceCount =
     (ai.web_sources?.length || 0) +
@@ -61,27 +131,65 @@ export function AnalysisPanel({ ai, reanalyzing, onReanalyze }: AnalysisPanelPro
 
   return (
     <div className="space-y-4">
-      {/* ── Badges recommandation + fiabilité (même taille) + Re-analyze ── */}
+      {/* ── Badges recommandation + fiabilité + Re-analyze ── */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          {interestStyle && (
+        <div className="flex items-center gap-2 relative">
+          {/* Recommendation badge - clickable */}
+          <div className="relative">
             <Badge
-              className={`${interestStyle.bg} ${interestStyle.text} ${interestStyle.border} border text-xs px-3 py-1`}
+              className={`${interestStyle?.bg || "bg-muted"} ${interestStyle?.text || ""} ${interestStyle?.border || ""} border text-xs px-3 py-1 cursor-pointer hover:opacity-80`}
+              onClick={() => { setShowRecommendationPicker(!showRecommendationPicker); setShowFiabilitePicker(false); }}
             >
-              <span
-                className={`inline-block w-2 h-2 rounded-full ${interestStyle.dot} mr-1.5`}
-              />
-              {interestStyle.label}
+              {interestStyle && (
+                <span className={`inline-block w-2 h-2 rounded-full ${interestStyle.dot} mr-1.5`} />
+              )}
+              {interestStyle?.label || "Cotation"}
+              <Pencil className="w-2.5 h-2.5 ml-1.5 opacity-50" />
             </Badge>
-          )}
-          {confidenceScore !== null && confidenceConfig && (
+            {showRecommendationPicker && (
+              <div className="absolute top-full left-0 mt-1 z-20 bg-background border rounded-lg shadow-lg p-1.5 min-w-[160px]">
+                {Object.entries(INTEREST_LEVELS).map(([key, config]) => (
+                  <button
+                    key={key}
+                    onClick={() => { setRecommendation(key); setShowRecommendationPicker(false); }}
+                    className={`w-full text-left flex items-center gap-2 px-2.5 py-1.5 rounded text-xs transition-colors ${
+                      recommendation === key ? `${config.bg} ${config.text} font-medium` : "hover:bg-muted"
+                    }`}
+                  >
+                    <span className={`inline-block w-2 h-2 rounded-full ${config.dot}`} />
+                    {config.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Fiabilité badge - clickable */}
+          <div className="relative">
             <Badge
               variant="outline"
-              className={`text-xs px-3 py-1 ${confidenceConfig.color}`}
+              className={`text-xs px-3 py-1 cursor-pointer hover:opacity-80 ${FIABILITE_STYLES[fiabilite] || ""}`}
+              onClick={() => { setShowFiabilitePicker(!showFiabilitePicker); setShowRecommendationPicker(false); }}
             >
-              Fiabilité {confidenceScore}/5
+              {fiabilite === 0 ? "Erreur" : `Fiabilité ${fiabilite}/5`}
+              <Pencil className="w-2.5 h-2.5 ml-1.5 opacity-50" />
             </Badge>
-          )}
+            {showFiabilitePicker && (
+              <div className="absolute top-full left-0 mt-1 z-20 bg-background border rounded-lg shadow-lg p-1.5 min-w-[120px]">
+                {FIABILITE_OPTIONS.map((opt) => (
+                  <button
+                    key={opt.value}
+                    onClick={() => { setFiabilite(opt.value); setShowFiabilitePicker(false); }}
+                    className={`w-full text-left px-2.5 py-1.5 rounded text-xs transition-colors ${
+                      fiabilite === opt.value ? "bg-muted font-medium" : "hover:bg-muted/50"
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
         <Button
           variant="ghost"
@@ -99,72 +207,216 @@ export function AnalysisPanel({ ai, reanalyzing, onReanalyze }: AnalysisPanelPro
         </Button>
       </div>
 
-      {/* ── Synthèse ── */}
+      {/* ── Synthèse éditable ── */}
       <div className="p-4 bg-muted/30 rounded-lg border border-border/30 space-y-2">
-        {ai.identified_object && (
-          <p className="text-sm font-medium">{ai.identified_object}</p>
-        )}
-        {ai.summary && (
-          <p className="text-sm text-muted-foreground leading-relaxed">
-            {ai.summary}
-          </p>
-        )}
-        {ai.estimated_range && (
-          <p className="text-sm">
-            <span className="text-muted-foreground">Estimation :</span>{" "}
-            <span className="font-semibold">{ai.estimated_range}</span>
-          </p>
-        )}
+        <EditableField
+          value={identifiedObject}
+          onChange={setIdentifiedObject}
+          editing={editingField === "identified_object"}
+          onEdit={() => setEditingField("identified_object")}
+          onClose={() => setEditingField(null)}
+          className="text-sm font-medium"
+          placeholder="Identification de l'objet…"
+        />
+        <EditableField
+          value={summary}
+          onChange={setSummary}
+          editing={editingField === "summary"}
+          onEdit={() => setEditingField("summary")}
+          onClose={() => setEditingField(null)}
+          className="text-sm text-muted-foreground leading-relaxed"
+          placeholder="Synthèse…"
+          multiline
+        />
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-muted-foreground">Estimation :</span>
+          <EditableField
+            value={estimatedRange}
+            onChange={setEstimatedRange}
+            editing={editingField === "estimated_range"}
+            onEdit={() => setEditingField("estimated_range")}
+            onClose={() => setEditingField(null)}
+            className="text-sm font-semibold"
+            placeholder="Fourchette €…"
+            inline
+          />
+        </div>
       </div>
 
-      {/* ── 3 boutons sur une ligne : Identité / État / Marché ── */}
-      {(ai.authenticity_assessment || ai.condition_notes || ai.market_insights) && (
+      {/* ── 3 boutons : Identité / État / Marché ── */}
+      {(authText || conditionText || marketText || sourceCount > 0) && (
         <div className="space-y-0">
           <div className="grid grid-cols-3 gap-1.5">
-            {ai.authenticity_assessment && (
-              <DetailButton
-                icon={<Fingerprint className="w-3.5 h-3.5" />}
-                label="Identité"
-                isOpen={openSection === "auth"}
-                onClick={() => toggleSection("auth")}
-              />
-            )}
-            {ai.condition_notes && (
-              <DetailButton
-                icon={<Wrench className="w-3.5 h-3.5" />}
-                label="État"
-                isOpen={openSection === "condition"}
-                onClick={() => toggleSection("condition")}
-              />
-            )}
-            {(ai.market_insights || sourceCount > 0) && (
-              <DetailButton
-                icon={<TrendingUp className="w-3.5 h-3.5" />}
-                label="Marché"
-                count={sourceCount > 0 ? sourceCount : undefined}
-                isOpen={openSection === "market"}
-                onClick={() => toggleSection("market")}
-              />
-            )}
+            <DetailButton
+              icon={<Fingerprint className="w-3.5 h-3.5" />}
+              label="Identité"
+              isOpen={openSection === "auth"}
+              onClick={() => toggleSection("auth")}
+            />
+            <DetailButton
+              icon={<Wrench className="w-3.5 h-3.5" />}
+              label="État"
+              isOpen={openSection === "condition"}
+              onClick={() => toggleSection("condition")}
+            />
+            <DetailButton
+              icon={<TrendingUp className="w-3.5 h-3.5" />}
+              label="Marché"
+              count={sourceCount > 0 ? sourceCount : undefined}
+              isOpen={openSection === "market"}
+              onClick={() => toggleSection("market")}
+            />
           </div>
 
-          {/* Contenu dépliable sous les boutons */}
-          {openSection === "auth" && ai.authenticity_assessment && (
-            <DetailContent content={ai.authenticity_assessment} />
+          {openSection === "auth" && (
+            <EditableDetailContent
+              value={authText}
+              onChange={setAuthText}
+              placeholder="Notes sur l'identité / authenticité…"
+            />
           )}
-          {openSection === "condition" && ai.condition_notes && (
-            <DetailContent content={ai.condition_notes} />
+          {openSection === "condition" && (
+            <EditableDetailContent
+              value={conditionText}
+              onChange={setConditionText}
+              placeholder="Notes sur l'état…"
+            />
           )}
           {openSection === "market" && (
-            <MarketContent ai={ai} />
+            <MarketContent ai={ai} marketText={marketText} onMarketTextChange={setMarketText} />
           )}
         </div>
       )}
 
       {/* Limitations - discret */}
       {ai.limitations && (
-        <p className="text-xs text-muted-foreground italic">
-          {ai.limitations}
+        <p className="text-xs text-muted-foreground italic">{ai.limitations}</p>
+      )}
+
+      {/* ── Bouton sauvegarder ── */}
+      {hasChanges && (
+        <div className="sticky bottom-0 pt-2">
+          <Button
+            size="sm"
+            onClick={handleSave}
+            disabled={saving}
+            className="w-full gap-2"
+          >
+            {saving ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
+            Enregistrer les modifications
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ── Champ éditable inline ── */
+function EditableField({
+  value,
+  onChange,
+  editing,
+  onEdit,
+  onClose,
+  className,
+  placeholder,
+  multiline,
+  inline,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  editing: boolean;
+  onEdit: () => void;
+  onClose: () => void;
+  className?: string;
+  placeholder?: string;
+  multiline?: boolean;
+  inline?: boolean;
+}) {
+  if (editing) {
+    return (
+      <div className={`flex gap-1 ${inline ? "items-center" : "flex-col"}`}>
+        {multiline ? (
+          <Textarea
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            placeholder={placeholder}
+            rows={3}
+            className="text-sm"
+            autoFocus
+          />
+        ) : (
+          <input
+            type="text"
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            placeholder={placeholder}
+            className="flex-1 text-sm bg-background border rounded px-2 py-1 outline-none focus:ring-1 focus:ring-primary"
+            autoFocus
+            onKeyDown={(e) => e.key === "Enter" && onClose()}
+          />
+        )}
+        <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={onClose}>
+          <X className="w-3 h-3" />
+        </Button>
+      </div>
+    );
+  }
+
+  if (!value) {
+    return (
+      <button onClick={onEdit} className="text-xs text-muted-foreground/50 hover:text-muted-foreground italic">
+        + {placeholder || "Ajouter…"}
+      </button>
+    );
+  }
+
+  return (
+    <p
+      onClick={onEdit}
+      className={`${className || ""} cursor-pointer hover:bg-muted/50 rounded px-1 -mx-1 transition-colors`}
+      title="Cliquer pour modifier"
+    >
+      {value}
+    </p>
+  );
+}
+
+/* ── Contenu détail éditable ── */
+function EditableDetailContent({
+  value,
+  onChange,
+  placeholder,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+}) {
+  const [editing, setEditing] = useState(false);
+
+  return (
+    <div className="mt-1.5 p-3 bg-muted/30 rounded-lg border border-border/30 animate-in slide-in-from-top-1 duration-200">
+      {editing ? (
+        <div className="flex flex-col gap-1">
+          <Textarea
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            placeholder={placeholder}
+            rows={3}
+            className="text-sm"
+            autoFocus
+          />
+          <Button variant="ghost" size="sm" className="self-end h-6 text-xs" onClick={() => setEditing(false)}>
+            OK
+          </Button>
+        </div>
+      ) : (
+        <p
+          onClick={() => setEditing(true)}
+          className="text-sm text-muted-foreground leading-relaxed cursor-pointer hover:bg-muted/50 rounded px-1 -mx-1 transition-colors"
+          title="Cliquer pour modifier"
+        >
+          {value || <span className="italic opacity-50">+ {placeholder}</span>}
         </p>
       )}
     </div>
@@ -208,30 +460,46 @@ function DetailButton({
   );
 }
 
-/* ── Contenu texte dépliable ── */
-function DetailContent({ content }: { content: string }) {
-  return (
-    <div className="mt-1.5 p-3 bg-muted/30 rounded-lg border border-border/30 animate-in slide-in-from-top-1 duration-200">
-      <p className="text-sm text-muted-foreground leading-relaxed">{content}</p>
-    </div>
-  );
-}
-
-/* ── Section Marché avec sources ── */
-function MarketContent({ ai }: { ai: any }) {
-  const sourceCount =
-    (ai.web_sources?.length || 0) +
-    (ai.vision_detection?.matchingPages?.length || 0);
+/* ── Section Marché avec sources + texte éditable ── */
+function MarketContent({
+  ai,
+  marketText,
+  onMarketTextChange,
+}: {
+  ai: any;
+  marketText: string;
+  onMarketTextChange: (v: string) => void;
+}) {
+  const [editingMarket, setEditingMarket] = useState(false);
 
   return (
     <div className="mt-1.5 p-3 bg-muted/30 rounded-lg border border-border/30 space-y-3 animate-in slide-in-from-top-1 duration-200">
-      {ai.market_insights && (
-        <p className="text-sm text-muted-foreground leading-relaxed">
-          {ai.market_insights}
+      {/* Editable market text */}
+      {editingMarket ? (
+        <div className="flex flex-col gap-1">
+          <Textarea
+            value={marketText}
+            onChange={(e) => onMarketTextChange(e.target.value)}
+            placeholder="Contexte marché…"
+            rows={3}
+            className="text-sm"
+            autoFocus
+          />
+          <Button variant="ghost" size="sm" className="self-end h-6 text-xs" onClick={() => setEditingMarket(false)}>
+            OK
+          </Button>
+        </div>
+      ) : (
+        <p
+          onClick={() => setEditingMarket(true)}
+          className="text-sm text-muted-foreground leading-relaxed cursor-pointer hover:bg-muted/50 rounded px-1 -mx-1 transition-colors"
+          title="Cliquer pour modifier"
+        >
+          {marketText || <span className="italic opacity-50">+ Contexte marché…</span>}
         </p>
       )}
 
-      {/* Résultats de ventes référencés */}
+      {/* Sources web */}
       {ai.web_sources?.length > 0 && (
         <div className="space-y-1.5">
           <p className="text-xs font-medium text-muted-foreground">
@@ -260,7 +528,7 @@ function MarketContent({ ai }: { ai: any }) {
         </div>
       )}
 
-      {/* Objets similaires trouvés visuellement */}
+      {/* Visually similar images */}
       {ai.vision_detection?.visuallySimilarImages?.length > 0 && (
         <div>
           <p className="text-xs font-medium text-muted-foreground mb-1.5 flex items-center gap-1">
@@ -281,9 +549,7 @@ function MarketContent({ ai }: { ai: any }) {
                     src={imgUrl}
                     alt={`Similaire ${i + 1}`}
                     className="w-full h-full object-cover"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).style.display = "none";
-                    }}
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
                   />
                 </a>
               )
@@ -292,7 +558,7 @@ function MarketContent({ ai }: { ai: any }) {
         </div>
       )}
 
-      {/* Pages correspondantes */}
+      {/* Matching pages */}
       {ai.vision_detection?.matchingPages?.length > 0 && (
         <div className="space-y-1">
           <p className="text-xs font-medium text-muted-foreground">

@@ -6,6 +6,7 @@ import { ArrowLeft, User, Mail, Phone, Tag, Euro, ExternalLink } from "lucide-re
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast as useToastSonner } from "@/hooks/use-toast";
 import { AnalysisPanel } from "./detail/AnalysisPanel";
 import { ResponsePanel } from "./detail/ResponsePanel";
 
@@ -103,6 +104,23 @@ export function EstimationDetail({
       toast({ title: "Erreur", variant: "destructive" });
     } finally {
       setSavingNotes(false);
+    }
+  };
+  const handleSaveAnalysis = async (updatedAi: any, decision?: string) => {
+    try {
+      const updateData: any = { ai_analysis: updatedAi };
+      if (decision) {
+        updateData.auctioneer_decision = decision;
+      }
+      const { error } = await supabase
+        .from("estimation_requests")
+        .update(updateData)
+        .eq("id", estimation.id);
+      if (error) throw error;
+      toast({ title: "Analyse mise à jour ✓" });
+      onUpdate();
+    } catch {
+      toast({ title: "Erreur de sauvegarde", variant: "destructive" });
     }
   };
 
@@ -226,6 +244,8 @@ export function EstimationDetail({
             ai={ai}
             reanalyzing={reanalyzing}
             onReanalyze={handleReanalyze}
+            estimationId={estimation.id}
+            onSaveAnalysis={handleSaveAnalysis}
           />
         </div>
 
