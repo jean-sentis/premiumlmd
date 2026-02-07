@@ -5,11 +5,9 @@ import { fr } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
 import {
   ArrowLeft,
-  Sparkles,
   User,
   Mail,
   Phone,
-  Calendar,
   Tag,
   Euro,
   ExternalLink,
@@ -19,16 +17,10 @@ import {
   Bookmark,
   Loader2,
   Send,
-  RefreshCw,
   Search,
-  AlertTriangle,
-  ShieldCheck,
-  Globe,
-  Eye,
-  Image,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+
 import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
@@ -37,6 +29,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { AnalysisSynthesis } from "./AnalysisSynthesis";
 
 interface EstimationRequest {
   id: string;
@@ -129,13 +122,6 @@ const DECISION_OPTIONS = [
   { value: "not_interested", label: "Pas intéressant", icon: XCircle, color: "text-red-600" },
 ];
 
-const RECOMMENDATION_COLORS: Record<string, string> = {
-  "très_intéressant": "bg-green-100 text-green-800 border-green-300",
-  "intéressant": "bg-emerald-100 text-emerald-800 border-emerald-300",
-  "à_examiner": "bg-amber-100 text-amber-800 border-amber-300",
-  "peu_intéressant": "bg-orange-100 text-orange-800 border-orange-300",
-  "hors_spécialité": "bg-gray-100 text-gray-800 border-gray-300",
-};
 
 export function EstimationDetail({ estimation, onBack, onUpdate }: EstimationDetailProps) {
   const { toast } = useToast();
@@ -301,252 +287,12 @@ export function EstimationDetail({ estimation, onBack, onUpdate }: EstimationDet
           <p className="text-sm bg-muted/30 p-3 rounded-lg border border-border/30">{estimation.description}</p>
         </div>
 
-        {/* AI Analysis */}
-        <div className="space-y-3 border border-brand-gold/30 rounded-lg bg-brand-gold/5 p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-brand-gold" />
-              <h3 className="text-sm font-semibold text-brand-gold">Analyse IA</h3>
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleReanalyze}
-              disabled={reanalyzing}
-              className="h-7 text-xs"
-            >
-              {reanalyzing ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3 mr-1" />}
-              Ré-analyser
-            </Button>
-          </div>
-
-          {!ai ? (
-            <div className="text-sm text-muted-foreground italic flex items-center gap-2">
-              <Loader2 className="w-4 h-4 animate-spin" />
-              Analyse en cours...
-            </div>
-          ) : (
-            <div className="space-y-3 text-sm">
-              {/* Recommendation badge */}
-              {ai.recommendation && (
-                <Badge className={`${RECOMMENDATION_COLORS[ai.recommendation] || "bg-gray-100"} border`}>
-                  {ai.recommendation_text || ai.recommendation}
-                </Badge>
-              )}
-
-              {/* Summary */}
-              {ai.summary && (
-                <div className="p-3 bg-background/80 rounded border border-border/30">
-                  <p className="font-medium text-xs text-muted-foreground mb-1">Résumé</p>
-                  <p>{ai.summary}</p>
-                </div>
-              )}
-
-              {/* Identified object */}
-              {ai.identified_object && (
-                <div className="p-3 bg-background/80 rounded border border-border/30">
-                  <p className="font-medium text-xs text-muted-foreground mb-1">Objet identifié</p>
-                  <p>{ai.identified_object}</p>
-                </div>
-              )}
-
-              {/* Estimation */}
-              {ai.estimated_range && (
-                <div className="p-3 bg-background/80 rounded border border-border/30">
-                  <p className="font-medium text-xs text-muted-foreground mb-1">Estimation IA</p>
-                  <p className="text-lg font-semibold">{ai.estimated_range}</p>
-                </div>
-              )}
-
-              {/* Authenticity */}
-              {ai.authenticity_assessment && (
-                <div className="p-3 bg-background/80 rounded border border-border/30">
-                  <p className="font-medium text-xs text-muted-foreground mb-1">Authenticité</p>
-                  <p>{ai.authenticity_assessment}</p>
-                </div>
-              )}
-
-              {/* Condition */}
-              {ai.condition_notes && (
-                <div className="p-3 bg-background/80 rounded border border-border/30">
-                  <p className="font-medium text-xs text-muted-foreground mb-1">État</p>
-                  <p>{ai.condition_notes}</p>
-                </div>
-              )}
-
-              {/* Market insights */}
-              {ai.market_insights && (
-                <div className="p-3 bg-background/80 rounded border border-border/30">
-                  <p className="font-medium text-xs text-muted-foreground mb-1">Contexte marché</p>
-                  <p>{ai.market_insights}</p>
-                </div>
-              )}
-
-              {/* Description accuracy */}
-              {ai.description_accuracy && (
-                <div className="p-3 bg-background/80 rounded border border-border/30">
-                  <p className="font-medium text-xs text-muted-foreground mb-1">Fiabilité de la description</p>
-                  <p>{ai.description_accuracy}</p>
-                </div>
-              )}
-
-              {/* Questions */}
-              {ai.questions_for_owner?.length > 0 && (
-                <div className="p-3 bg-background/80 rounded border border-border/30">
-                  <p className="font-medium text-xs text-muted-foreground mb-1">Questions suggérées</p>
-                  <ul className="list-disc list-inside space-y-1">
-                    {ai.questions_for_owner.map((q: string, i: number) => (
-                      <li key={i}>{q}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {/* Web sources */}
-              {ai.web_sources?.length > 0 && (
-                <div className="p-3 bg-background/80 rounded border border-border/30">
-                  <p className="font-medium text-xs text-muted-foreground mb-2 flex items-center gap-1.5">
-                    <Globe className="w-3.5 h-3.5" />
-                    Sources web croisées
-                  </p>
-                  <div className="space-y-1.5">
-                    {ai.web_sources.map((src: { title: string; url: string; relevance: string }, i: number) => (
-                      <div key={i} className="flex items-start gap-2">
-                        <ExternalLink className="w-3 h-3 mt-0.5 shrink-0 text-muted-foreground" />
-                        <div className="min-w-0">
-                          <a
-                            href={src.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-xs font-medium text-primary hover:underline truncate block"
-                          >
-                            {src.title || src.url}
-                          </a>
-                          {src.relevance && (
-                            <p className="text-xs text-muted-foreground">{src.relevance}</p>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Google Vision Web Detection */}
-              {ai.vision_detection && (
-                <div className="p-3 bg-background/80 rounded border border-border/30 space-y-2">
-                  <p className="font-medium text-xs text-muted-foreground mb-2 flex items-center gap-1.5">
-                    <Eye className="w-3.5 h-3.5" />
-                    Google Vision — Détection web
-                  </p>
-
-                  {/* Best guess labels */}
-                  {ai.vision_detection.bestGuessLabels?.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5">
-                      {ai.vision_detection.bestGuessLabels.map((label: string, i: number) => (
-                        <Badge key={i} variant="secondary" className="text-xs">
-                          {label}
-                        </Badge>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Top web entities */}
-                  {ai.vision_detection.webEntities?.length > 0 && (
-                    <div>
-                      <p className="text-xs text-muted-foreground mb-1">Entités identifiées :</p>
-                      <div className="flex flex-wrap gap-1">
-                        {ai.vision_detection.webEntities.slice(0, 6).map((e: { description: string; score: number }, i: number) => (
-                          <Badge key={i} variant="outline" className="text-xs">
-                            {e.description}
-                            <span className="ml-1 opacity-50">{(e.score * 100).toFixed(0)}%</span>
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Matching pages */}
-                  {ai.vision_detection.matchingPages?.length > 0 && (
-                    <div>
-                      <p className="text-xs text-muted-foreground mb-1">Pages correspondantes :</p>
-                      <div className="space-y-1">
-                        {ai.vision_detection.matchingPages.map((page: { url: string; title: string }, i: number) => (
-                          <a
-                            key={i}
-                            href={page.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-1.5 text-xs text-primary hover:underline truncate"
-                          >
-                            <ExternalLink className="w-3 h-3 shrink-0" />
-                            {page.title || page.url}
-                          </a>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Visually similar images */}
-                  {ai.vision_detection.visuallySimilarImages?.length > 0 && (
-                    <div>
-                      <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
-                        <Image className="w-3 h-3" />
-                        Images visuellement similaires
-                      </p>
-                      <div className="grid grid-cols-4 gap-1.5">
-                        {ai.vision_detection.visuallySimilarImages.map((imgUrl: string, i: number) => (
-                          <a
-                            key={i}
-                            href={imgUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="aspect-square rounded overflow-hidden border hover:opacity-80 transition-opacity"
-                          >
-                            <img
-                              src={imgUrl}
-                              alt={`Similaire ${i + 1}`}
-                              className="w-full h-full object-cover"
-                              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                            />
-                          </a>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Confidence level & Limitations */}
-              {(ai.confidence_level || ai.limitations) && (
-                <div className="p-3 bg-background/80 rounded border border-border/30 space-y-2">
-                  {ai.confidence_level && (
-                    <div className="flex items-center gap-2">
-                      <ShieldCheck className="w-3.5 h-3.5 text-muted-foreground" />
-                      <p className="font-medium text-xs text-muted-foreground">Confiance :</p>
-                      <Badge variant="outline" className={
-                        ai.confidence_level === "élevée" ? "border-green-400 text-green-700" :
-                        ai.confidence_level === "moyenne" ? "border-amber-400 text-amber-700" :
-                        "border-red-400 text-red-700"
-                      }>
-                        {ai.confidence_level}
-                      </Badge>
-                    </div>
-                  )}
-                  {ai.limitations && (
-                    <div className="flex items-start gap-2">
-                      <AlertTriangle className="w-3.5 h-3.5 text-amber-500 mt-0.5 shrink-0" />
-                      <div>
-                        <p className="font-medium text-xs text-muted-foreground mb-0.5">Limitations</p>
-                        <p className="text-xs text-muted-foreground">{ai.limitations}</p>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
+        {/* Analyse — Niveau 1 : Synthèse */}
+        <AnalysisSynthesis
+          ai={ai}
+          reanalyzing={reanalyzing}
+          onReanalyze={handleReanalyze}
+        />
 
         {/* Auctioneer decision */}
         <div className="space-y-3 border rounded-lg p-4">
