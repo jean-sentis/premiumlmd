@@ -23,6 +23,7 @@ import {
   Search,
   AlertTriangle,
   ShieldCheck,
+  Globe,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -396,6 +397,36 @@ export function EstimationDetail({ estimation, onBack, onUpdate }: EstimationDet
                       <li key={i}>{q}</li>
                     ))}
                   </ul>
+                </div>
+              )}
+
+              {/* Web sources */}
+              {ai.web_sources?.length > 0 && (
+                <div className="p-3 bg-background/80 rounded border border-border/30">
+                  <p className="font-medium text-xs text-muted-foreground mb-2 flex items-center gap-1.5">
+                    <Globe className="w-3.5 h-3.5" />
+                    Sources web croisées
+                  </p>
+                  <div className="space-y-1.5">
+                    {ai.web_sources.map((src: { title: string; url: string; relevance: string }, i: number) => (
+                      <div key={i} className="flex items-start gap-2">
+                        <ExternalLink className="w-3 h-3 mt-0.5 shrink-0 text-muted-foreground" />
+                        <div className="min-w-0">
+                          <a
+                            href={src.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs font-medium text-primary hover:underline truncate block"
+                          >
+                            {src.title || src.url}
+                          </a>
+                          {src.relevance && (
+                            <p className="text-xs text-muted-foreground">{src.relevance}</p>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
 
