@@ -523,6 +523,54 @@ serve(async (req) => {
       webResults = await searchWebReferences(lensResults.bestGuessLabels, serpApiKey);
     }
 
+    // ── EXTRA: Targeted auction platform searches (Drouot, Interenchères) ──
+    if (serpApiKey && searchTerms.length > 0) {
+      const auctionTerms = searchTerms.slice(0, 2);
+      const auctionQueries: string[] = [];
+      
+      for (const term of auctionTerms) {
+        auctionQueries.push(`site:drouot.com ${term}`);
+        auctionQueries.push(`site:interencheres.com ${term}`);
+      }
+
+      console.log("[analyze-estimation] Auction platform search:", auctionQueries);
+
+      const auctionSearchPromises = auctionQueries.map(async (query) => {
+        try {
+          const params = new URLSearchParams({
+            engine: "google",
+            q: query,
+            api_key: serpApiKey,
+            hl: "fr",
+            gl: "fr",
+            num: "5",
+          });
+          const response = await fetch(`https://serpapi.com/search?${params.toString()}`);
+          if (!response.ok) return [];
+          const data = await response.json();
+          return (data.organic_results || []).map((item: any) => ({
+            title: item.title || "",
+            url: item.link || "",
+            description: item.snippet || "",
+          }));
+        } catch {
+          return [];
+        }
+      });
+
+      const auctionResults = await Promise.all(auctionSearchPromises);
+      const existingUrls = new Set(webResults.map((r) => r.url));
+      for (const batch of auctionResults) {
+        for (const r of batch) {
+          if (r.url && !existingUrls.has(r.url)) {
+            webResults.push(r);
+            existingUrls.add(r.url);
+          }
+        }
+      }
+      console.log(`[analyze-estimation] After auction search: ${webResults.length} total web results`);
+    }
+
     // ── EXTRA: Search based on user text clues (signatures, artist names) ──
     if (serpApiKey && userOwnMessage.length > 10) {
       // Extract potential proper nouns/names from user description
@@ -531,7 +579,6 @@ serve(async (req) => {
       
       if (namePatterns) {
         for (const match of namePatterns) {
-          // Extract the name part after the keyword
           const namePart = match.replace(/^(?:signature|signé|marqué|poinçon|inscrit|écrit)\s+(?:comme\s+)?["']?/i, "").trim();
           if (namePart.length >= 3) {
             extraTerms.push(`${namePart} artiste enchères`);
@@ -540,7 +587,6 @@ serve(async (req) => {
         }
       }
 
-      // Also check for any capitalized words that could be names (not common French words)
       const commonWords = new Set(["Le", "La", "Les", "Un", "Une", "Des", "Du", "De", "En", "Au", "Il", "Je", "Mon", "Mes", "Son", "Ses", "Est", "Pas", "Très", "Comme", "Bonjour", "Merci"]);
       const capitalizedWords = userOwnMessage.match(/[A-ZÀ-Ü][a-zà-ü]{2,}/g) || [];
       const potentialNames = capitalizedWords.filter(w => !commonWords.has(w));
@@ -554,7 +600,6 @@ serve(async (req) => {
       if (extraTerms.length > 0) {
         console.log("[analyze-estimation] Extra search from user text:", extraTerms);
         const extraResults = await searchWebReferences(extraTerms, serpApiKey);
-        // Merge with existing results, dedup by URL
         const existingUrls = new Set(webResults.map(r => r.url));
         for (const r of extraResults) {
           if (!existingUrls.has(r.url)) {
