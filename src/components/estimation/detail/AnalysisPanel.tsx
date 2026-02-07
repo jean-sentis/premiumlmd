@@ -127,9 +127,9 @@ export function AnalysisPanel({
 
   const interestStyle = getInterestStyle(recommendation);
 
-  const sourceCount =
-    (ai.web_sources?.length || 0) +
-    (ai.lens_detection?.visualMatches?.length || 0);
+  const lensCount = ai.lens_detection?.visualMatches?.length || 0;
+  const webCount = (ai.web_sources?.length || 0);
+  const sourceCount = lensCount + webCount;
 
   const toggleSection = (key: string) => {
     setOpenSection((prev) => (prev === key ? null : key));
@@ -249,10 +249,10 @@ export function AnalysisPanel({
         </div>
       </div>
 
-      {/* ── 3 boutons : Identité / État / Marché ── */}
+      {/* ── Boutons détail ── */}
       {(authText || conditionText || marketText || sourceCount > 0) && (
         <div className="space-y-0">
-          <div className="grid grid-cols-3 gap-1.5">
+          <div className="flex flex-wrap gap-1.5">
             <DetailButton
               icon={<Fingerprint className="w-3.5 h-3.5" />}
               label="Identité"
@@ -265,13 +265,24 @@ export function AnalysisPanel({
               isOpen={openSection === "condition"}
               onClick={() => toggleSection("condition")}
             />
-            <DetailButton
-              icon={<TrendingUp className="w-3.5 h-3.5" />}
-              label="Marché"
-              count={sourceCount > 0 ? sourceCount : undefined}
-              isOpen={openSection === "market"}
-              onClick={() => toggleSection("market")}
-            />
+            {lensCount > 0 && (
+              <DetailButton
+                icon={<Image className="w-3.5 h-3.5" />}
+                label="Correspondances"
+                count={lensCount}
+                isOpen={openSection === "lens"}
+                onClick={() => toggleSection("lens")}
+              />
+            )}
+            {(webCount > 0 || marketText) && (
+              <DetailButton
+                icon={<TrendingUp className="w-3.5 h-3.5" />}
+                label="Résultats"
+                count={webCount > 0 ? webCount : undefined}
+                isOpen={openSection === "market"}
+                onClick={() => toggleSection("market")}
+              />
+            )}
           </div>
 
           {openSection === "auth" && (
@@ -287,6 +298,9 @@ export function AnalysisPanel({
               onChange={setConditionText}
               placeholder="Notes sur l'état…"
             />
+          )}
+          {openSection === "lens" && (
+            <LensContent ai={ai} />
           )}
           {openSection === "market" && (
             <MarketContent ai={ai} marketText={marketText} onMarketTextChange={setMarketText} />
@@ -466,7 +480,50 @@ function DetailButton({
   );
 }
 
-/* ── Section Marché avec sources + texte éditable ── */
+/* ── Section Correspondances visuelles (Google Lens) ── */
+function LensContent({ ai }: { ai: any }) {
+  const matches = ai.lens_detection?.visualMatches || [];
+  if (matches.length === 0) return null;
+
+  return (
+    <div className="mt-1.5 p-3 bg-muted/30 rounded-lg border border-border/30 animate-in slide-in-from-top-1 duration-200">
+      <div className="space-y-1.5">
+        {matches.map(
+          (match: { title: string; link: string; source: string; thumbnail?: string; price?: string }, i: number) => (
+            <div key={i} className="flex items-start gap-2">
+              {match.thumbnail && (
+                <a href={match.link} target="_blank" rel="noopener noreferrer" className="shrink-0">
+                  <img
+                    src={match.thumbnail}
+                    alt={match.title}
+                    className="w-10 h-10 object-cover rounded border"
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                  />
+                </a>
+              )}
+              <div className="min-w-0 flex-1">
+                <a
+                  href={match.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs font-medium text-primary hover:underline line-clamp-1"
+                >
+                  {match.title}
+                </a>
+                <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
+                  <span>{match.source}</span>
+                  {match.price && <span className="font-medium text-foreground">{match.price}</span>}
+                </div>
+              </div>
+            </div>
+          )
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ── Section Résultats (marché + sources web) ── */
 function MarketContent({
   ai,
   marketText,
@@ -531,48 +588,6 @@ function MarketContent({
               </div>
             )
           )}
-        </div>
-      )}
-
-      {/* Google Lens visual matches */}
-      {ai.lens_detection?.visualMatches?.length > 0 && (
-        <div>
-          <p className="text-xs font-medium text-muted-foreground mb-1.5 flex items-center gap-1">
-            <Image className="w-3 h-3" />
-            Correspondances visuelles ({ai.lens_detection.visualMatches.length})
-          </p>
-          <div className="space-y-1.5">
-            {ai.lens_detection.visualMatches.map(
-              (match: { title: string; link: string; source: string; thumbnail?: string; price?: string }, i: number) => (
-                <div key={i} className="flex items-start gap-2">
-                  {match.thumbnail && (
-                    <a href={match.link} target="_blank" rel="noopener noreferrer" className="shrink-0">
-                      <img
-                        src={match.thumbnail}
-                        alt={match.title}
-                        className="w-10 h-10 object-cover rounded border"
-                        onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
-                      />
-                    </a>
-                  )}
-                  <div className="min-w-0 flex-1">
-                    <a
-                      href={match.link}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-xs font-medium text-primary hover:underline line-clamp-1"
-                    >
-                      {match.title}
-                    </a>
-                    <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
-                      <span>{match.source}</span>
-                      {match.price && <span className="font-medium text-foreground">{match.price}</span>}
-                    </div>
-                  </div>
-                </div>
-              )
-            )}
-          </div>
         </div>
       )}
     </div>
