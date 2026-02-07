@@ -532,11 +532,21 @@ serve(async (req) => {
     // ── EXTRA: Targeted auction platform searches (Drouot, Interenchères) ──
     if (serpApiKey && searchTerms.length > 0) {
       const auctionTerms = searchTerms.slice(0, 2);
+      const auctionSites = [
+        "drouot.com",
+        "interencheres.com",
+        "gazette-drouot.com",
+        "invaluable.com",
+        "artnet.com",
+        "barnebys.com",
+        "artprice.com",
+      ];
       const auctionQueries: string[] = [];
       
+      // Use OR syntax to search multiple sites in fewer queries (saves API quota)
+      const siteFilter = auctionSites.map(s => `site:${s}`).join(" OR ");
       for (const term of auctionTerms) {
-        auctionQueries.push(`site:drouot.com ${term}`);
-        auctionQueries.push(`site:interencheres.com ${term}`);
+        auctionQueries.push(`(${siteFilter}) ${term}`);
       }
 
       console.log("[analyze-estimation] Auction platform search:", auctionQueries);
