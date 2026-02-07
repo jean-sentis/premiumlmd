@@ -3,12 +3,11 @@ import {
   RefreshCw,
   Loader2,
   ChevronDown,
-  Shield,
+  Fingerprint,
   Wrench,
   TrendingUp,
   ExternalLink,
   Image,
-  FileText,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -51,6 +50,10 @@ export function AnalysisPanel({ ai, reanalyzing, onReanalyze }: AnalysisPanelPro
   const confidenceConfig = ai.confidence_level
     ? CONFIDENCE_CONFIG[ai.confidence_level as keyof typeof CONFIDENCE_CONFIG]
     : null;
+
+  const sourceCount =
+    (ai.web_sources?.length || 0) +
+    (ai.vision_detection?.matchingPages?.length || 0);
 
   const toggleSection = (key: string) => {
     setOpenSection((prev) => (prev === key ? null : key));
@@ -114,14 +117,14 @@ export function AnalysisPanel({ ai, reanalyzing, onReanalyze }: AnalysisPanelPro
         )}
       </div>
 
-      {/* ── 3 boutons sur une ligne : Authenticité / État / Marché ── */}
+      {/* ── 3 boutons sur une ligne : Identité / État / Marché ── */}
       {(ai.authenticity_assessment || ai.condition_notes || ai.market_insights) && (
         <div className="space-y-0">
           <div className="grid grid-cols-3 gap-1.5">
             {ai.authenticity_assessment && (
               <DetailButton
-                icon={<Shield className="w-3.5 h-3.5" />}
-                label="Authenticité"
+                icon={<Fingerprint className="w-3.5 h-3.5" />}
+                label="Identité"
                 isOpen={openSection === "auth"}
                 onClick={() => toggleSection("auth")}
               />
@@ -134,10 +137,11 @@ export function AnalysisPanel({ ai, reanalyzing, onReanalyze }: AnalysisPanelPro
                 onClick={() => toggleSection("condition")}
               />
             )}
-            {ai.market_insights && (
+            {(ai.market_insights || sourceCount > 0) && (
               <DetailButton
                 icon={<TrendingUp className="w-3.5 h-3.5" />}
                 label="Marché"
+                count={sourceCount > 0 ? sourceCount : undefined}
                 isOpen={openSection === "market"}
                 onClick={() => toggleSection("market")}
               />
@@ -171,11 +175,13 @@ export function AnalysisPanel({ ai, reanalyzing, onReanalyze }: AnalysisPanelPro
 function DetailButton({
   icon,
   label,
+  count,
   isOpen,
   onClick,
 }: {
   icon: React.ReactNode;
   label: string;
+  count?: number;
   isOpen: boolean;
   onClick: () => void;
 }) {
@@ -190,6 +196,11 @@ function DetailButton({
     >
       {icon}
       <span className="hidden sm:inline">{label}</span>
+      {count !== undefined && (
+        <span className="text-[10px] bg-primary/10 text-primary rounded-full px-1.5 py-0 font-semibold">
+          {count}
+        </span>
+      )}
       <ChevronDown
         className={`w-3 h-3 transition-transform ${isOpen ? "rotate-180" : ""}`}
       />
