@@ -57,23 +57,37 @@ export function EstimationDetail({
   const [freshData, setFreshData] = useState<EstimationRequest | null>(null);
 
   // Re-fetch fresh data on mount, and poll every 5s while analysis is pending
+  // Also handles RLS failures gracefully: keeps polling and falls back to prop data
   useEffect(() => {
     let cancelled = false;
     let timer: ReturnType<typeof setTimeout>;
+    let retryCount = 0;
+    const MAX_RETRIES = 60; // 5 minutes max polling
 
     const fetchFresh = async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("estimation_requests")
         .select("*")
         .eq("id", estimation.id)
         .maybeSingle();
       if (cancelled) return;
-      if (data) {
-        setFreshData(data as any);
-        // Keep polling only while ai_analysis is still null
-        if (!data.ai_analysis) {
-          timer = setTimeout(fetchFresh, 5000);
+
+      if (error || !data) {
+        // RLS or network issue — keep retrying with backoff, don't give up silently
+        console.warn("[EstimationDetail] Re-fetch failed (RLS or network), using prop data. Retry:", retryCount);
+        retryCount++;
+        if (retryCount < MAX_RETRIES) {
+          const delay = Math.min(5000 * Math.pow(1.2, Math.min(retryCount, 10)), 15000);
+          timer = setTimeout(fetchFresh, delay);
         }
+        return;
+      }
+
+      retryCount = 0; // Reset on success
+      setFreshData(data as any);
+      // Keep polling only while ai_analysis is still null
+      if (!data.ai_analysis) {
+        timer = setTimeout(fetchFresh, 5000);
       }
     };
     fetchFresh();
