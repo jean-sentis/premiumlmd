@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { Phone, Mail, UserPlus, Loader2 } from "lucide-react";
+import { Phone, Mail, UserPlus, Loader2, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { INTEREST_LEVELS, type InterestLevel } from "./interest-config";
+import { INTEREST_LEVELS, type InterestLevel, getInterestStyle } from "./interest-config";
 import { EmailComposer } from "./EmailComposer";
 
 interface ResponsePanelProps {
@@ -15,6 +15,7 @@ interface ResponsePanelProps {
     telephone: string | null;
     auctioneer_decision: string | null;
     response_message: string | null;
+    response_mode?: string | null;
     status: string;
     ai_analysis: any;
   };
@@ -33,6 +34,10 @@ export function ResponsePanel({ estimation, onUpdate }: ResponsePanelProps) {
   const [saving, setSaving] = useState(false);
 
   const aiQuestions = estimation.ai_analysis?.questions_for_owner || [];
+
+  // Color style based on interest level when responded
+  const isResponded = estimation.status === "responded" || estimation.status === "in_review";
+  const interestStyle = getInterestStyle(estimation.auctioneer_decision);
 
   const handleSavePhone = async () => {
     if (!interest) return;
@@ -106,9 +111,25 @@ export function ResponsePanel({ estimation, onUpdate }: ResponsePanelProps) {
     }
   };
 
+  // Build dynamic container classes based on interest color
+  const containerClasses = isResponded && interestStyle
+    ? `space-y-4 border-2 rounded-lg p-4 ${interestStyle.border} ${interestStyle.bg}`
+    : "space-y-4 border rounded-lg p-4";
+
   return (
-    <div className="space-y-4 border rounded-lg p-4">
-      <h3 className="text-sm font-semibold">Répondre à {estimation.nom}</h3>
+    <div className={containerClasses}>
+      <div className="flex items-center justify-between">
+        <h3 className="text-sm font-semibold">Répondre à {estimation.nom}</h3>
+        {isResponded && interestStyle && (
+          <span className={`text-xs px-2.5 py-1 rounded-full flex items-center gap-1 ${interestStyle.bg} ${interestStyle.text} ${interestStyle.border} border`}>
+            <CheckCircle2 className="w-3 h-3" />
+            {interestStyle.label}
+            {estimation.response_mode === "phone" && " · Appelé"}
+            {estimation.response_mode === "email" && " · Emailé"}
+            {estimation.response_mode === "delegate" && " · Délégué"}
+          </span>
+        )}
+      </div>
 
       {/* Mode selection */}
       <div className="grid grid-cols-3 gap-2">

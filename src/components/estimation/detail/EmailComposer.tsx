@@ -1,46 +1,41 @@
-import { useState, useEffect, useMemo } from "react";
-import { Send, Loader2 } from "lucide-react";
+import { useState, useRef } from "react";
+import { Send, Loader2, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { INTEREST_LEVELS, type InterestLevel } from "./interest-config";
 
-const GREETING_OPTIONS = [
-  { id: "formal", label: "Madame, Monsieur," },
-  { id: "personal", label: "Personnalisé" },
+const GREETING_SNIPPETS = [
+  { label: "Bonjour personnalisé", build: (name: string) => `Bonjour ${name},\n\n` },
+  { label: "Madame, Monsieur", build: () => "Madame, Monsieur,\n\n" },
 ];
 
-const INTENT_OPTIONS = [
+const INTENT_SNIPPETS = [
   {
-    id: "interested",
     label: "Pièce intéressante",
-    text: "Nous avons examiné votre objet avec attention. Il présente un réel intérêt et nous souhaiterions en discuter avec vous pour envisager une mise en vente.",
+    text: "Nous avons examiné votre objet avec attention. Il présente un réel intérêt et nous souhaiterions en discuter avec vous pour envisager une mise en vente.\n\n",
   },
   {
-    id: "need_info",
     label: "Besoin d'informations",
-    text: "Pour affiner notre analyse, nous aurions besoin de quelques informations complémentaires avant de pouvoir vous faire une proposition.",
+    text: "Pour affiner notre analyse, nous aurions besoin de quelques informations complémentaires avant de pouvoir vous faire une proposition.\n\n",
   },
   {
-    id: "follow_up",
     label: "À suivre",
-    text: "Votre pièce pourrait trouver sa place dans l'une de nos prochaines ventes thématiques. Nous revenons vers vous prochainement avec une proposition concrète.",
+    text: "Votre pièce pourrait trouver sa place dans l'une de nos prochaines ventes thématiques. Nous revenons vers vous prochainement avec une proposition concrète.\n\n",
   },
   {
-    id: "declined",
     label: "Pas dans nos cordes",
-    text: "Après examen attentif, cet objet ne correspond pas à notre domaine d'expertise actuel ou aux conditions du marché. Nous vous conseillons de vous rapprocher d'un confrère spécialisé.",
+    text: "Après examen attentif, cet objet ne correspond pas à notre domaine d'expertise actuel ou aux conditions du marché. Nous vous conseillons de vous rapprocher d'un confrère spécialisé.\n\n",
   },
 ];
 
-const CLOSING =
+const CLOSING_SNIPPET =
   "Nous restons à votre disposition pour tout complément d'information.\n\nCordialement,\nL'équipe Douze pages & associés";
 
 interface EmailComposerProps {
@@ -64,211 +59,109 @@ export function EmailComposer({
   saving,
   existingMessage,
 }: EmailComposerProps) {
-  const [greeting, setGreeting] = useState("personal");
-  const [intent, setIntent] = useState("");
-  const [selectedQuestions, setSelectedQuestions] = useState<Set<number>>(
-    new Set()
+  const [message, setMessage] = useState(
+    existingMessage ||
+      `Bonjour ${sellerName},\n\nNous avons bien reçu votre demande et vous en remercions.\n\n`
   );
-  const [questionEdits, setQuestionEdits] = useState<Record<number, string>>(
-    {}
-  );
-  const [freeText, setFreeText] = useState("");
-  const [manualEdit, setManualEdit] = useState(false);
-  const [manualMessage, setManualMessage] = useState(existingMessage);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const getGreetingText = (id: string) =>
-    id === "personal" ? `Bonjour ${sellerName},` : "Madame, Monsieur,";
-
-  // Build composed message from building blocks
-  const composedMessage = useMemo(() => {
-    if (manualEdit) return manualMessage;
-
-    const parts: string[] = [];
-
-    // Greeting
-    parts.push(getGreetingText(greeting));
-    parts.push("");
-
-    // Thanks
-    parts.push(
-      "Nous avons bien reçu votre demande et vous en remercions."
-    );
-    parts.push("");
-
-    // Intent
-    const intentOpt = INTENT_OPTIONS.find((i) => i.id === intent);
-    if (intentOpt) {
-      parts.push(intentOpt.text);
-      parts.push("");
+  const insertAtCursor = (text: string) => {
+    const el = textareaRef.current;
+    if (!el) {
+      setMessage((prev) => prev + text);
+      return;
     }
-
-    // Selected questions
-    if (selectedQuestions.size > 0) {
-      const questionTexts = Array.from(selectedQuestions)
-        .sort()
-        .map((idx) => `— ${questionEdits[idx] || aiQuestions[idx]}`);
-      if (questionTexts.length > 0) {
-        parts.push("Pourriez-vous nous préciser :");
-        parts.push(...questionTexts);
-        parts.push("");
-      }
-    }
-
-    // Free text
-    if (freeText.trim()) {
-      parts.push(freeText.trim());
-      parts.push("");
-    }
-
-    // Closing
-    parts.push(CLOSING);
-
-    return parts.join("\n");
-  }, [
-    greeting,
-    intent,
-    selectedQuestions,
-    questionEdits,
-    freeText,
-    manualEdit,
-    manualMessage,
-    sellerName,
-    aiQuestions,
-  ]);
-
-  // Sync manual message with auto-compose
-  useEffect(() => {
-    if (!manualEdit) {
-      setManualMessage(composedMessage);
-    }
-  }, [composedMessage, manualEdit]);
-
-  const toggleQuestion = (idx: number) => {
-    setSelectedQuestions((prev) => {
-      const next = new Set(prev);
-      if (next.has(idx)) next.delete(idx);
-      else next.add(idx);
-      return next;
+    const start = el.selectionStart;
+    const end = el.selectionEnd;
+    const before = message.slice(0, start);
+    const after = message.slice(end);
+    const newMessage = before + text + after;
+    setMessage(newMessage);
+    // Reposition cursor after inserted text
+    requestAnimationFrame(() => {
+      el.focus();
+      el.selectionStart = el.selectionEnd = start + text.length;
     });
   };
 
+  const insertQuestions = (questions: string[]) => {
+    const block =
+      "Pourriez-vous nous préciser :\n" +
+      questions.map((q) => `— ${q}`).join("\n") +
+      "\n\n";
+    insertAtCursor(block);
+  };
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {/* Interest selector */}
       <InterestSelector value={interest} onChange={onInterestChange} />
 
-      {/* Composition tools */}
-      {!manualEdit && (
-        <div className="space-y-3">
-          {/* Greeting */}
-          <Select value={greeting} onValueChange={setGreeting}>
-            <SelectTrigger className="h-8 text-xs">
-              <SelectValue placeholder="Formule d'ouverture…" />
-            </SelectTrigger>
-            <SelectContent>
-              {GREETING_OPTIONS.map((g) => (
-                <SelectItem key={g.id} value={g.id} className="text-xs">
-                  {getGreetingText(g.id)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+      {/* Toolbar: insert snippets into body */}
+      <div className="flex items-center gap-1.5 flex-wrap">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm" className="text-xs gap-1 h-7">
+              <Plus className="w-3 h-3" />
+              Insérer
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="text-xs">
+            {/* Greetings */}
+            {GREETING_SNIPPETS.map((g) => (
+              <DropdownMenuItem
+                key={g.label}
+                onClick={() => insertAtCursor(g.build(sellerName))}
+              >
+                {g.label}
+              </DropdownMenuItem>
+            ))}
+            <DropdownMenuSeparator />
+            {/* Intents */}
+            {INTENT_SNIPPETS.map((i) => (
+              <DropdownMenuItem
+                key={i.label}
+                onClick={() => insertAtCursor(i.text)}
+              >
+                {i.label}
+              </DropdownMenuItem>
+            ))}
+            <DropdownMenuSeparator />
+            {/* AI questions */}
+            {aiQuestions.length > 0 && (
+              <DropdownMenuItem onClick={() => insertQuestions(aiQuestions)}>
+                Questions suggérées ({aiQuestions.length})
+              </DropdownMenuItem>
+            )}
+            {/* Closing */}
+            <DropdownMenuItem onClick={() => insertAtCursor(CLOSING_SNIPPET)}>
+              Formule de politesse
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
 
-          {/* Intent */}
-          <Select value={intent} onValueChange={setIntent}>
-            <SelectTrigger className="h-8 text-xs">
-              <SelectValue placeholder="Tonalité de la réponse…" />
-            </SelectTrigger>
-            <SelectContent>
-              {INTENT_OPTIONS.map((i) => (
-                <SelectItem key={i.id} value={i.id} className="text-xs">
-                  {i.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          {/* AI-suggested questions as checkboxes */}
-          {aiQuestions.length > 0 && (
-            <div className="space-y-2">
-              <p className="text-xs font-medium text-muted-foreground">
-                Questions suggérées
-              </p>
-              {aiQuestions.map((q: string, idx: number) => (
-                <label
-                  key={idx}
-                  className="flex items-start gap-2 cursor-pointer group"
-                >
-                  <Checkbox
-                    checked={selectedQuestions.has(idx)}
-                    onCheckedChange={() => toggleQuestion(idx)}
-                    className="mt-0.5"
-                  />
-                  <span
-                    className={`text-xs ${
-                      selectedQuestions.has(idx)
-                        ? "text-foreground"
-                        : "text-muted-foreground"
-                    }`}
-                  >
-                    {questionEdits[idx] || q}
-                  </span>
-                </label>
-              ))}
-            </div>
-          )}
-
-          {/* Free text */}
-          <Textarea
-            placeholder="Ajouter un message personnel…"
-            value={freeText}
-            onChange={(e) => setFreeText(e.target.value)}
-            rows={2}
-            className="text-xs"
-          />
-        </div>
-      )}
-
-      {/* Live preview / manual edit */}
-      <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <p className="text-xs font-medium text-muted-foreground">
-            {manualEdit ? "Message (édition libre)" : "Aperçu du message"}
-          </p>
-          <button
-            onClick={() => {
-              if (!manualEdit) setManualMessage(composedMessage);
-              setManualEdit(!manualEdit);
-            }}
-            className="text-xs text-primary hover:underline"
-          >
-            {manualEdit ? "← Retour au compositeur" : "Modifier librement"}
-          </button>
-        </div>
-        <Textarea
-          value={manualEdit ? manualMessage : composedMessage}
-          onChange={(e) => manualEdit && setManualMessage(e.target.value)}
-          readOnly={!manualEdit}
-          rows={12}
-          className={`text-xs ${
-            !manualEdit ? "bg-muted/30 cursor-default" : ""
-          }`}
-        />
+        <span className="text-[10px] text-muted-foreground ml-1">
+          Modifiez directement le message ci-dessous
+        </span>
       </div>
+
+      {/* Email body — directly editable */}
+      <Textarea
+        ref={textareaRef}
+        value={message}
+        onChange={(e) => setMessage(e.target.value)}
+        rows={14}
+        className="text-xs font-mono leading-relaxed"
+        placeholder="Rédigez votre message ici…"
+      />
 
       {/* Send */}
       <div className="flex items-center justify-between">
         <p className="text-xs text-muted-foreground">Envoi à : {sellerEmail}</p>
         <Button
           size="sm"
-          disabled={
-            saving ||
-            !interest ||
-            !(manualEdit ? manualMessage : composedMessage).trim()
-          }
-          onClick={() =>
-            onSend(manualEdit ? manualMessage : composedMessage, interest)
-          }
+          disabled={saving || !interest || !message.trim()}
+          onClick={() => onSend(message, interest)}
           className="gap-2"
         >
           {saving ? (
