@@ -145,11 +145,11 @@ export function EstimationFormDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-xl">
-            Demande d'estimation
+          <DialogTitle className="text-xl font-serif">
+            Estimation gratuite
           </DialogTitle>
           <DialogDescription>
-            Envoyez vos photos et une description de votre objet. Notre commissaire-priseur vous répondra sous 48h.
+            Envoyez vos photos et une description. Notre commissaire-priseur vous répondra sous 48h.
             {relatedLotTitle && (
               <span className="block mt-1 text-brand-primary font-medium">
                 En référence au lot : {relatedLotTitle}
