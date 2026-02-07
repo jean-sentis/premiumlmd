@@ -208,12 +208,10 @@ export function EstimationInbox({
             const isResponded = est.status === "responded";
             const overdue = getOverdueInfo(est.created_at, est.status);
 
-            // Interest level from CP decision or AI recommendation
-            const effectiveInterest = getEffectiveInterest(
-              est.auctioneer_decision,
-              est.ai_analysis?.recommendation
-            );
-            const interestStyle = getInterestStyle(effectiveInterest);
+            // Color only after CP has responded (not from AI alone)
+            const interestStyle = isResponded && est.auctioneer_decision
+              ? getInterestStyle(est.auctioneer_decision)
+              : null;
 
             // Response mode icon
             const responseMode = (est as any).response_mode;
