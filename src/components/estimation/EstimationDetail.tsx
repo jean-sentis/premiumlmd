@@ -56,17 +56,32 @@ export function EstimationDetail({
   const [reanalyzing, setReanalyzing] = useState(false);
   const [freshData, setFreshData] = useState<EstimationRequest | null>(null);
 
-  // Re-fetch fresh data on mount to get latest ai_analysis
+  // Re-fetch fresh data on mount, and poll every 5s while analysis is pending
   useEffect(() => {
+    let cancelled = false;
+    let timer: ReturnType<typeof setTimeout>;
+
     const fetchFresh = async () => {
       const { data } = await supabase
         .from("estimation_requests")
         .select("*")
         .eq("id", estimation.id)
         .maybeSingle();
-      if (data) setFreshData(data as any);
+      if (cancelled) return;
+      if (data) {
+        setFreshData(data as any);
+        // Keep polling only while ai_analysis is still null
+        if (!data.ai_analysis) {
+          timer = setTimeout(fetchFresh, 5000);
+        }
+      }
     };
     fetchFresh();
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
   }, [estimation.id]);
 
   const current = freshData || estimation;
