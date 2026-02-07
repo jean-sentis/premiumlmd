@@ -49,9 +49,9 @@ export function AnalysisPanel({ ai, reanalyzing, onReanalyze }: AnalysisPanelPro
 
   return (
     <div className="space-y-4">
-      {/* ── Interest level + Reliability ── */}
+      {/* ── Interest level + Reliability + Re-analyze ── */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3 flex-wrap">
+        <div className="flex items-center gap-2 flex-wrap">
           {interestStyle && (
             <Badge
               className={`${interestStyle.bg} ${interestStyle.text} ${interestStyle.border} border text-sm px-3 py-1`}
@@ -86,175 +86,57 @@ export function AnalysisPanel({ ai, reanalyzing, onReanalyze }: AnalysisPanelPro
         </Button>
       </div>
 
-      {/* ── Identification + Synthesis + Estimation ── */}
-      <div className="space-y-2">
+      {/* ── Synthèse unifiée (3-5 lignes, une seule typo) ── */}
+      <div className="p-4 bg-muted/30 rounded-lg border border-border/30 space-y-2">
         {ai.identified_object && (
-          <div className="p-3 bg-muted/30 rounded-lg border border-border/30">
-            <p className="font-medium text-xs text-muted-foreground mb-1">
-              Identification
-            </p>
-            <p className="text-sm">{ai.identified_object}</p>
-          </div>
+          <p className="text-sm font-medium">{ai.identified_object}</p>
         )}
-
         {ai.summary && (
           <p className="text-sm text-muted-foreground leading-relaxed">
             {ai.summary}
           </p>
         )}
-
         {ai.estimated_range && (
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-medium text-muted-foreground">
-              Estimation :
-            </span>
-            <span className="text-lg font-semibold">{ai.estimated_range}</span>
-          </div>
+          <p className="text-sm">
+            <span className="text-muted-foreground">Estimation :</span>{" "}
+            <span className="font-semibold">{ai.estimated_range}</span>
+          </p>
         )}
       </div>
 
-      {/* ── Collapsible sections ── */}
-      {ai.authenticity_assessment && (
-        <CollapsibleSection
-          open={authOpen}
-          onOpenChange={setAuthOpen}
-          icon={<Shield className="w-4 h-4" />}
-          title="Authenticité"
-          content={ai.authenticity_assessment}
-        />
-      )}
+      {/* ── Boutons collapsibles ── */}
+      <div className="space-y-2">
+        {ai.authenticity_assessment && (
+          <CollapsibleCriterion
+            open={authOpen}
+            onOpenChange={setAuthOpen}
+            icon={<Shield className="w-4 h-4" />}
+            title="Authenticité"
+            content={ai.authenticity_assessment}
+          />
+        )}
 
-      {ai.condition_notes && (
-        <CollapsibleSection
-          open={conditionOpen}
-          onOpenChange={setConditionOpen}
-          icon={<Wrench className="w-4 h-4" />}
-          title="État"
-          content={ai.condition_notes}
-        />
-      )}
+        {ai.condition_notes && (
+          <CollapsibleCriterion
+            open={conditionOpen}
+            onOpenChange={setConditionOpen}
+            icon={<Wrench className="w-4 h-4" />}
+            title="État"
+            content={ai.condition_notes}
+          />
+        )}
 
-      {(ai.market_insights || sourceCount > 0) && (
-        <Collapsible open={marketOpen} onOpenChange={setMarketOpen}>
-          <CollapsibleTrigger asChild>
-            <button className="w-full flex items-center gap-2 p-3 rounded-lg border border-border/50 hover:bg-muted/30 transition-colors text-left">
-              <TrendingUp className="w-4 h-4 text-muted-foreground" />
-              <span className="text-sm font-medium flex-1">
-                Contexte marché
-              </span>
-              {sourceCount > 0 && (
-                <span className="text-xs text-muted-foreground">
-                  {sourceCount} source{sourceCount > 1 ? "s" : ""}
-                </span>
-              )}
-              <ChevronRight
-                className={`w-4 h-4 text-muted-foreground transition-transform ${
-                  marketOpen ? "rotate-90" : ""
-                }`}
-              />
-            </button>
-          </CollapsibleTrigger>
-          <CollapsibleContent className="pt-2 pl-6 space-y-3">
-            {ai.market_insights && (
-              <p className="text-xs text-muted-foreground">
-                {ai.market_insights}
-              </p>
-            )}
+        {(ai.market_insights || sourceCount > 0) && (
+          <MarketSection
+            open={marketOpen}
+            onOpenChange={setMarketOpen}
+            ai={ai}
+            sourceCount={sourceCount}
+          />
+        )}
+      </div>
 
-            {/* Real market data - auction results, sales records */}
-            {ai.web_sources?.length > 0 && (
-              <div className="space-y-1.5">
-                <p className="text-xs font-medium text-muted-foreground">
-                  Résultats de ventes référencés
-                </p>
-                {ai.web_sources.map(
-                  (
-                    src: { title: string; url: string; relevance: string },
-                    i: number
-                  ) => (
-                    <div key={i} className="flex items-start gap-2">
-                      <ExternalLink className="w-3 h-3 mt-0.5 shrink-0 text-muted-foreground" />
-                      <div className="min-w-0">
-                        <a
-                          href={src.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-xs font-medium text-primary hover:underline truncate block"
-                        >
-                          {src.title || new URL(src.url).hostname}
-                        </a>
-                        {src.relevance && (
-                          <p className="text-xs text-muted-foreground">
-                            {src.relevance}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  )
-                )}
-              </div>
-            )}
-
-            {/* Visually similar objects found */}
-            {ai.vision_detection?.visuallySimilarImages?.length > 0 && (
-              <div>
-                <p className="text-xs font-medium text-muted-foreground mb-1.5 flex items-center gap-1">
-                  <Image className="w-3 h-3" />
-                  Objets similaires en vente
-                </p>
-                <div className="grid grid-cols-4 gap-1.5">
-                  {ai.vision_detection.visuallySimilarImages.map(
-                    (imgUrl: string, i: number) => (
-                      <a
-                        key={i}
-                        href={imgUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="aspect-square rounded overflow-hidden border hover:opacity-80 transition-opacity"
-                      >
-                        <img
-                          src={imgUrl}
-                          alt={`Similaire ${i + 1}`}
-                          className="w-full h-full object-cover"
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).style.display =
-                              "none";
-                          }}
-                        />
-                      </a>
-                    )
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Matching pages */}
-            {ai.vision_detection?.matchingPages?.length > 0 && (
-              <div className="space-y-1">
-                <p className="text-xs font-medium text-muted-foreground">
-                  Pages correspondantes
-                </p>
-                {ai.vision_detection.matchingPages.map(
-                  (page: { url: string; title: string }, i: number) => (
-                    <a
-                      key={i}
-                      href={page.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-1.5 text-xs text-primary hover:underline truncate"
-                    >
-                      <ExternalLink className="w-3 h-3 shrink-0" />
-                      {page.title || new URL(page.url).hostname}
-                    </a>
-                  )
-                )}
-              </div>
-            )}
-          </CollapsibleContent>
-        </Collapsible>
-      )}
-
-      {/* Limitations - discreet */}
+      {/* Limitations - discret */}
       {ai.limitations && (
         <p className="text-xs text-muted-foreground italic">
           {ai.limitations}
@@ -264,7 +146,8 @@ export function AnalysisPanel({ ai, reanalyzing, onReanalyze }: AnalysisPanelPro
   );
 }
 
-function CollapsibleSection({
+/* ── Critère collapsible générique ── */
+function CollapsibleCriterion({
   open,
   onOpenChange,
   icon,
@@ -280,7 +163,7 @@ function CollapsibleSection({
   return (
     <Collapsible open={open} onOpenChange={onOpenChange}>
       <CollapsibleTrigger asChild>
-        <button className="w-full flex items-center gap-2 p-3 rounded-lg border border-border/50 hover:bg-muted/30 transition-colors text-left">
+        <button className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg border border-border/50 hover:bg-muted/30 transition-colors text-left">
           <span className="text-muted-foreground">{icon}</span>
           <span className="text-sm font-medium flex-1">{title}</span>
           <ChevronRight
@@ -291,8 +174,146 @@ function CollapsibleSection({
         </button>
       </CollapsibleTrigger>
       <CollapsibleContent className="pt-2 pl-6">
-        <p className="text-xs text-muted-foreground">{content}</p>
+        <p className="text-sm text-muted-foreground leading-relaxed">{content}</p>
       </CollapsibleContent>
     </Collapsible>
   );
+}
+
+/* ── Section Contexte marché ── */
+function MarketSection({
+  open,
+  onOpenChange,
+  ai,
+  sourceCount,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  ai: any;
+  sourceCount: number;
+}) {
+  return (
+    <Collapsible open={open} onOpenChange={onOpenChange}>
+      <CollapsibleTrigger asChild>
+        <button className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg border border-border/50 hover:bg-muted/30 transition-colors text-left">
+          <TrendingUp className="w-4 h-4 text-muted-foreground" />
+          <span className="text-sm font-medium flex-1">Contexte marché</span>
+          {sourceCount > 0 && (
+            <span className="text-xs text-muted-foreground">
+              {sourceCount} source{sourceCount > 1 ? "s" : ""}
+            </span>
+          )}
+          <ChevronRight
+            className={`w-4 h-4 text-muted-foreground transition-transform ${
+              open ? "rotate-90" : ""
+            }`}
+          />
+        </button>
+      </CollapsibleTrigger>
+      <CollapsibleContent className="pt-2 pl-6 space-y-3">
+        {ai.market_insights && (
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            {ai.market_insights}
+          </p>
+        )}
+
+        {/* Résultats de ventes référencés */}
+        {ai.web_sources?.length > 0 && (
+          <div className="space-y-1.5">
+            <p className="text-xs font-medium text-muted-foreground">
+              Résultats de ventes référencés
+            </p>
+            {ai.web_sources.map(
+              (
+                src: { title: string; url: string; relevance: string },
+                i: number
+              ) => (
+                <div key={i} className="flex items-start gap-2">
+                  <ExternalLink className="w-3 h-3 mt-0.5 shrink-0 text-muted-foreground" />
+                  <div className="min-w-0">
+                    <a
+                      href={src.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs font-medium text-primary hover:underline truncate block"
+                    >
+                      {src.title || safeHostname(src.url)}
+                    </a>
+                    {src.relevance && (
+                      <p className="text-xs text-muted-foreground">
+                        {src.relevance}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )
+            )}
+          </div>
+        )}
+
+        {/* Objets similaires trouvés visuellement */}
+        {ai.vision_detection?.visuallySimilarImages?.length > 0 && (
+          <div>
+            <p className="text-xs font-medium text-muted-foreground mb-1.5 flex items-center gap-1">
+              <Image className="w-3 h-3" />
+              Objets similaires identifiés
+            </p>
+            <div className="grid grid-cols-4 gap-1.5">
+              {ai.vision_detection.visuallySimilarImages.map(
+                (imgUrl: string, i: number) => (
+                  <a
+                    key={i}
+                    href={imgUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="aspect-square rounded overflow-hidden border hover:opacity-80 transition-opacity"
+                  >
+                    <img
+                      src={imgUrl}
+                      alt={`Similaire ${i + 1}`}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = "none";
+                      }}
+                    />
+                  </a>
+                )
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Pages correspondantes */}
+        {ai.vision_detection?.matchingPages?.length > 0 && (
+          <div className="space-y-1">
+            <p className="text-xs font-medium text-muted-foreground">
+              Pages correspondantes
+            </p>
+            {ai.vision_detection.matchingPages.map(
+              (page: { url: string; title: string }, i: number) => (
+                <a
+                  key={i}
+                  href={page.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1.5 text-xs text-primary hover:underline truncate"
+                >
+                  <ExternalLink className="w-3 h-3 shrink-0" />
+                  {page.title || safeHostname(page.url)}
+                </a>
+              )
+            )}
+          </div>
+        )}
+      </CollapsibleContent>
+    </Collapsible>
+  );
+}
+
+function safeHostname(url: string): string {
+  try {
+    return new URL(url).hostname;
+  } catch {
+    return url;
+  }
 }
