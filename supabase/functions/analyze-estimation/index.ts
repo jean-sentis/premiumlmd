@@ -266,22 +266,26 @@ RÈGLES :
 - Ignore le titre d'un éventuel "lot similaire" mentionné par le propriétaire.
 - Jamais de certitude sur un artiste sauf signature lisible ou sources convergentes.
 - Formulations prudentes : "pourrait être", "évoque le style de".
-- Cite les sources pertinentes (site, URL).
 
-Réponds en JSON (sans backticks) :
+CONCISION OBLIGATOIRE :
+- "identified_object" = UNE seule ligne (type, matériau, style/époque)
+- "summary" = 2-3 phrases courtes MAXIMUM. C'est l'avis préliminaire affiché par défaut.
+- Les détails longs vont dans authenticity_assessment, condition_notes, market_insights.
+
+JSON sans backticks :
 {
-  "summary": "2-3 phrases : ce que tu vois + confirmation/infirmation par les sources",
-  "identified_object": "Identification croisée photo + web",
-  "authenticity_assessment": "Éléments orientant vers authenticité ou réserves",
-  "condition_notes": "État apparent",
-  "estimated_range": "Fourchette € avec source si possible, ou 'À confirmer'",
+  "identified_object": "1 ligne",
+  "summary": "2-3 phrases MAX",
+  "estimated_range": "Fourchette € ou 'À confirmer'",
+  "authenticity_assessment": "Détails authenticité",
+  "condition_notes": "Détails état",
   "market_insights": "Contexte marché, ventes récentes",
   "web_sources": [{"title":"","url":"","relevance":""}],
   "recommendation": "très_intéressant|intéressant|à_examiner|peu_intéressant|hors_spécialité",
   "recommendation_text": "1 phrase",
   "questions_for_owner": ["2-3 questions"],
   "confidence_level": "élevée|moyenne|faible",
-  "limitations": "Ce qui manque"
+  "limitations": "1 phrase"
 }`,
     },
   ];
