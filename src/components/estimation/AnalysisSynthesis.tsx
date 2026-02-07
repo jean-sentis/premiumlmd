@@ -5,11 +5,14 @@ import {
   ExternalLink,
   ChevronDown,
   ChevronUp,
-  AlertTriangle,
   Image,
   FileText,
   MessageSquareQuote,
   Search,
+  Shield,
+  Wrench,
+  TrendingUp,
+  ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -115,53 +118,14 @@ export function AnalysisSynthesis({ ai, reanalyzing, onReanalyze }: AnalysisSynt
             <p className="text-muted-foreground leading-relaxed">{ai.summary}</p>
           )}
 
-          {/* Authenticité + État en 2 colonnes */}
-          {(ai.authenticity_assessment || ai.condition_notes) && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {ai.authenticity_assessment && (
-                <div className="p-3 bg-muted/30 rounded border border-border/30">
-                  <p className="font-medium text-xs text-muted-foreground mb-1">Authenticité</p>
-                  <p className="text-xs">{ai.authenticity_assessment}</p>
-                </div>
-              )}
-              {ai.condition_notes && (
-                <div className="p-3 bg-muted/30 rounded border border-border/30">
-                  <p className="font-medium text-xs text-muted-foreground mb-1">État</p>
-                  <p className="text-xs">{ai.condition_notes}</p>
-                </div>
-              )}
-            </div>
+          {/* ── Détails (repliables) ── */}
+          {(ai.authenticity_assessment || ai.condition_notes || ai.market_insights || ai.questions_for_owner?.length > 0) && (
+            <DetailSection ai={ai} />
           )}
 
-          {/* Contexte marché */}
-          {ai.market_insights && (
-            <div className="p-3 bg-muted/30 rounded border border-border/30">
-              <p className="font-medium text-xs text-muted-foreground mb-1">Contexte marché</p>
-              <p className="text-xs">{ai.market_insights}</p>
-            </div>
-          )}
-
-          {/* Questions suggérées pour le propriétaire */}
-          {ai.questions_for_owner?.length > 0 && (
-            <div className="p-3 bg-muted/30 rounded border border-border/30">
-              <p className="font-medium text-xs text-muted-foreground mb-1 flex items-center gap-1.5">
-                <MessageSquareQuote className="w-3.5 h-3.5" />
-                Questions à poser au propriétaire
-              </p>
-              <ul className="list-disc list-inside space-y-0.5 text-xs">
-                {ai.questions_for_owner.map((q: string, i: number) => (
-                  <li key={i}>{q}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {/* Limitations */}
+          {/* Limitations - discret */}
           {ai.limitations && (
-            <div className="flex items-start gap-2 text-xs text-muted-foreground">
-              <AlertTriangle className="w-3.5 h-3.5 text-amber-500 mt-0.5 shrink-0" />
-              <p>{ai.limitations}</p>
-            </div>
+            <p className="text-[11px] text-muted-foreground italic">{ai.limitations}</p>
           )}
 
           {/* ── NIVEAU 2 : Sources & références (collapsible) ── */}
@@ -268,5 +232,50 @@ export function AnalysisSynthesis({ ai, reanalyzing, onReanalyze }: AnalysisSynt
         </div>
       )}
     </div>
+  );
+}
+
+/* ── Section détails repliable ── */
+function DetailSection({ ai }: { ai: any }) {
+  const [open, setOpen] = useState(false);
+
+  const items: Array<{ icon: React.ReactNode; title: string; content: string }> = [];
+  if (ai.authenticity_assessment) items.push({ icon: <Shield className="w-3.5 h-3.5" />, title: "Authenticité", content: ai.authenticity_assessment });
+  if (ai.condition_notes) items.push({ icon: <Wrench className="w-3.5 h-3.5" />, title: "État", content: ai.condition_notes });
+  if (ai.market_insights) items.push({ icon: <TrendingUp className="w-3.5 h-3.5" />, title: "Contexte marché", content: ai.market_insights });
+
+  return (
+    <Collapsible open={open} onOpenChange={setOpen}>
+      <CollapsibleTrigger asChild>
+        <button className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
+          <ChevronRight className={`w-3 h-3 transition-transform ${open ? "rotate-90" : ""}`} />
+          Voir le détail de l'analyse
+        </button>
+      </CollapsibleTrigger>
+      <CollapsibleContent className="space-y-2 pt-2">
+        {items.map((item, i) => (
+          <div key={i} className="p-3 bg-muted/30 rounded border border-border/30">
+            <p className="font-medium text-xs text-muted-foreground mb-1 flex items-center gap-1.5">
+              {item.icon}
+              {item.title}
+            </p>
+            <p className="text-xs">{item.content}</p>
+          </div>
+        ))}
+        {ai.questions_for_owner?.length > 0 && (
+          <div className="p-3 bg-muted/30 rounded border border-border/30">
+            <p className="font-medium text-xs text-muted-foreground mb-1 flex items-center gap-1.5">
+              <MessageSquareQuote className="w-3.5 h-3.5" />
+              Questions à poser au propriétaire
+            </p>
+            <ul className="list-disc list-inside space-y-0.5 text-xs">
+              {ai.questions_for_owner.map((q: string, i: number) => (
+                <li key={i}>{q}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </CollapsibleContent>
+    </Collapsible>
   );
 }
