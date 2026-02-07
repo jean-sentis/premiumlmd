@@ -79,8 +79,72 @@ Réponds UNIQUEMENT en JSON valide, sans markdown ni backticks.`,
       searchTerms: Array.isArray(parsed.searchTerms) ? parsed.searchTerms : [],
     };
   } catch {
-    console.error("[analyze-estimation] Step 1 JSON parse failed, raw:", raw.substring(0, 200));
-    return { description: raw, searchTerms: [] };
+    console.error("[analyze-estimation] Step 1 JSON parse failed, attempting repair. Raw:", raw.substring(0, 300));
+
+    // Attempt to repair common JSON issues (unescaped quotes inside strings)
+    try {
+      const cleaned = raw.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+      // Replace internal unescaped double quotes: match "key": "value with "quotes" inside"
+      // Strategy: parse field by field using regex
+      const descMatch = cleaned.match(/"description"\s*:\s*"([\s\S]*?)"\s*,\s*"searchTerms"/);
+      const termsMatch = cleaned.match(/"searchTerms"\s*:\s*\[([\s\S]*?)\]/);
+
+      const description = descMatch ? descMatch[1].replace(/"/g, '\\"').replace(/\\\\"/g, '\\"') : "";
+      let searchTerms: string[] = [];
+
+      if (termsMatch) {
+        // Extract quoted strings from the array
+        const termMatches = termsMatch[1].match(/"([^"]+)"/g);
+        if (termMatches) {
+          searchTerms = termMatches.map(t => t.replace(/^"|"$/g, ""));
+        }
+      }
+
+      if (searchTerms.length > 0) {
+        console.log("[analyze-estimation] Step 1 repaired successfully:", searchTerms);
+        return { description, searchTerms };
+      }
+    } catch (repairErr) {
+      console.error("[analyze-estimation] Step 1 repair also failed:", repairErr);
+    }
+
+    // Final fallback: extract useful terms from raw text
+    console.log("[analyze-estimation] Step 1 using text extraction fallback");
+    const fallbackTerms: string[] = [];
+
+    // Extract quoted names (signatures, artists mentioned by Gemini)
+    const quotedNames = raw.match(/(?:signé|signature|marqué|inscrit)\s*[«"']?\s*([A-ZÀ-Ü][A-Za-zà-ü\s-]{2,30})/gi) || [];
+    for (const match of quotedNames) {
+      const name = match.replace(/^(?:signé|signature|marqué|inscrit)\s*[«"']?\s*/i, "").trim();
+      if (name.length >= 3) {
+        fallbackTerms.push(`${name} artiste peintre`);
+        fallbackTerms.push(`${name} enchères estimation`);
+      }
+    }
+
+    // Extract capitalized proper names from Gemini's raw text
+    const properNames = raw.match(/[A-ZÀ-Ü]{2,}[A-Za-zà-ü]*/g) || [];
+    const stopWords = new Set(["JSON", "UNIQUEMENT", "IMPORTANT", "NOTE", "MAX", "ATTENTION", "URL", "HTTP", "HTTPS", "EUR"]);
+    for (const name of properNames) {
+      if (name.length >= 4 && !stopWords.has(name)) {
+        fallbackTerms.push(`${name} artiste enchères`);
+      }
+    }
+
+    // Also extract from searchTerms-like patterns in the raw text
+    const termPatterns = raw.match(/"([^"]{5,60})"/g) || [];
+    for (const t of termPatterns.slice(0, 5)) {
+      const cleaned = t.replace(/^"|"$/g, "");
+      if (cleaned.length >= 5 && !cleaned.includes("{") && !cleaned.includes(":")) {
+        fallbackTerms.push(cleaned);
+      }
+    }
+
+    // Deduplicate
+    const uniqueTerms = [...new Set(fallbackTerms)].slice(0, 5);
+    console.log("[analyze-estimation] Step 1 fallback terms:", uniqueTerms);
+
+    return { description: raw.substring(0, 500), searchTerms: uniqueTerms };
   }
 }
 
