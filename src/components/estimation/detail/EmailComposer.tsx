@@ -156,21 +156,32 @@ export function EmailComposer({
       />
 
       {/* Send */}
-      <div className="flex items-center justify-between">
-        <p className="text-xs text-muted-foreground">Envoi à : {sellerEmail}</p>
-        <Button
-          size="sm"
-          disabled={saving || !interest || !message.trim()}
-          onClick={() => onSend(message, interest)}
-          className="gap-2"
-        >
-          {saving ? (
-            <Loader2 className="w-3 h-3 animate-spin" />
-          ) : (
-            <Send className="w-3 h-3" />
-          )}
-          Envoyer
-        </Button>
+      <div className="space-y-2">
+        {(!interest || !message.trim()) && (
+          <p className="text-xs text-orange-700 dark:text-orange-400 bg-orange-50 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-800 rounded px-2 py-1">
+            {!interest && !message.trim()
+              ? "⚠ Sélectionnez un niveau d'intérêt et rédigez un message"
+              : !interest
+              ? "⚠ Sélectionnez un niveau d'intérêt ci-dessus"
+              : "⚠ Rédigez un message avant d'envoyer"}
+          </p>
+        )}
+        <div className="flex items-center justify-between">
+          <p className="text-xs text-muted-foreground">Envoi à : {sellerEmail}</p>
+          <Button
+            size="sm"
+            disabled={saving || !interest || !message.trim()}
+            onClick={() => onSend(message, interest)}
+            className="gap-2"
+          >
+            {saving ? (
+              <Loader2 className="w-3 h-3 animate-spin" />
+            ) : (
+              <Send className="w-3 h-3" />
+            )}
+            Envoyer
+          </Button>
+        </div>
       </div>
     </div>
   );
