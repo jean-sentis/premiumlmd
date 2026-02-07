@@ -247,35 +247,6 @@ export function AnalysisPanel({
             inline
           />
         </div>
-
-        {/* Sources justifiant l'estimation — affichées directement */}
-        {ai?.web_sources?.length > 0 && (
-          <div className="pt-2 mt-2 border-t border-border/20 space-y-1">
-            <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
-              Sources de l'estimation
-            </p>
-            {ai.web_sources.map(
-              (src: { title: string; url: string; relevance: string }, i: number) => (
-                <div key={i} className="flex items-start gap-1.5">
-                  <ExternalLink className="w-3 h-3 mt-0.5 shrink-0 text-muted-foreground/60" />
-                  <div className="min-w-0">
-                    <a
-                      href={src.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-xs text-primary hover:underline line-clamp-1"
-                    >
-                      {src.title || safeHostname(src.url)}
-                    </a>
-                    {src.relevance && (
-                      <p className="text-[11px] text-muted-foreground leading-snug">{src.relevance}</p>
-                    )}
-                  </div>
-                </div>
-              )
-            )}
-          </div>
-        )}
       </div>
 
       {/* ── Boutons détail ── */}
