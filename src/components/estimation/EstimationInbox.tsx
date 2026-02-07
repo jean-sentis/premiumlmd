@@ -5,19 +5,22 @@ import { fr } from "date-fns/locale";
 import {
   Mail,
   MailOpen,
-  Sparkles,
   Clock,
-  CheckCircle2,
-  XCircle,
-  Eye,
-  ArrowLeft,
+  Phone,
+  UserPlus,
   Loader2,
   RefreshCw,
   Search,
+  AlertTriangle,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  getInterestStyle,
+  getEffectiveInterest,
+  getOverdueInfo,
+} from "./detail/interest-config";
 
 interface EstimationRequest {
   id: string;
@@ -47,22 +50,16 @@ interface EstimationInboxProps {
   selectedId?: string;
 }
 
-const STATUS_CONFIG: Record<string, { label: string; icon: React.ElementType; color: string }> = {
-  new: { label: "Nouveau", icon: Mail, color: "bg-blue-100 text-blue-800" },
-  ai_analyzed: { label: "Analysé IA", icon: Sparkles, color: "bg-amber-100 text-amber-800" },
-  in_review: { label: "En examen", icon: Eye, color: "bg-purple-100 text-purple-800" },
-  accepted: { label: "Accepté", icon: CheckCircle2, color: "bg-green-100 text-green-800" },
-  declined: { label: "Décliné", icon: XCircle, color: "bg-red-100 text-red-800" },
-  responded: { label: "Répondu", icon: MailOpen, color: "bg-gray-100 text-gray-800" },
-};
-
 const SOURCE_LABELS: Record<string, string> = {
   estimation_form: "Estimation en ligne",
   objet_similaire: "Objet similaire",
   contact: "Contact",
 };
 
-export function EstimationInbox({ onSelectEstimation, selectedId }: EstimationInboxProps) {
+export function EstimationInbox({
+  onSelectEstimation,
+  selectedId,
+}: EstimationInboxProps) {
   const [estimations, setEstimations] = useState<EstimationRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -70,8 +67,6 @@ export function EstimationInbox({ onSelectEstimation, selectedId }: EstimationIn
 
   const fetchEstimations = async () => {
     setLoading(true);
-    // Use service role via edge function or direct query depending on access
-    // For demo, we'll query directly (admin page)
     const { data, error } = await supabase
       .from("estimation_requests")
       .select("*")
@@ -95,7 +90,16 @@ export function EstimationInbox({ onSelectEstimation, selectedId }: EstimationIn
       e.nom.toLowerCase().includes(searchQuery.toLowerCase()) ||
       e.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
       e.email.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = !statusFilter || e.status === statusFilter;
+    const matchesStatus =
+      !statusFilter ||
+      (statusFilter === "responded"
+        ? e.status === "responded"
+        : statusFilter === "overdue"
+          ? e.status !== "responded" &&
+            getOverdueInfo(e.created_at, e.status) !== null
+          : statusFilter === "pending"
+            ? e.status !== "responded"
+            : true);
     return matchesSearch && matchesStatus;
   });
 
@@ -103,6 +107,19 @@ export function EstimationInbox({ onSelectEstimation, selectedId }: EstimationIn
     if (path.startsWith("http")) return path;
     return `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/${path}`;
   };
+
+  // Count stats
+  const respondedCount = estimations.filter(
+    (e) => e.status === "responded"
+  ).length;
+  const pendingCount = estimations.filter(
+    (e) => e.status !== "responded"
+  ).length;
+  const overdueCount = estimations.filter(
+    (e) =>
+      e.status !== "responded" &&
+      getOverdueInfo(e.created_at, e.status) !== null
+  ).length;
 
   if (loading) {
     return (
@@ -120,13 +137,18 @@ export function EstimationInbox({ onSelectEstimation, selectedId }: EstimationIn
           <div className="relative flex-1">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Rechercher..."
+              placeholder="Rechercher…"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-8 h-9"
             />
           </div>
-          <Button variant="ghost" size="icon" onClick={fetchEstimations} className="h-9 w-9">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={fetchEstimations}
+            className="h-9 w-9"
+          >
             <RefreshCw className="h-4 w-4" />
           </Button>
         </div>
@@ -138,20 +160,38 @@ export function EstimationInbox({ onSelectEstimation, selectedId }: EstimationIn
           >
             Tous ({estimations.length})
           </Badge>
-          {Object.entries(STATUS_CONFIG).map(([key, config]) => {
-            const count = estimations.filter((e) => e.status === key).length;
-            if (count === 0) return null;
-            return (
-              <Badge
-                key={key}
-                variant={statusFilter === key ? "default" : "outline"}
-                className="cursor-pointer text-xs"
-                onClick={() => setStatusFilter(statusFilter === key ? null : key)}
-              >
-                {config.label} ({count})
-              </Badge>
-            );
-          })}
+          <Badge
+            variant={statusFilter === "pending" ? "default" : "outline"}
+            className="cursor-pointer text-xs"
+            onClick={() =>
+              setStatusFilter(statusFilter === "pending" ? null : "pending")
+            }
+          >
+            En attente ({pendingCount})
+          </Badge>
+          {overdueCount > 0 && (
+            <Badge
+              variant={statusFilter === "overdue" ? "default" : "outline"}
+              className="cursor-pointer text-xs text-red-600 border-red-300"
+              onClick={() =>
+                setStatusFilter(statusFilter === "overdue" ? null : "overdue")
+              }
+            >
+              <AlertTriangle className="w-3 h-3 mr-1" />
+              En retard ({overdueCount})
+            </Badge>
+          )}
+          <Badge
+            variant={statusFilter === "responded" ? "default" : "outline"}
+            className="cursor-pointer text-xs"
+            onClick={() =>
+              setStatusFilter(
+                statusFilter === "responded" ? null : "responded"
+              )
+            }
+          >
+            Répondu ({respondedCount})
+          </Badge>
         </div>
       </div>
 
@@ -164,18 +204,32 @@ export function EstimationInbox({ onSelectEstimation, selectedId }: EstimationIn
           </div>
         ) : (
           filtered.map((est) => {
-            const statusInfo = STATUS_CONFIG[est.status] || STATUS_CONFIG.new;
-            const StatusIcon = statusInfo.icon;
             const isSelected = selectedId === est.id;
-            const isUnread = est.status === "new" || est.status === "ai_analyzed";
+            const isResponded = est.status === "responded";
+            const overdue = getOverdueInfo(est.created_at, est.status);
+
+            // Interest level from CP decision or AI recommendation
+            const effectiveInterest = getEffectiveInterest(
+              est.auctioneer_decision,
+              est.ai_analysis?.recommendation
+            );
+            const interestStyle = getInterestStyle(effectiveInterest);
+
+            // Response mode icon
+            const responseMode = (est as any).response_mode;
+            const delegateTo = (est as any).delegate_to;
 
             return (
               <div
                 key={est.id}
                 onClick={() => onSelectEstimation(est)}
-                className={`flex gap-3 p-3 border-b cursor-pointer transition-colors hover:bg-muted/50 ${
-                  isSelected ? "bg-muted" : ""
-                } ${isUnread ? "bg-brand-gold/5" : ""}`}
+                className={`flex gap-3 p-3 border-b cursor-pointer transition-colors hover:bg-muted/50 border-l-4 ${
+                  interestStyle
+                    ? interestStyle.borderLeft
+                    : "border-l-transparent"
+                } ${isSelected ? "bg-muted" : ""} ${
+                  !isResponded && !isSelected ? "bg-brand-gold/5" : ""
+                }`}
               >
                 {/* Thumbnail */}
                 <div className="w-14 h-14 rounded-lg overflow-hidden flex-shrink-0 bg-muted">
@@ -195,23 +249,67 @@ export function EstimationInbox({ onSelectEstimation, selectedId }: EstimationIn
                 {/* Content */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between gap-2">
-                    <span className={`text-sm truncate ${isUnread ? "font-semibold" : ""}`}>
+                    <span
+                      className={`text-sm truncate ${
+                        !isResponded ? "font-semibold" : ""
+                      }`}
+                    >
                       {est.nom}
                     </span>
                     <span className="text-[10px] text-muted-foreground flex-shrink-0">
-                      {format(new Date(est.created_at), "dd MMM HH:mm", { locale: fr })}
+                      {format(new Date(est.created_at), "dd MMM HH:mm", {
+                        locale: fr,
+                      })}
                     </span>
                   </div>
                   <p className="text-xs text-muted-foreground truncate mt-0.5">
                     {est.description}
                   </p>
                   <div className="flex items-center gap-1.5 mt-1">
-                    <Badge variant="outline" className={`text-[10px] px-1.5 py-0 ${statusInfo.color}`}>
-                      <StatusIcon className="w-3 h-3 mr-0.5" />
-                      {statusInfo.label}
-                    </Badge>
+                    {/* Status badge */}
+                    {isResponded ? (
+                      <Badge
+                        variant="outline"
+                        className="text-[10px] px-1.5 py-0 bg-gray-100 text-gray-700"
+                      >
+                        <MailOpen className="w-3 h-3 mr-0.5" />
+                        Répondu
+                      </Badge>
+                    ) : (
+                      <Badge
+                        variant="outline"
+                        className="text-[10px] px-1.5 py-0 bg-blue-50 text-blue-700"
+                      >
+                        <Clock className="w-3 h-3 mr-0.5" />
+                        En attente
+                      </Badge>
+                    )}
+
+                    {/* Overdue badge */}
+                    {overdue && (
+                      <Badge
+                        variant="outline"
+                        className="text-[10px] px-1.5 py-0 bg-red-50 text-red-700 border-red-300"
+                      >
+                        <AlertTriangle className="w-3 h-3 mr-0.5" />+
+                        {overdue.daysOverdue}j
+                      </Badge>
+                    )}
+
+                    {/* Response mode icon */}
+                    {responseMode === "phone" && (
+                      <Phone className="w-3 h-3 text-muted-foreground" />
+                    )}
+                    {responseMode === "delegate" && (
+                      <span className="flex items-center gap-0.5 text-[10px] text-muted-foreground">
+                        <UserPlus className="w-3 h-3" />
+                        {delegateTo}
+                      </span>
+                    )}
+
+                    {/* Source */}
                     {est.source && (
-                      <span className="text-[10px] text-muted-foreground">
+                      <span className="text-[10px] text-muted-foreground ml-auto">
                         {SOURCE_LABELS[est.source] || est.source}
                       </span>
                     )}
