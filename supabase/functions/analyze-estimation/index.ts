@@ -172,6 +172,7 @@ async function runGoogleLens(
       api_key: serpApiKey,
       hl: "fr",
       country: "fr",
+      safe: "off",
     });
 
     const response = await fetch(`https://serpapi.com/search?${params.toString()}`);
@@ -262,6 +263,7 @@ async function searchWebReferences(
         hl: "fr",
         gl: "fr",
         num: "5",
+        safe: "off",
       });
 
       const response = await fetch(
@@ -911,6 +913,7 @@ serve(async (req) => {
             hl: "fr",
             gl: "fr",
             num: "5",
+            safe: "off",
           });
           const response = await fetch(`https://serpapi.com/search?${params.toString()}`);
           if (!response.ok) return [];
