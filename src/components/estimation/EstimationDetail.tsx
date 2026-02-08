@@ -112,7 +112,7 @@ export function EstimationDetail({
             "Content-Type": "application/json",
             Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
           },
-          body: JSON.stringify({ estimation_id: estimation.id }),
+          body: JSON.stringify({ estimation_id: estimation.id, force: true }),
         }
       );
       if (!resp.ok) throw new Error("Erreur d'analyse");

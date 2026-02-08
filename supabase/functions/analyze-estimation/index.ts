@@ -755,7 +755,7 @@ serve(async (req) => {
   }
 
   try {
-    const { estimation_id } = await req.json();
+    const { estimation_id, force } = await req.json();
     if (!estimation_id) {
       return new Response(JSON.stringify({ error: "estimation_id is required" }), {
         status: 400,
@@ -792,6 +792,24 @@ serve(async (req) => {
     }
 
     console.log(`[analyze-estimation] Found: ${estimation.nom} - ${estimation.description?.substring(0, 50)}`);
+
+    // ── Anti-duplicate lock: skip if analyzed less than 60s ago (unless force=true) ──
+    if (!force && estimation.ai_analyzed_at) {
+      const analyzedAt = new Date(estimation.ai_analyzed_at).getTime();
+      const now = Date.now();
+      const elapsedSeconds = (now - analyzedAt) / 1000;
+      if (elapsedSeconds < 60) {
+        console.log(`[analyze-estimation] Skipping: already analyzed ${Math.round(elapsedSeconds)}s ago (< 60s). Use force=true to override.`);
+        return new Response(JSON.stringify({ 
+          status: "skipped", 
+          reason: "already_analyzed_recently",
+          elapsed_seconds: Math.round(elapsedSeconds),
+        }), {
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
 
     const photoUrls: string[] = estimation.photo_urls || [];
 
