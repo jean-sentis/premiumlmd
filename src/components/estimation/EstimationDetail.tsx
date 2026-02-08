@@ -214,7 +214,7 @@ export function EstimationDetail({
       {/* ═══════════════════════════════════════════════════ */}
       <div className="flex-1 overflow-y-auto">
         <div className="p-4 md:p-6">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6" style={{ minHeight: "calc(30vh + 25px)" }}>
             {/* Column 1: Seller info */}
             <div className="lg:border-r lg:pr-6">
               <SellerInfoPanel estimation={current} getPhotoUrl={getPhotoUrl} />
