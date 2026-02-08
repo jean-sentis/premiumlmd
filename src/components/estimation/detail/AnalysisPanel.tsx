@@ -547,7 +547,7 @@ function LensContent({ ai, sellerPhotoUrl }: { ai: any; sellerPhotoUrl?: string 
 
           return (
             <div key={i} className="p-3 bg-muted/30 rounded-lg border border-border/30">
-              {/* Side by side images */}
+              {/* Side by side images — NEVER crop, show full image */}
               <div className="flex gap-2 mb-2">
                 {/* Seller photo */}
                 {sellerPhotoUrl && (
@@ -557,7 +557,7 @@ function LensContent({ ai, sellerPhotoUrl }: { ai: any; sellerPhotoUrl?: string 
                       <img
                         src={sellerPhotoUrl}
                         alt="Photo vendeur"
-                        className="w-full aspect-square object-cover rounded border"
+                        className="w-full max-h-48 object-contain rounded border bg-muted/20"
                       />
                     </a>
                   </div>
@@ -570,7 +570,7 @@ function LensContent({ ai, sellerPhotoUrl }: { ai: any; sellerPhotoUrl?: string 
                       <img
                         src={match.thumbnail}
                         alt={match.title}
-                        className="w-full aspect-square object-cover rounded border"
+                        className="w-full max-h-48 object-contain rounded border bg-muted/20"
                         onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
                       />
                     </a>

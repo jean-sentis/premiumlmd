@@ -84,16 +84,13 @@ Réponds UNIQUEMENT en JSON valide, sans markdown ni backticks.`,
     // Attempt to repair common JSON issues (unescaped quotes inside strings)
     try {
       const cleaned = raw.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
-      // Replace internal unescaped double quotes: match "key": "value with "quotes" inside"
-      // Strategy: parse field by field using regex
       const descMatch = cleaned.match(/"description"\s*:\s*"([\s\S]*?)"\s*,\s*"searchTerms"/);
       const termsMatch = cleaned.match(/"searchTerms"\s*:\s*\[([\s\S]*?)\]/);
 
-      const description = descMatch ? descMatch[1].replace(/"/g, '\\"').replace(/\\\\"/g, '\\"') : "";
+      const description = descMatch ? descMatch[1].replace(/"/g, '\\\\"').replace(/\\\\\\"/g, '\\\\"') : "";
       let searchTerms: string[] = [];
 
       if (termsMatch) {
-        // Extract quoted strings from the array
         const termMatches = termsMatch[1].match(/"([^"]+)"/g);
         if (termMatches) {
           searchTerms = termMatches.map(t => t.replace(/^"|"$/g, ""));
@@ -112,17 +109,15 @@ Réponds UNIQUEMENT en JSON valide, sans markdown ni backticks.`,
     console.log("[analyze-estimation] Step 1 using text extraction fallback");
     const fallbackTerms: string[] = [];
 
-    // Extract quoted names (signatures, artists mentioned by Gemini)
-    const quotedNames = raw.match(/(?:signé|signature|marqué|inscrit)\s*[«"']?\s*([A-ZÀ-Ü][A-Za-zà-ü\s-]{2,30})/gi) || [];
+    const quotedNames = raw.match(/(?:signé|signature|marqué|inscrit)\s*[«\"']?\s*([A-ZÀ-Ü][A-Za-zà-ü\s-]{2,30})/gi) || [];
     for (const match of quotedNames) {
-      const name = match.replace(/^(?:signé|signature|marqué|inscrit)\s*[«"']?\s*/i, "").trim();
+      const name = match.replace(/^(?:signé|signature|marqué|inscrit)\s*[«\"']?\s*/i, "").trim();
       if (name.length >= 3) {
         fallbackTerms.push(`${name} artiste peintre`);
         fallbackTerms.push(`${name} enchères estimation`);
       }
     }
 
-    // Extract capitalized proper names from Gemini's raw text
     const properNames = raw.match(/[A-ZÀ-Ü]{2,}[A-Za-zà-ü]*/g) || [];
     const stopWords = new Set(["JSON", "UNIQUEMENT", "IMPORTANT", "NOTE", "MAX", "ATTENTION", "URL", "HTTP", "HTTPS", "EUR"]);
     for (const name of properNames) {
@@ -131,7 +126,6 @@ Réponds UNIQUEMENT en JSON valide, sans markdown ni backticks.`,
       }
     }
 
-    // Also extract from searchTerms-like patterns in the raw text
     const termPatterns = raw.match(/"([^"]{5,60})"/g) || [];
     for (const t of termPatterns.slice(0, 5)) {
       const cleaned = t.replace(/^"|"$/g, "");
@@ -140,7 +134,6 @@ Réponds UNIQUEMENT en JSON valide, sans markdown ni backticks.`,
       }
     }
 
-    // Deduplicate
     const uniqueTerms = [...new Set(fallbackTerms)].slice(0, 5);
     console.log("[analyze-estimation] Step 1 fallback terms:", uniqueTerms);
 
@@ -166,7 +159,6 @@ async function runGoogleLens(
     searchTermsFromLens: [],
   };
 
-  // Process only the first photo (most important, saves API quota)
   const imageUrl = photoUrls[0].startsWith("http")
     ? photoUrls[0]
     : `${supabaseUrl}/storage/v1/object/public/${photoUrls[0]}`;
@@ -192,7 +184,6 @@ async function runGoogleLens(
 
     const data = await response.json();
 
-    // Extract knowledge graph / best guess
     if (data.knowledge_graph) {
       const kg = data.knowledge_graph;
       if (kg.title) {
@@ -204,7 +195,6 @@ async function runGoogleLens(
       }
     }
 
-    // Extract visual matches (the core value - what Google Lens shows)
     const visualMatches = data.visual_matches || [];
     const seenTitles = new Set<string>();
 
@@ -221,13 +211,11 @@ async function runGoogleLens(
         });
       }
 
-      // Extract search terms from the first few strong matches
       if (result.searchTermsFromLens.length < 5 && title.length > 5) {
         result.searchTermsFromLens.push(title);
       }
     }
 
-    // Also check for text results / search suggestions
     if (data.text_results) {
       for (const tr of data.text_results.slice(0, 3)) {
         if (tr.text && !result.bestGuessLabels.includes(tr.text)) {
@@ -242,7 +230,6 @@ async function runGoogleLens(
       result.searchTermsFromLens.length, "search terms",
     );
 
-    // Log top 3 matches for debugging
     for (const vm of result.visualMatches.slice(0, 3)) {
       console.log(`  → "${vm.title}" (${vm.source}) ${vm.price || ""}`);
     }
@@ -260,7 +247,6 @@ async function searchWebReferences(
 ): Promise<Array<{ title: string; url: string; description: string }>> {
   const allResults: Array<{ title: string; url: string; description: string }> = [];
 
-  // Run up to 3 search queries in parallel
   const queries = searchTerms.slice(0, 3).map((term) =>
     `${term} enchères estimation prix`
   );
@@ -305,7 +291,6 @@ async function searchWebReferences(
     allResults.push(...batch);
   }
 
-  // Deduplicate by URL
   const seen = new Set<string>();
   const unique = allResults.filter((r) => {
     if (seen.has(r.url)) return false;
@@ -327,10 +312,7 @@ async function runFinalAnalysis(
   webResults: Array<{ title: string; url: string; description: string }>,
   lensResults: LensResult | null,
 ): Promise<any> {
-  const messages: any[] = [
-    {
-      role: "system",
-      content: `Expert commissaire-priseur. Analyse croisée : photos → correspondances visuelles → recherche web.
+  const systemPrompt = `Expert commissaire-priseur. Analyse croisée : photos → correspondances visuelles → recherche web.
 
 RÈGLES IMPÉRATIVES :
 - Analyse visuelle INDÉPENDANTE d'abord, puis confronte aux sources web.
@@ -483,27 +465,39 @@ CONCISION OBLIGATOIRE :
 - Les détails longs vont dans authenticity_assessment, condition_notes, market_insights.
 - Ne JAMAIS mentionner les outils techniques utilisés (Google Vision, Google Lens, API, etc.).
 
+VÉRIFICATION FINALE OBLIGATOIRE — ÉTAPE CRITIQUE AVANT DE PRODUIRE LE JSON :
+Après avoir rempli "visual_comparisons", tu DOIS effectuer cette auto-vérification en 3 étapes :
+ÉTAPE A : Identifie quel match_index a le verdict le plus favorable ("identique" > "même_modèle" > "similaire" > "différent").
+ÉTAPE B : Vérifie que "identified_object" et "summary" sont BASÉS sur cette correspondance la plus favorable. Si tu as un "identique" ou "même_modèle" et que ton summary n'en parle pas ou cite une autre correspondance → CORRIGE IMMÉDIATEMENT avant de finaliser.
+ÉTAPE C : Vérifie que "estimated_range" utilise le prix de la correspondance "identique"/"même_modèle" (si disponible). Si tu utilises le prix d'une correspondance "similaire" ou "différent" comme référence directe → CORRIGE.
+RÈGLE ABSOLUE : Un summary qui contredit les verdicts visuels rend l'analyse INUTILE et NON PROFESSIONNELLE. Le commissaire-priseur voit les verdicts ET la synthèse côte à côte — une incohérence détruit sa confiance.
+
 JSON sans backticks :
 {
-  "identified_object": "1 ligne au conditionnel. Si plusieurs pistes, la piste principale.",
-  "alternative_identifications": ["Piste 2 : Charles VII d'après Galeries Nicolas Bourriaud — écartée car les dimensions ne correspondent pas", "Piste 3 : Grand Condé d'après Proantic — possible mais les sources web sont moins convaincantes"],
+  "identified_object": "1 ligne au conditionnel. DOIT correspondre au match 'identique'/'même_modèle' s'il y en a un.",
+  "alternative_identifications": ["Piste écartée avec explication et source"],
   "visual_comparisons": [
-    {"match_index": 0, "verdict": "similaire", "details": "Même sujet (Louis XIV à cheval) mais le socle de la correspondance est rocheux et décoré alors que celui du vendeur est plat et lisse. Tirage/modèle différent."},
-    {"match_index": 1, "verdict": "différent", "details": "Sujet différent (Charles VII, armure gothique). Non comparable."},
-    {"match_index": 2, "verdict": "identique", "details": "Même composition, même socle plat, mêmes proportions. Dimensions compatibles (53,5 cm vs 49 cm). Probablement le même modèle d'édition."}
+    {"match_index": 0, "verdict": "similaire", "details": "Différences précises observées : socle rocheux vs plat, etc."},
+    {"match_index": 1, "verdict": "différent", "details": "Non comparable car..."},
+    {"match_index": 2, "verdict": "identique", "details": "Même composition, même socle, mêmes proportions..."}
   ],
-  "summary": "2-4 phrases au conditionnel. DOIT mentionner les pistes alternatives si elles existent. Liens en markdown [texte](url). Montants avec séparateur de milliers + devise. COHÉRENT avec les verdicts visual_comparisons : ne citer comme référence directe QUE les correspondances 'identique' ou 'même_modèle'. Si vente confirmée : mentionner avec prix + lien markdown. Si contradiction : 'Sauf erreur, ...'",
-  "estimated_range": "Fourchette en € avec séparateur de milliers. Ex: 35 000 – 45 000 €",
+  "summary": "DOIT citer en priorité le match 'identique'/'même_modèle' (ici match 2) comme référence. Si aucun match n'est identique, le dire explicitement. Liens en markdown.",
+  "estimated_range": "BASÉ sur le prix du match 'identique'/'même_modèle'. Si aucun : fourchette large et prudente.",
   "authenticity_assessment": "Détails authenticité (au conditionnel)",
   "condition_notes": "Détails état",
-  "market_insights": "Contexte marché. Montants formatés (35 000 €). Liens en markdown. Distinguer ventes comparables vs autres. MENTIONNER les verdicts des comparaisons visuelles.",
-  "web_sources": [{"title":"","url":"JAMAIS de domaine à paywall (drouot, invaluable, artnet, artprice, mutualart, liveauctioneers) — utiliser le site de la maison de vente, interencheres ou barnebys","relevance":"Préciser si c'est la même œuvre, similaire ou différente"}],
+  "market_insights": "Pour CHAQUE prix cité, indiquer le verdict visuel correspondant. Seuls identique/même_modèle = référence directe de prix.",
+  "web_sources": [{"title":"","url":"JAMAIS de paywall","relevance":"même œuvre / similaire / différent"}],
   "recommendation": "très_intéressant|intéressant|à_examiner|peu_intéressant|hors_spécialité",
   "recommendation_text": "1 phrase",
   "questions_for_owner": ["2-3 questions"],
   "confidence_score": 3,
   "limitations": "1 phrase"
-}`,
+}`;
+
+  const messages: any[] = [
+    {
+      role: "system",
+      content: systemPrompt,
     },
   ];
 
@@ -578,12 +572,11 @@ JSON sans backticks :
     userContent.push({ type: "text", text: lensContext });
 
     // ── CRITICAL: Include visual match THUMBNAIL IMAGES so the AI can ACTUALLY compare visual details ──
-    // Without this, the AI cannot compare socles, poses, patinas, etc.
     const matchesWithThumbnails = lensResults.visualMatches.filter((m: any) => m.thumbnail).slice(0, 6);
     if (matchesWithThumbnails.length > 0) {
       userContent.push({
         type: "text",
-        text: "\n\n🔍 IMAGES DES CORRESPONDANCES VISUELLES — Compare CHAQUE image ci-dessous avec les photos du vendeur.\nPour CHAQUE correspondance, note les DIFFÉRENCES PRÉCISES (socle, pose, patine, dimensions apparentes, accessoires, drapés).\nSi le socle, la pose ou un détail majeur diffère → ce n'est PAS la même œuvre, c'est au mieux un modèle similaire.",
+        text: "\n\n🔍 IMAGES DES CORRESPONDANCES VISUELLES — Compare CHAQUE image ci-dessous avec les photos du vendeur.\nPour CHAQUE correspondance, note les DIFFÉRENCES PRÉCISES (socle, pose, patine, dimensions apparentes, accessoires, drapés).\nSi le socle, la pose ou un détail majeur diffère → ce n'est PAS la même œuvre, c'est au mieux un modèle similaire.\nRAPPEL : Ton summary DOIT être COHÉRENT avec tes verdicts. Si tu trouves un 'même_modèle', cite-le dans le summary !",
       });
       for (const match of matchesWithThumbnails) {
         userContent.push({
@@ -631,6 +624,9 @@ JSON sans backticks :
   if (estimation.object_category) {
     textDescription += `\nCatégorie : ${estimation.object_category}`;
   }
+
+  // FINAL REMINDER: coherence check
+  textDescription += `\n\n⚠️ RAPPEL FINAL : Après avoir rempli visual_comparisons, VÉRIFIE que ton summary et identified_object citent bien la correspondance avec le meilleur verdict (identique > même_modèle). Si tu as trouvé un "même_modèle" quelque part mais que ton summary ne le mentionne pas, CORRIGE AVANT DE RÉPONDRE.`;
 
   userContent.push({ type: "text", text: textDescription });
   messages.push({ role: "user", content: userContent });
@@ -689,24 +685,16 @@ JSON sans backticks :
     };
 
     // Strip bare/raw URLs that the AI wrote in clear text instead of markdown
-    // This catches patterns like "Source : https://...", "https://...", "(https://...)"
     const stripBareUrls = (text: string): string => {
       if (!text) return text;
-      // Remove URLs that are NOT already inside markdown links [text](url)
-      // First, protect existing markdown links by temporarily replacing them
       const mdLinks: string[] = [];
       let protected_ = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_match, linkText, url) => {
         mdLinks.push(`[${linkText}](${url})`);
         return `%%MDLINK_${mdLinks.length - 1}%%`;
       });
-      // Now strip any remaining bare URLs
-      // Pattern: optional prefix like "Source :", "Voir ", etc., then the URL
       protected_ = protected_.replace(/(?:(?:Source|Voir|Lien|Ref|Référence)\s*[:：]\s*)?https?:\/\/[^\s,;)}\]"']+/gi, "");
-      // Clean up leftover parentheses/brackets around removed URLs
       protected_ = protected_.replace(/\(\s*\)/g, "").replace(/\[\s*\]/g, "");
-      // Restore markdown links
       protected_ = protected_.replace(/%%MDLINK_(\d+)%%/g, (_match, idx) => mdLinks[parseInt(idx)]);
-      // Clean double spaces
       protected_ = protected_.replace(/  +/g, " ").trim();
       return protected_;
     };
@@ -723,6 +711,26 @@ JSON sans backticks :
     if (parsed.identified_object) parsed.identified_object = cleanTextField(parsed.identified_object);
     if (parsed.condition_notes) parsed.condition_notes = cleanTextField(parsed.condition_notes);
     if (parsed.limitations) parsed.limitations = cleanTextField(parsed.limitations);
+
+    // ── POST-PROCESSING: Verify coherence between visual_comparisons and summary ──
+    if (parsed.visual_comparisons && Array.isArray(parsed.visual_comparisons)) {
+      const bestVerdict = parsed.visual_comparisons.reduce((best: any, comp: any) => {
+        const verdictOrder: Record<string, number> = { "identique": 4, "même_modèle": 3, "similaire": 2, "différent": 1 };
+        const currentScore = verdictOrder[comp.verdict] || 0;
+        const bestScore = best ? (verdictOrder[best.verdict] || 0) : 0;
+        return currentScore > bestScore ? comp : best;
+      }, null);
+
+      if (bestVerdict) {
+        console.log(`[analyze-estimation] Best visual verdict: ${bestVerdict.verdict} (match_index: ${bestVerdict.match_index})`);
+        
+        // Log warning if no match is identique/même_modèle
+        const hasStrongMatch = parsed.visual_comparisons.some((c: any) => c.verdict === "identique" || c.verdict === "même_modèle");
+        if (!hasStrongMatch) {
+          console.log("[analyze-estimation] WARNING: No 'identique' or 'même_modèle' visual match found — estimation should be cautious");
+        }
+      }
+    }
     
     return parsed;
   } catch {
@@ -759,7 +767,6 @@ serve(async (req) => {
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const lovableApiKey = Deno.env.get("LOVABLE_API_KEY");
     const serpApiKey = Deno.env.get("SERPAPI_API_KEY");
-    // Google API keys no longer needed for search
 
     if (!lovableApiKey) {
       throw new Error("LOVABLE_API_KEY is not configured");
@@ -790,7 +797,6 @@ serve(async (req) => {
     let visualDescription = "";
     let searchTerms: string[] = [];
 
-    // Extract user text for search enrichment
     const userOwnMessage = (estimation.description || "").split("---")[0]?.trim() || "";
 
     if (photoUrls.length > 0) {
@@ -805,12 +811,10 @@ serve(async (req) => {
 
     const parallelTasks: Promise<void>[] = [];
 
-    // SerpAPI Google Lens (reverse image search — replaces Vision API)
     if (photoUrls.length > 0 && serpApiKey) {
       parallelTasks.push(
         runGoogleLens(photoUrls, supabaseUrl, serpApiKey).then((r) => {
           lensResults = r;
-          // Augment search terms with Lens labels
           if (r.bestGuessLabels.length > 0) {
             searchTerms.push(...r.bestGuessLabels.filter((l) => !searchTerms.includes(l)));
           }
@@ -820,7 +824,6 @@ serve(async (req) => {
       console.warn("[analyze-estimation] SERPAPI_API_KEY not configured, skipping Google Lens");
     }
 
-    // Google Search via SerpAPI (runs in parallel with Lens using initial terms from Step 1)
     if (searchTerms.length > 0 && serpApiKey) {
       parallelTasks.push(
         searchWebReferences(searchTerms, serpApiKey).then((r) => {
@@ -831,24 +834,19 @@ serve(async (req) => {
 
     await Promise.all(parallelTasks);
 
-    // If Lens gave us new terms and search had no results, retry with Lens labels
     if (webResults.length === 0 && lensResults && lensResults.bestGuessLabels.length > 0 && serpApiKey) {
       console.log("[analyze-estimation] Retrying SerpAPI Search with Lens labels:", lensResults.bestGuessLabels);
       webResults = await searchWebReferences(lensResults.bestGuessLabels, serpApiKey);
     }
 
     // ── EXTRA: Research leads from Google Lens visual matches ──
-    // When Lens identifies an artist, title, or object name from visual matches,
-    // run targeted web searches to verify those leads
     if (serpApiKey && lensResults && lensResults.visualMatches.length > 0) {
       const lensLeads = new Set<string>();
       
-      // Extract unique artist names, object titles from visual match titles
       for (const match of lensResults.visualMatches.slice(0, 8)) {
         const title = match.title || "";
         if (title.length < 5) continue;
         
-        // Clean common suffixes from match titles
         const cleaned = title
           .replace(/\s*[-–|]\s*(eBay|Etsy|Amazon|Pinterest|Wikipedia|Wikimedia).*$/i, "")
           .replace(/\s*[-–|]\s*\d+\s*€.*$/i, "")
@@ -859,7 +857,6 @@ serve(async (req) => {
         }
       }
       
-      // Also use bestGuessLabels as leads
       for (const label of lensResults.bestGuessLabels) {
         if (label.length >= 3) lensLeads.add(label);
       }
@@ -869,7 +866,6 @@ serve(async (req) => {
       if (lensSearchTerms.length > 0) {
         console.log("[analyze-estimation] Lens leads to research:", lensSearchTerms);
         
-        // Search specifically for auction results of Lens-identified items
         const lensAuctionTerms = lensSearchTerms.map(t => `${t} enchères adjugé vente`);
         const lensWebResults = await searchWebReferences(lensAuctionTerms, serpApiKey);
         
@@ -884,7 +880,7 @@ serve(async (req) => {
       }
     }
 
-    // ── EXTRA: Targeted auction platform searches (Drouot, Interenchères) ──
+    // ── EXTRA: Targeted auction platform searches ──
     if (serpApiKey && searchTerms.length > 0) {
       const auctionTerms = searchTerms.slice(0, 2);
       const auctionSites = [
@@ -899,7 +895,6 @@ serve(async (req) => {
       ];
       const auctionQueries: string[] = [];
       
-      // Use OR syntax to search multiple sites in fewer queries (saves API quota)
       const siteFilter = auctionSites.map(s => `site:${s}`).join(" OR ");
       for (const term of auctionTerms) {
         auctionQueries.push(`(${siteFilter}) ${term}`);
@@ -943,11 +938,10 @@ serve(async (req) => {
       console.log(`[analyze-estimation] After auction search: ${webResults.length} total web results`);
     }
 
-    // ── EXTRA: Search based on user text clues (signatures, artist names) ──
+    // ── EXTRA: Search based on user text clues ──
     if (serpApiKey && userOwnMessage.length > 5) {
       const extraTerms: string[] = [];
 
-      // Flexible regex: handles text between keyword and name, case-insensitive
       const flexiblePatterns = [
         /(?:signature|signé|marqué|poinçon|inscrit|écrit)[\s\w,''éèêëàâäùûüîïôö]*?(?:comme\s+)?([a-zà-üA-ZÀ-Ü][a-zà-ü]{2,}(?:\s+[a-zà-üA-ZÀ-Ü][a-zà-ü]{2,})*)/gi,
         /(?:artiste|par|de|auteur)\s+([A-ZÀ-Ü][a-zà-ü]{2,}(?:\s+[A-ZÀ-Ü][a-zà-ü]{2,})*)/g,
@@ -971,7 +965,6 @@ serve(async (req) => {
         }
       }
 
-      // Also check for capitalized words that could be proper names
       const commonWords = new Set(["Le", "La", "Les", "Un", "Une", "Des", "Du", "De", "En", "Au", "Il", "Je", "Mon", "Mes", "Son", "Ses", "Est", "Pas", "Très", "Comme", "Bonjour", "Merci"]);
       const capitalizedWords = userOwnMessage.match(/[A-ZÀ-Ü][a-zà-ü]{2,}/g) || [];
       for (const w of capitalizedWords) {
