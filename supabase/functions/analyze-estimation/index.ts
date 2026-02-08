@@ -339,6 +339,17 @@ RÈGLES IMPÉRATIVES :
 - PRUDENCE OBLIGATOIRE : Ne JAMAIS écrire "il s'agit de", toujours utiliser des formulations conditionnelles.
 - FIABILITÉ : Note ta confiance de 1 à 4 (0 et 5 réservés au commissaire-priseur).
 
+CORRESPONDANCES VISUELLES — RÈGLE CRITIQUE DE CROISEMENT :
+- Les correspondances visuelles (recherche d'image inversée) peuvent identifier un artiste, une œuvre ou un objet DIFFÉRENT de ton analyse visuelle initiale.
+- Tu DOIS traiter CHAQUE correspondance visuelle comme une PISTE SÉRIEUSE à explorer, surtout si elle propose une identification différente de la tienne.
+- Si une correspondance visuelle identifie l'objet comme étant de l'artiste X, et que ton analyse initiale suggère l'artiste Y :
+  → NE REJETTE PAS la piste X. Confronte les deux hypothèses.
+  → Cherche dans les résultats web si la piste X est corroborée.
+  → Présente les deux possibilités avec leur niveau de vraisemblance.
+  → Ex: "L'analyse visuelle évoque le style de Y, mais une correspondance identifie cette œuvre comme pouvant être de X. Les sources web tendent à confirmer la piste X car [raisons]."
+- Si une correspondance visuelle donne un titre d'œuvre précis, un nom d'artiste, ou une attribution spécifique, C'EST SOUVENT LA BONNE RÉPONSE. Google Lens est très performant pour identifier des œuvres connues.
+- NE SOIS PAS plus affirmatif que les preuves ne le permettent. Si ta seule analyse visuelle te donne une idée mais que Lens dit autre chose avec des sources concordantes, Lens a probablement raison.
+
 LECTURE CRITIQUE DES SOURCES — RÈGLE LA PLUS IMPORTANTE :
 - Tu DOIS lire CHAQUE source web et correspondance visuelle ATTENTIVEMENT et INTÉGRALEMENT.
 - Pour chaque résultat, détermine :
@@ -400,6 +411,8 @@ SITES À PAYWALL — RÈGLE STRICTE :
   • invaluable.com (abonnement requis pour les résultats détaillés)
   • artnet.com (base de prix payante)
   • artprice.com (abonnement requis)
+  • mutualart.com (abonnement requis)
+  • liveauctioneers.com (résultats partiels)
 - UTILISE ACTIVEMENT les données trouvées sur ces sites pour ton raisonnement et ton estimation. Ce sont des sources de premier plan.
 - MAIS ne JAMAIS inclure de lien vers ces domaines dans web_sources ni dans les liens markdown. L'utilisateur cliquera et verra "accès refusé", c'est une perte de temps.
 - STRATÉGIE OBLIGATOIRE quand tu trouves une info sur un site à paywall :
@@ -410,13 +423,23 @@ SITES À PAYWALL — RÈGLE STRICTE :
   5. Si AUCUN lien accessible n'existe : cite l'info sans lien. Ex: "vendue en septembre 2018 chez Biarritz Enchères pour 39 000 €".
   6. Ne JAMAIS mentionner le nom du site à paywall comme source visible.
 
-FORMATAGE DES TEXTES — RÈGLES STRICTES :
-- LIENS HYPERTEXTE : Ne JAMAIS écrire une URL en clair dans le texte. TOUJOURS intégrer le lien dans les mots en markdown : [texte descriptif](url). Le lien doit être DANS le texte naturel, pas à côté. Exemples :
-  BIEN : "Cette œuvre semble avoir été [adjugée 39 000 € en septembre 2018](https://example.com/lot/123) chez X."
-  BIEN : "Un exemplaire comparable a été [vendu chez Christie's en 2022](https://www.christies.com/lot/123)."
-  MAL : "Source : https://www.example.com/lot/123"
-  MAL : "Voir la vente (https://www.example.com/lot/123)"
-  MAL : "[Lien](https://...)" sans texte descriptif
+FORMATAGE DES TEXTES — RÈGLES ULTRA-STRICTES :
+- LIENS HYPERTEXTE — TOLÉRANCE ZÉRO pour les URLs en clair :
+  • INTERDIT : toute URL brute dans le texte (https://..., http://..., www...)
+  • INTERDIT : "[Lien](url)" ou "[Source](url)" — le texte du lien DOIT être descriptif
+  • INTERDIT : "Source : https://..." ou "Voir : https://..."
+  • INTERDIT : "(https://...)" entre parenthèses
+  • OBLIGATOIRE : le lien est intégré dans le texte naturel de la phrase
+  • EXEMPLES CORRECTS :
+    "Cette œuvre a été [adjugée 39 000 € en septembre 2018](https://example.com/lot/123) chez X."
+    "Un exemplaire comparable a été [proposé chez Christie's en 2022](https://www.christies.com/lot/123)."
+    "L'artiste est [référencé sur le site de la galerie Durand](https://galerie-durand.com/artistes/nom)."
+  • EXEMPLES INCORRECTS À NE JAMAIS PRODUIRE :
+    "Source : https://www.example.com" ← INTERDIT
+    "[Lien](https://www.example.com)" ← INTERDIT
+    "Voir https://www.example.com" ← INTERDIT
+    "https://www.example.com" ← INTERDIT
+    "(source: https://www.example.com)" ← INTERDIT
 - MONTANTS : Toujours séparer les milliers avec un espace et indiquer la devise. Ex: "39 000 €", "150 000 HKD (≈ 18 000 €)", "1 200 €". JAMAIS "39000€" ou "39,000€".
 - DATES : Format français "mars 2024", "12 octobre 2023". Jamais de format anglo-saxon.
 
@@ -434,7 +457,7 @@ JSON sans backticks :
   "authenticity_assessment": "Détails authenticité (au conditionnel)",
   "condition_notes": "Détails état",
   "market_insights": "Contexte marché. Montants formatés (35 000 €). Liens en markdown. Distinguer ventes comparables vs autres.",
-  "web_sources": [{"title":"","url":"JAMAIS de domaine à paywall (drouot, invaluable, artnet, artprice) — utiliser le site de la maison de vente, interencheres ou barnebys","relevance":"Préciser si c'est la même œuvre, similaire ou différente"}],
+  "web_sources": [{"title":"","url":"JAMAIS de domaine à paywall (drouot, invaluable, artnet, artprice, mutualart, liveauctioneers) — utiliser le site de la maison de vente, interencheres ou barnebys","relevance":"Préciser si c'est la même œuvre, similaire ou différente"}],
   "recommendation": "très_intéressant|intéressant|à_examiner|peu_intéressant|hors_spécialité",
   "recommendation_text": "1 phrase",
   "questions_for_owner": ["2-3 questions"],
@@ -558,12 +581,13 @@ JSON sans backticks :
     const parsed = JSON.parse(cleaned);
     
     // Post-processing: strip links to paywall domains
-    const PAYWALL_DOMAINS = ["drouot.com", "gazette-drouot", "invaluable.com", "artnet.com", "artprice.com"];
+    const PAYWALL_DOMAINS = ["drouot.com", "gazette-drouot", "invaluable.com", "artnet.com", "artprice.com", "mutualart.com", "liveauctioneers.com"];
     const isPaywalled = (url: string) => PAYWALL_DOMAINS.some(d => url?.includes(d));
     
     if (parsed.web_sources && Array.isArray(parsed.web_sources)) {
       parsed.web_sources = parsed.web_sources.filter((s: any) => !isPaywalled(s.url));
     }
+
     // Strip paywall links from markdown text fields (keep the text, remove the link)
     const stripPaywallLinks = (text: string): string => {
       if (!text) return text;
@@ -574,9 +598,42 @@ JSON sans backticks :
       }
       return text;
     };
-    if (parsed.summary) parsed.summary = stripPaywallLinks(parsed.summary);
-    if (parsed.market_insights) parsed.market_insights = stripPaywallLinks(parsed.market_insights);
-    if (parsed.authenticity_assessment) parsed.authenticity_assessment = stripPaywallLinks(parsed.authenticity_assessment);
+
+    // Strip bare/raw URLs that the AI wrote in clear text instead of markdown
+    // This catches patterns like "Source : https://...", "https://...", "(https://...)"
+    const stripBareUrls = (text: string): string => {
+      if (!text) return text;
+      // Remove URLs that are NOT already inside markdown links [text](url)
+      // First, protect existing markdown links by temporarily replacing them
+      const mdLinks: string[] = [];
+      let protected_ = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_match, linkText, url) => {
+        mdLinks.push(`[${linkText}](${url})`);
+        return `%%MDLINK_${mdLinks.length - 1}%%`;
+      });
+      // Now strip any remaining bare URLs
+      // Pattern: optional prefix like "Source :", "Voir ", etc., then the URL
+      protected_ = protected_.replace(/(?:(?:Source|Voir|Lien|Ref|Référence)\s*[:：]\s*)?https?:\/\/[^\s,;)}\]"']+/gi, "");
+      // Clean up leftover parentheses/brackets around removed URLs
+      protected_ = protected_.replace(/\(\s*\)/g, "").replace(/\[\s*\]/g, "");
+      // Restore markdown links
+      protected_ = protected_.replace(/%%MDLINK_(\d+)%%/g, (_match, idx) => mdLinks[parseInt(idx)]);
+      // Clean double spaces
+      protected_ = protected_.replace(/  +/g, " ").trim();
+      return protected_;
+    };
+
+    // Apply both cleanups to all text fields
+    const cleanTextField = (text: string): string => {
+      if (!text) return text;
+      return stripBareUrls(stripPaywallLinks(text));
+    };
+
+    if (parsed.summary) parsed.summary = cleanTextField(parsed.summary);
+    if (parsed.market_insights) parsed.market_insights = cleanTextField(parsed.market_insights);
+    if (parsed.authenticity_assessment) parsed.authenticity_assessment = cleanTextField(parsed.authenticity_assessment);
+    if (parsed.identified_object) parsed.identified_object = cleanTextField(parsed.identified_object);
+    if (parsed.condition_notes) parsed.condition_notes = cleanTextField(parsed.condition_notes);
+    if (parsed.limitations) parsed.limitations = cleanTextField(parsed.limitations);
     
     return parsed;
   } catch {
@@ -689,6 +746,53 @@ serve(async (req) => {
     if (webResults.length === 0 && lensResults && lensResults.bestGuessLabels.length > 0 && serpApiKey) {
       console.log("[analyze-estimation] Retrying SerpAPI Search with Lens labels:", lensResults.bestGuessLabels);
       webResults = await searchWebReferences(lensResults.bestGuessLabels, serpApiKey);
+    }
+
+    // ── EXTRA: Research leads from Google Lens visual matches ──
+    // When Lens identifies an artist, title, or object name from visual matches,
+    // run targeted web searches to verify those leads
+    if (serpApiKey && lensResults && lensResults.visualMatches.length > 0) {
+      const lensLeads = new Set<string>();
+      
+      // Extract unique artist names, object titles from visual match titles
+      for (const match of lensResults.visualMatches.slice(0, 8)) {
+        const title = match.title || "";
+        if (title.length < 5) continue;
+        
+        // Clean common suffixes from match titles
+        const cleaned = title
+          .replace(/\s*[-–|]\s*(eBay|Etsy|Amazon|Pinterest|Wikipedia|Wikimedia).*$/i, "")
+          .replace(/\s*[-–|]\s*\d+\s*€.*$/i, "")
+          .trim();
+        
+        if (cleaned.length >= 5 && !lensLeads.has(cleaned)) {
+          lensLeads.add(cleaned);
+        }
+      }
+      
+      // Also use bestGuessLabels as leads
+      for (const label of lensResults.bestGuessLabels) {
+        if (label.length >= 3) lensLeads.add(label);
+      }
+      
+      const lensSearchTerms = Array.from(lensLeads).slice(0, 4);
+      
+      if (lensSearchTerms.length > 0) {
+        console.log("[analyze-estimation] Lens leads to research:", lensSearchTerms);
+        
+        // Search specifically for auction results of Lens-identified items
+        const lensAuctionTerms = lensSearchTerms.map(t => `${t} enchères adjugé vente`);
+        const lensWebResults = await searchWebReferences(lensAuctionTerms, serpApiKey);
+        
+        const existingUrls = new Set(webResults.map(r => r.url));
+        for (const r of lensWebResults) {
+          if (r.url && !existingUrls.has(r.url)) {
+            webResults.push(r);
+            existingUrls.add(r.url);
+          }
+        }
+        console.log(`[analyze-estimation] After Lens lead research: ${webResults.length} total web results`);
+      }
     }
 
     // ── EXTRA: Targeted auction platform searches (Drouot, Interenchères) ──
