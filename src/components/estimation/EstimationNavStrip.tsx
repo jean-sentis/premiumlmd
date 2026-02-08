@@ -74,7 +74,10 @@ export function EstimationNavStrip({
                 {isResponded ? (
                   <MailOpen className="w-3 h-3 text-muted-foreground/30" />
                 ) : (
-                  <Mail className="w-3 h-3 text-blue-500" />
+                  <span className="relative">
+                    <Mail className="w-3 h-3 text-blue-500" />
+                    <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-blue-500 ring-1 ring-background" />
+                  </span>
                 )}
               </div>
 

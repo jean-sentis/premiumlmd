@@ -64,7 +64,7 @@ export function EstimationFilters({
           active={activeFilter === "unread"}
           onClick={() => onFilterChange("unread")}
           count={counts.unread}
-          icon={<Mail className="w-3 h-3" />}
+          icon={<span className="relative w-3 h-3 flex items-center justify-center"><Mail className="w-3 h-3" /><span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-blue-500" /></span>}
           accentClass="text-blue-700"
         >
           Non lus

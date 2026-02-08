@@ -82,7 +82,10 @@ export function EstimationCard({ estimation, onClick }: EstimationCardProps) {
             {estimation.nom}
           </span>
           {!isResponded ? (
-            <Mail className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+            <span className="relative shrink-0">
+              <Mail className="w-3.5 h-3.5 text-blue-500" />
+              <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-blue-500 ring-2 ring-card" />
+            </span>
           ) : (
             <MailOpen className="w-3.5 h-3.5 text-muted-foreground/40 shrink-0" />
           )}
