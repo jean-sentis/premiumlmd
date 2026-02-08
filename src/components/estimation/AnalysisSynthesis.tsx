@@ -22,6 +22,22 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 
+/** Parse markdown links [text](url) into React elements */
+function renderMarkdownLinks(text: string): React.ReactNode {
+  const parts = text.split(/(\[[^\]]+\]\([^)]+\))/g);
+  return parts.map((part, i) => {
+    const match = part.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
+    if (match) {
+      return (
+        <a key={i} href={match[2]} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+          {match[1]}
+        </a>
+      );
+    }
+    return <span key={i}>{part}</span>;
+  });
+}
+
 const RECOMMENDATION_COLORS: Record<string, string> = {
   "très_intéressant": "bg-green-100 text-green-800 border-green-300",
   "intéressant": "bg-emerald-100 text-emerald-800 border-emerald-300",
@@ -115,7 +131,7 @@ export function AnalysisSynthesis({ ai, reanalyzing, onReanalyze }: AnalysisSynt
 
           {/* Résumé */}
           {ai.summary && (
-            <p className="text-muted-foreground leading-relaxed">{ai.summary}</p>
+            <p className="text-muted-foreground leading-relaxed">{renderMarkdownLinks(ai.summary)}</p>
           )}
 
           {/* ── Détails (repliables) ── */}
@@ -250,7 +266,7 @@ function DetailSection({ ai }: { ai: any }) {
               {item.icon}
               {item.title}
             </p>
-            <p className="text-xs">{item.content}</p>
+            <p className="text-xs">{renderMarkdownLinks(item.content)}</p>
           </div>
         ))}
         {ai.questions_for_owner?.length > 0 && (

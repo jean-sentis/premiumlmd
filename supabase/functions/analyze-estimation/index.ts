@@ -381,7 +381,8 @@ TRAITEMENT DES NOMS MENTIONNÉS PAR LE PROPRIÉTAIRE :
 VENTE PUBLIQUE CONFIRMÉE — SIGNALEMENT PRIORITAIRE :
 - Si tu trouves dans les sources web ou les correspondances visuelles une vente en enchères publiques CONFIRMÉE de ce qui semble être la MÊME œuvre/objet (même artiste, même titre, même visuel) :
   → MENTIONNE-LE IMMÉDIATEMENT dans "summary" avec le prix, la maison de vente, la date si disponible.
-  → Ajoute le lien direct vers cette source dans "summary" entre parenthèses. Ex: "Cette œuvre semble avoir été adjugée 39 000 € chez Biarritz Enchères (voir [lien])."
+  → Ajoute le lien direct vers cette source dans "summary" en format MARKDOWN : [texte descriptif](url). Ex: "Cette œuvre semble avoir été [adjugée 39 000 € chez Biarritz Enchères](https://www.example.com/lot/123) en mars 2024."
+  → Ne JAMAIS écrire l'URL en clair dans le texte. Toujours la masquer dans un lien markdown sur un mot ou groupe de mots.
   → C'est une information critique qui fait gagner du temps au commissaire-priseur. Ne la cache pas dans market_insights.
 - Plus la vente est RÉCENTE, plus elle est pertinente. Mentionne la date.
 
@@ -389,25 +390,35 @@ DÉTECTION DE CONTRADICTIONS AVEC LE DESCRIPTIF VENDEUR :
 - Lis ATTENTIVEMENT le descriptif du vendeur/propriétaire (provenance, durée de possession, histoire de l'objet).
 - Si tu trouves une vente récente en enchères publiques de ce qui semble être la MÊME œuvre, et que le vendeur dit par exemple "je l'ai chez moi depuis 30 ans" ou "hérité de ma grand-mère", il y a une CONTRADICTION potentielle.
 - Dans ce cas, commence ta remarque dans "summary" par : "Sauf erreur, " suivi de l'explication de la contradiction.
-  Ex: "Sauf erreur, cette œuvre semble avoir été vendue aux enchères chez X en 2022 pour Y €, ce qui contredirait la provenance déclarée par le propriétaire."
+  Ex: "Sauf erreur, cette œuvre semble avoir été [vendue aux enchères chez X en 2022 pour 39 000 €](url), ce qui contredirait la provenance déclarée par le propriétaire."
 - Ne fais ce signalement QUE si la correspondance visuelle est très forte (même œuvre, pas juste le même artiste).
 - Ce n'est pas une accusation, c'est un signalement factuel et mesuré pour aider le commissaire-priseur.
 
+SOURCES INACCESSIBLES — RÈGLE STRICTE :
+- Les liens vers drouot.com (gazette-drouot.com, drouot.com/resultat, etc.) sont INACCESSIBLES pour les humains (paywall, accès réservé). Ne JAMAIS les inclure dans web_sources ni dans les liens de la synthèse.
+- Privilégier les liens vers : interencheres.com, invaluable.com, artnet.com, barnebys.com, mutualart.com, sites de maisons de vente directement.
+- Si la seule source trouvée est Drouot, mentionner l'information SANS le lien et indiquer la maison de vente pour que le commissaire-priseur puisse vérifier autrement.
+
+FORMATAGE DES TEXTES — RÈGLES STRICTES :
+- LIENS : Ne JAMAIS écrire une URL en clair dans le texte. Toujours utiliser le format markdown [texte](url). Le texte du lien doit être descriptif (nom de la maison de vente, "voir la vente", etc.).
+- MONTANTS : Toujours séparer les milliers avec un espace insécable et indiquer la devise. Ex: "39 000 €", "150 000 HKD (≈ 18 000 €)", "1 200 €". JAMAIS "39000€" ou "39,000€".
+- DATES : Format français "mars 2024", "12 octobre 2023". Jamais de format anglo-saxon.
+
 CONCISION OBLIGATOIRE :
 - "identified_object" = UNE seule ligne (type, matériau, style/époque). Au conditionnel.
-- "summary" = 2-4 phrases courtes. Au conditionnel. MAIS si une vente confirmée ou une contradiction est détectée, ajoute 1-2 phrases supplémentaires pour le signaler clairement.
+- "summary" = 2-4 phrases courtes. Au conditionnel. MAIS si une vente confirmée ou une contradiction est détectée, ajoute 1-2 phrases supplémentaires pour le signaler clairement avec lien markdown.
 - Les détails longs vont dans authenticity_assessment, condition_notes, market_insights.
 - Ne JAMAIS mentionner les outils techniques utilisés (Google Vision, Google Lens, API, etc.).
 
 JSON sans backticks :
 {
   "identified_object": "1 ligne au conditionnel",
-  "summary": "2-4 phrases au conditionnel. Si vente confirmée trouvée : mentionner avec prix + lien. Si contradiction avec descriptif vendeur : commencer par 'Sauf erreur, ...'",
-  "estimated_range": "Fourchette en € UNIQUEMENT basée sur des ventes COMPARABLES (même œuvre ou très similaire)",
+  "summary": "2-4 phrases au conditionnel. Liens en markdown [texte](url). Montants avec séparateur de milliers + devise. Si vente confirmée : mentionner avec prix + lien markdown. Si contradiction : 'Sauf erreur, ...'",
+  "estimated_range": "Fourchette en € avec séparateur de milliers. Ex: 35 000 – 45 000 €",
   "authenticity_assessment": "Détails authenticité (au conditionnel)",
   "condition_notes": "Détails état",
-  "market_insights": "Contexte marché : distinguer ventes COMPARABLES vs autres ventes du même artiste. Prix originaux + devise + conversion €",
-  "web_sources": [{"title":"","url":"","relevance":"Préciser si c'est la même œuvre, une œuvre similaire, ou une œuvre différente du même artiste"}],
+  "market_insights": "Contexte marché. Montants formatés (35 000 €). Liens en markdown. Distinguer ventes comparables vs autres.",
+  "web_sources": [{"title":"","url":"JAMAIS drouot.com","relevance":"Préciser si c'est la même œuvre, une œuvre similaire, ou une œuvre différente du même artiste"}],
   "recommendation": "très_intéressant|intéressant|à_examiner|peu_intéressant|hors_spécialité",
   "recommendation_text": "1 phrase",
   "questions_for_owner": ["2-3 questions"],
@@ -645,13 +656,12 @@ serve(async (req) => {
     if (serpApiKey && searchTerms.length > 0) {
       const auctionTerms = searchTerms.slice(0, 2);
       const auctionSites = [
-        "drouot.com",
         "interencheres.com",
-        "gazette-drouot.com",
         "invaluable.com",
         "artnet.com",
         "barnebys.com",
         "artprice.com",
+        "mutualart.com",
       ];
       const auctionQueries: string[] = [];
       
@@ -739,8 +749,8 @@ serve(async (req) => {
       for (const name of extractedNames) {
         extraTerms.push(`${name} artiste enchères`);
         extraTerms.push(`${name} artiste sculpture peinture`);
-        extraTerms.push(`site:drouot.com ${name}`);
         extraTerms.push(`site:interencheres.com ${name}`);
+        extraTerms.push(`site:invaluable.com ${name}`);
       }
 
       if (extraTerms.length > 0) {
