@@ -7,20 +7,30 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-// ── Step 1: Ask Gemini for a visual description + search terms ──
-async function extractVisualSearchTerms(
+// ══════════════════════════════════════════════════════════════════
+// STEP 1: Visual triage + search terms (Gemini Flash)
+// Returns object classification, confidence, AND search terms
+// ══════════════════════════════════════════════════════════════════
+interface TriageResult {
+  description: string;
+  searchTerms: string[];
+  is_art_or_antique: boolean;
+  triage_confidence: "high" | "medium" | "low";
+  object_type: string;
+}
+
+async function extractVisualSearchTermsWithTriage(
   photoUrls: string[],
   supabaseUrl: string,
   lovableApiKey: string,
   userDescription?: string,
-): Promise<{ description: string; searchTerms: string[] }> {
+): Promise<TriageResult> {
   const imageContent: any[] = [];
   for (const url of photoUrls) {
     const fullUrl = url.startsWith("http") ? url : `${supabaseUrl}/storage/v1/object/public/${url}`;
     imageContent.push({ type: "image_url", image_url: { url: fullUrl } });
   }
 
-  // Include user description context if available
   const userContext = userDescription
     ? `\n\nLe propriétaire a fourni cette description : "${userDescription}"\nTiens-en compte pour affiner les termes de recherche (noms propres, signatures mentionnées, artistes, matériaux, époques, etc.).`
     : "";
@@ -28,26 +38,30 @@ async function extractVisualSearchTerms(
   const messages = [
     {
       role: "system",
-      content: `Tu es un expert en art et antiquités. Analyse les photos et produis un JSON avec :
+      content: `Tu es un expert en art, antiquités et objets de collection. Analyse les photos et produis un JSON avec :
 - "description" : description visuelle factuelle de l'objet (type, style, matériaux, signatures/poinçons visibles, époque probable). 3-4 phrases maximum.
-- "searchTerms" : un tableau de 3 à 5 termes de recherche web pertinents pour identifier cet objet ou trouver des objets similaires sur des sites d'enchères. Chaque terme doit être une combinaison utile (ex: "vase art nouveau Gallé", "pendule bronze Empire", "huile sur toile paysage Barbizon"). Inclus des variantes si pertinent (nom d'artiste potentiel, technique, style).
-- Si le propriétaire mentionne un nom d'artiste, une signature ou un poinçon, INCLURE ce nom dans les termes de recherche même si tu ne le reconnais pas visuellement.
+- "searchTerms" : un tableau de 3 à 5 termes de recherche web pertinents pour identifier cet objet ou trouver des objets similaires sur des sites d'enchères.
+- "is_art_or_antique" : boolean. TRUE si l'objet est une œuvre d'art (peinture, sculpture, estampe, lithographie), une antiquité (meuble ancien, objet d'art décoratif ancien), un bijou de valeur, une montre de collection, du vin/spiritueux rare, ou tout objet nécessitant une expertise spécialisée pour être correctement identifié et estimé. FALSE si c'est un objet courant facilement identifiable (électroménager, vélo, imprimante, meuble moderne IKEA, vêtements courants, jouets modernes, etc.).
+- "triage_confidence" : "high" | "medium" | "low". Ta confiance dans ta capacité à identifier et estimer cet objet UNIQUEMENT à partir des photos :
+  - "high" = objet clairement identifiable, tu peux donner une estimation fiable sans recherche supplémentaire (ex: un appareil électronique courant, un meuble de série reconnaissable).
+  - "medium" = tu as une bonne idée de ce que c'est mais des détails restent incertains (provenance, authenticité, artiste exact).
+  - "low" = tu as besoin de recherches visuelles ou web pour identifier correctement cet objet.
+- "object_type" : type d'objet en 2-3 mots (ex: "sculpture bronze", "huile sur toile", "montre Rolex", "imprimante laser", "vélo route").
+
+IMPORTANT : Sois HONNÊTE sur ta confiance. Si tu vois une signature illisible, une marque inconnue, ou un style que tu ne peux pas dater précisément → "medium" ou "low".
 
 Réponds UNIQUEMENT en JSON valide, sans markdown ni backticks.`,
     },
     {
       role: "user",
       content: [
-        { type: "text", text: `Analyse ces photos et génère les termes de recherche :${userContext}` },
+        { type: "text", text: `Analyse ces photos et classifie l'objet :${userContext}` },
         ...imageContent,
       ],
     },
   ];
 
-  console.log("[analyze-estimation] Step 1: Extracting visual search terms...");
-  if (userDescription) {
-    console.log("[analyze-estimation] Step 1: Including user description context");
-  }
+  console.log("[analyze-estimation] Step 1: Triage + search terms...");
 
   const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
     method: "POST",
@@ -64,7 +78,7 @@ Réponds UNIQUEMENT en JSON valide, sans markdown ni backticks.`,
   if (!response.ok) {
     const errText = await response.text();
     console.error("[analyze-estimation] Step 1 failed:", response.status, errText);
-    return { description: "", searchTerms: [] };
+    return { description: "", searchTerms: [], is_art_or_antique: true, triage_confidence: "low", object_type: "inconnu" };
   }
 
   const data = await response.json();
@@ -73,42 +87,43 @@ Réponds UNIQUEMENT en JSON valide, sans markdown ni backticks.`,
   try {
     const cleaned = raw.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
     const parsed = JSON.parse(cleaned);
-    console.log("[analyze-estimation] Step 1 result:", parsed.searchTerms);
+    console.log("[analyze-estimation] Step 1 triage:", {
+      is_art: parsed.is_art_or_antique,
+      confidence: parsed.triage_confidence,
+      type: parsed.object_type,
+      terms: parsed.searchTerms,
+    });
     return {
       description: parsed.description || "",
       searchTerms: Array.isArray(parsed.searchTerms) ? parsed.searchTerms : [],
+      is_art_or_antique: parsed.is_art_or_antique !== false, // default to true if missing
+      triage_confidence: ["high", "medium", "low"].includes(parsed.triage_confidence) ? parsed.triage_confidence : "low",
+      object_type: parsed.object_type || "inconnu",
     };
   } catch {
-    console.error("[analyze-estimation] Step 1 JSON parse failed, attempting repair. Raw:", raw.substring(0, 300));
+    console.error("[analyze-estimation] Step 1 JSON parse failed. Raw:", raw.substring(0, 300));
 
-    // Attempt to repair common JSON issues (unescaped quotes inside strings)
+    // Attempt repair
     try {
       const cleaned = raw.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
       const descMatch = cleaned.match(/"description"\s*:\s*"([\s\S]*?)"\s*,\s*"searchTerms"/);
       const termsMatch = cleaned.match(/"searchTerms"\s*:\s*\[([\s\S]*?)\]/);
 
-      const description = descMatch ? descMatch[1].replace(/"/g, '\\\\"').replace(/\\\\\\"/g, '\\\\"') : "";
+      const description = descMatch ? descMatch[1] : "";
       let searchTerms: string[] = [];
-
       if (termsMatch) {
         const termMatches = termsMatch[1].match(/"([^"]+)"/g);
         if (termMatches) {
           searchTerms = termMatches.map(t => t.replace(/^"|"$/g, ""));
         }
       }
-
       if (searchTerms.length > 0) {
-        console.log("[analyze-estimation] Step 1 repaired successfully:", searchTerms);
-        return { description, searchTerms };
+        return { description, searchTerms, is_art_or_antique: true, triage_confidence: "low", object_type: "inconnu" };
       }
-    } catch (repairErr) {
-      console.error("[analyze-estimation] Step 1 repair also failed:", repairErr);
-    }
+    } catch {}
 
-    // Final fallback: extract useful terms from raw text
-    console.log("[analyze-estimation] Step 1 using text extraction fallback");
+    // Final fallback
     const fallbackTerms: string[] = [];
-
     const quotedNames = raw.match(/(?:signé|signature|marqué|inscrit)\s*[«\"']?\s*([A-ZÀ-Ü][A-Za-zà-ü\s-]{2,30})/gi) || [];
     for (const match of quotedNames) {
       const name = match.replace(/^(?:signé|signature|marqué|inscrit)\s*[«\"']?\s*/i, "").trim();
@@ -117,7 +132,6 @@ Réponds UNIQUEMENT en JSON valide, sans markdown ni backticks.`,
         fallbackTerms.push(`${name} enchères estimation`);
       }
     }
-
     const properNames = raw.match(/[A-ZÀ-Ü]{2,}[A-Za-zà-ü]*/g) || [];
     const stopWords = new Set(["JSON", "UNIQUEMENT", "IMPORTANT", "NOTE", "MAX", "ATTENTION", "URL", "HTTP", "HTTPS", "EUR"]);
     for (const name of properNames) {
@@ -125,23 +139,14 @@ Réponds UNIQUEMENT en JSON valide, sans markdown ni backticks.`,
         fallbackTerms.push(`${name} artiste enchères`);
       }
     }
-
-    const termPatterns = raw.match(/"([^"]{5,60})"/g) || [];
-    for (const t of termPatterns.slice(0, 5)) {
-      const cleaned = t.replace(/^"|"$/g, "");
-      if (cleaned.length >= 5 && !cleaned.includes("{") && !cleaned.includes(":")) {
-        fallbackTerms.push(cleaned);
-      }
-    }
-
     const uniqueTerms = [...new Set(fallbackTerms)].slice(0, 5);
-    console.log("[analyze-estimation] Step 1 fallback terms:", uniqueTerms);
-
-    return { description: raw.substring(0, 500), searchTerms: uniqueTerms };
+    return { description: raw.substring(0, 500), searchTerms: uniqueTerms, is_art_or_antique: true, triage_confidence: "low", object_type: "inconnu" };
   }
 }
 
-// ── Step 1b: SerpAPI Google Lens (reverse image search) ──
+// ══════════════════════════════════════════════════════════════════
+// STEP 1b: SerpAPI Google Lens (reverse image search)
+// ══════════════════════════════════════════════════════════════════
 interface LensResult {
   bestGuessLabels: string[];
   visualMatches: Array<{ title: string; link: string; source: string; thumbnail?: string; price?: string }>;
@@ -241,7 +246,9 @@ async function runGoogleLens(
   return result;
 }
 
-// ── Step 2: Search the web using SerpAPI Google Search ──
+// ══════════════════════════════════════════════════════════════════
+// STEP 2: Search the web using SerpAPI Google Search
+// ══════════════════════════════════════════════════════════════════
 async function searchWebReferences(
   searchTerms: string[],
   serpApiKey: string,
@@ -304,7 +311,9 @@ async function searchWebReferences(
   return unique.slice(0, 10);
 }
 
-// ── Step 3: Final AI analysis with cross-referenced sources ──
+// ══════════════════════════════════════════════════════════════════
+// STEP 3: Final AI analysis with cross-referenced sources
+// ══════════════════════════════════════════════════════════════════
 async function runFinalAnalysis(
   estimation: any,
   photoUrls: string[],
@@ -313,8 +322,17 @@ async function runFinalAnalysis(
   visualDescription: string,
   webResults: Array<{ title: string; url: string; description: string }>,
   lensResults: LensResult | null,
+  analysisDepth: number,
 ): Promise<any> {
+  // Adapt system prompt based on analysis depth
+  const depthContext = analysisDepth === 1
+    ? `\nNOTE : Cette analyse est de NIVEAU 1 (vision uniquement, sans recherche web). Tes estimations sont basées UNIQUEMENT sur ton expertise visuelle. Sois transparent : si tu manques d'éléments pour estimer précisément, dis-le clairement et indique ce qu'une recherche approfondie pourrait apporter.`
+    : analysisDepth === 2
+    ? `\nNOTE : Cette analyse est de NIVEAU 2 (vision + correspondances visuelles Google Lens). Tu disposes de correspondances visuelles mais PAS de recherche web détaillée. Si les correspondances ne suffisent pas à confirmer l'identification, indique qu'une recherche approfondie (niveau 3) serait utile.`
+    : "";
+
   const systemPrompt = `Expert commissaire-priseur. Analyse croisée : photos → correspondances visuelles → recherche web.
+${depthContext}
 
 RÈGLES IMPÉRATIVES :
 - Analyse visuelle INDÉPENDANTE d'abord, puis confronte aux sources web.
@@ -360,134 +378,75 @@ DIMENSIONS DU VENDEUR — RÈGLE ANTI-ABSURDITÉ CRITIQUE :
   1. Vérifie si la référence mentionne des dimensions.
   2. Compare ces dimensions à celles du vendeur.
   3. Si l'écart dépasse 20% sur UNE dimension ou 30% en volume global, cette référence ne peut PAS être "la même œuvre". C'est au mieux un modèle similaire dans une taille différente.
-- EXEMPLES D'ERREURS À NE JAMAIS COMMETTRE :
-  → Le vendeur dit "49 cm de haut" et tu cites une référence à 119 cm de haut → ABSURDE. C'est un objet complètement différent en taille. Le commissaire-priseur perdrait toute crédibilité.
-  → Le vendeur dit "30 x 40 cm" et tu cites un tableau de "130 x 180 cm" → ce n'est PAS la même œuvre.
-- Quand les dimensions diffèrent significativement, MENTIONNE-LE EXPLICITEMENT : "Attention, la référence de vente chez X concerne un exemplaire de 119 cm, soit plus du double de l'objet soumis (49 cm). Il s'agit donc d'un modèle de taille différente, et le prix n'est pas directement comparable."
-- Les dimensions impactent FORTEMENT la valeur. Un bronze de 49 cm et un bronze de 119 cm du même sujet peuvent avoir un rapport de prix de 1 à 10 ou plus.
-- Si le vendeur n'a pas fourni de dimensions, DEMANDE-LES dans "questions_for_owner". C'est une information essentielle.
-- Ne JAMAIS ignorer silencieusement un écart de dimensions. C'est une faute professionnelle grave.
+- Quand les dimensions diffèrent significativement, MENTIONNE-LE EXPLICITEMENT.
+- Les dimensions impactent FORTEMENT la valeur.
+- Si le vendeur n'a pas fourni de dimensions, DEMANDE-LES dans "questions_for_owner".
+- Ne JAMAIS ignorer silencieusement un écart de dimensions.
 
 LECTURE CRITIQUE DES SOURCES — RÈGLE LA PLUS IMPORTANTE :
 - Tu DOIS lire CHAQUE source web et correspondance visuelle ATTENTIVEMENT et INTÉGRALEMENT.
 - Pour chaque résultat, détermine :
-  1. Est-ce la MÊME œuvre / le même objet que celui soumis ? (même artiste, même titre, mêmes dimensions, même technique)
-  2. Ou est-ce une AUTRE œuvre du même artiste ? (différent titre, différentes dimensions, différente période)
+  1. Est-ce la MÊME œuvre / le même objet que celui soumis ?
+  2. Ou est-ce une AUTRE œuvre du même artiste ?
   3. Ou est-ce un objet SIMILAIRE d'un autre artiste ?
-- SEULES les ventes de la MÊME œuvre ou d'œuvres très comparables (même artiste, même technique, dimensions similaires, même période) sont pertinentes pour l'estimation.
-- Les records de vente d'un artiste pour ses œuvres MAJEURES ne s'appliquent PAS à toutes ses œuvres. Un artiste peut avoir des œuvres à 500 € et d'autres à 500 000 €.
-- Si une source mentionne une vente à 39 000 € pour la MÊME œuvre, cette donnée prime sur des ventes à 200 000 € d'AUTRES œuvres du même artiste.
-- CITE EXPLICITEMENT dans "market_insights" quelles ventes sont comparables et lesquelles ne le sont pas. Ex: "Vente comparable : même œuvre adjugée 39 000 € chez X. À ne pas confondre avec [autre œuvre majeure] adjugée 200 000 € chez Y."
+- SEULES les ventes de la MÊME œuvre ou d'œuvres très comparables sont pertinentes pour l'estimation.
+- CITE EXPLICITEMENT dans "market_insights" quelles ventes sont comparables et lesquelles ne le sont pas.
 - En cas de doute sur la comparabilité, PRENDS LA FOURCHETTE BASSE.
 
 HIÉRARCHIE DE FIABILITÉ DES PRIX — RÈGLE CRITIQUE :
-- Les prix de vente réels (« vendu », « adjugé », « adjugé à », « vendu frais inclus », « hammer price », « sold for ») sont les données LES PLUS FIABLES. Ils priment sur TOUT le reste.
+- Les prix de vente réels (« vendu », « adjugé ») sont les données LES PLUS FIABLES.
 - HIÉRARCHIE (du plus fiable au moins fiable) :
-  1. VENTE CONFIRMÉE : « adjugé X € », « vendu X € », « sold for », « hammer price » → PRIORITÉ ABSOLUE, utiliser directement pour l'estimation.
-  2. ESTIMATION DE MAISON DE VENTE : « estimé X-Y € », « estimate » → Fiable mais indicatif.
-  3. PRIX DEMANDÉ EN GALERIE : « prix : X € », « asking price » → Moins fiable, souvent supérieur au prix de marché.
-  4. PRIX SUR MARKETPLACE (eBay, Etsy, 1stDibs) : « listed at » → Peu fiable, souvent très gonflé.
-  5. ESTIMATION ARTPRICE / INDEX : → Utile comme contexte général mais pas comme référence directe.
-- Quand une source dit "adjugé" ou "vendu" avec un prix, c'est un FAIT. Base ton estimation dessus en priorité.
-- Quand une source dit juste un prix sans contexte de vente, c'est probablement un prix demandé (moins fiable).
-- MENTIONNE dans "market_insights" le type de chaque prix cité (adjugé, estimé, demandé).
+  1. VENTE CONFIRMÉE : « adjugé X € », « vendu X € » → PRIORITÉ ABSOLUE.
+  2. ESTIMATION DE MAISON DE VENTE : « estimé X-Y € » → Fiable mais indicatif.
+  3. PRIX DEMANDÉ EN GALERIE → Moins fiable, souvent supérieur au prix de marché.
+  4. PRIX SUR MARKETPLACE (eBay, Etsy, 1stDibs) → Peu fiable, souvent gonflé.
+  5. ESTIMATION ARTPRICE / INDEX → Contexte général.
 
 CONVERSION DES DEVISES — RÈGLE CRITIQUE :
-- Les sources web et correspondances visuelles peuvent afficher des prix en TOUTES DEVISES : HKD (dollar de Hong Kong), USD, GBP, CNY, JPY, CHF, AUD, etc.
-- Tu DOIS identifier la devise de chaque prix trouvé et le CONVERTIR en euros (€) avant de l'utiliser.
-- Taux de conversion approximatifs à utiliser : 1 HKD ≈ 0.12 €, 1 USD ≈ 0.92 €, 1 GBP ≈ 1.16 €, 1 CHF ≈ 1.04 €, 1 CNY ≈ 0.13 €, 1 JPY ≈ 0.006 €, 1 AUD ≈ 0.60 €, 1 CAD ≈ 0.68 €.
-- ATTENTION : Un prix de 100 000 HKD ≈ 12 000 €, pas 100 000 €. Ne JAMAIS confondre les devises.
+- Taux approximatifs : 1 HKD ≈ 0.12 €, 1 USD ≈ 0.92 €, 1 GBP ≈ 1.16 €, 1 CHF ≈ 1.04 €, 1 CNY ≈ 0.13 €, 1 JPY ≈ 0.006 €.
 - Dans "estimated_range", TOUJOURS donner la fourchette en EUROS (€).
-- Dans "market_insights", mentionner les prix originaux avec leur devise ET leur équivalent en euros. Ex: "Adjugé 150 000 HKD (≈ 18 000 €) chez Christie's Hong Kong".
-- Si la devise d'un prix n'est pas claire, le signaler explicitement.
 
 TRAITEMENT DES NOMS MENTIONNÉS PAR LE PROPRIÉTAIRE :
-- Si le propriétaire mentionne un nom d'artiste, une signature ou un poinçon, tu DOIS en tenir compte même si les correspondances visuelles ne confirment pas ce nom.
-- Si le nom mentionné N'APPARAÎT PAS dans les résultats visuels ou web : signale-le explicitement. Ex: "Le propriétaire mentionne une signature 'Claudio', mais aucune correspondance n'a été trouvée dans les bases d'enchères consultées. Il pourrait s'agir d'un artiste peu référencé ou d'une lecture incertaine."
-- Inclus le nom mentionné dans tes questions au propriétaire (photo de la signature, orthographe exacte, etc.).
+- Si le propriétaire mentionne un nom d'artiste, tu DOIS en tenir compte même si les correspondances visuelles ne confirment pas ce nom.
 - Ne JAMAIS ignorer silencieusement un nom fourni par le propriétaire.
 
 VENTE PUBLIQUE CONFIRMÉE — SIGNALEMENT PRIORITAIRE :
-- Si tu trouves dans les sources web ou les correspondances visuelles une vente en enchères publiques CONFIRMÉE de ce qui semble être la MÊME œuvre/objet (même artiste, même titre, même visuel) :
-  → MENTIONNE-LE IMMÉDIATEMENT dans "summary" avec le prix, la maison de vente, la date si disponible.
-  → Ajoute le lien direct vers cette source dans "summary" en format MARKDOWN : [texte descriptif](url). Ex: "Cette œuvre semble avoir été [adjugée 39 000 € chez Biarritz Enchères](https://www.example.com/lot/123) en mars 2024."
-  → Ne JAMAIS écrire l'URL en clair dans le texte. Toujours la masquer dans un lien markdown sur un mot ou groupe de mots.
-  → C'est une information critique qui fait gagner du temps au commissaire-priseur. Ne la cache pas dans market_insights.
-- Plus la vente est RÉCENTE, plus elle est pertinente. Mentionne la date.
+- Si tu trouves une vente confirmée de la MÊME œuvre → MENTIONNE-LE IMMÉDIATEMENT dans "summary" avec lien markdown.
 
 DÉTECTION DE CONTRADICTIONS AVEC LE DESCRIPTIF VENDEUR :
-- Lis ATTENTIVEMENT le descriptif du vendeur/propriétaire (provenance, durée de possession, histoire de l'objet).
-- Si tu trouves une vente récente en enchères publiques de ce qui semble être la MÊME œuvre, et que le vendeur dit par exemple "je l'ai chez moi depuis 30 ans" ou "hérité de ma grand-mère", il y a une CONTRADICTION potentielle.
-- Dans ce cas, commence ta remarque dans "summary" par : "Sauf erreur, " suivi de l'explication de la contradiction.
-  Ex: "Sauf erreur, cette œuvre semble avoir été [vendue aux enchères chez X en 2022 pour 39 000 €](url), ce qui contredirait la provenance déclarée par le propriétaire."
-- Ne fais ce signalement QUE si la correspondance visuelle est très forte (même œuvre, pas juste le même artiste).
-- Ce n'est pas une accusation, c'est un signalement factuel et mesuré pour aider le commissaire-priseur.
+- Commence par "Sauf erreur, " si tu trouves une contradiction.
 
 SITES À PAYWALL — RÈGLE STRICTE :
-- Certains sites sont des mines d'or pour l'ANALYSE mais leurs liens sont INACCESSIBLES aux humains (paywall, abonnement requis). Liste des domaines bloqués :
-  • drouot.com, gazette-drouot.com (paywall Drouot)
-  • invaluable.com (abonnement requis pour les résultats détaillés)
-  • artnet.com (base de prix payante)
-  • artprice.com (abonnement requis)
-  • mutualart.com (abonnement requis)
-  • liveauctioneers.com (résultats partiels)
-- UTILISE ACTIVEMENT les données trouvées sur ces sites pour ton raisonnement et ton estimation. Ce sont des sources de premier plan.
-- MAIS ne JAMAIS inclure de lien vers ces domaines dans web_sources ni dans les liens markdown. L'utilisateur cliquera et verra "accès refusé", c'est une perte de temps.
-- STRATÉGIE OBLIGATOIRE quand tu trouves une info sur un site à paywall :
-  1. Note le NOM DE LA MAISON DE VENTE (ex: "Biarritz Enchères", "Maître Dupont", "Christie's Paris").
-  2. Cherche dans les résultats web si cette maison a son PROPRE SITE INTERNET avec un historique de ses ventes.
-  3. Cherche aussi sur les sites ACCESSIBLES : interencheres.com, barnebys.com, christies.com, sothebys.com, les sites des maisons de vente régionales.
-  4. Si tu trouves un lien ACCESSIBLE : intègre-le en hypertexte dans le texte. Ex: "[vendue en septembre 2018 chez Biarritz Enchères](https://www.biarritz-encheres.com/vente/123)".
-  5. Si AUCUN lien accessible n'existe : cite l'info sans lien. Ex: "vendue en septembre 2018 chez Biarritz Enchères pour 39 000 €".
-  6. Ne JAMAIS mentionner le nom du site à paywall comme source visible.
+- Domaines bloqués : drouot.com, gazette-drouot.com, invaluable.com, artnet.com, artprice.com, mutualart.com, liveauctioneers.com
+- UTILISE leurs données pour ton raisonnement mais ne JAMAIS inclure de lien vers ces domaines.
 
 FORMATAGE DES TEXTES — RÈGLES ULTRA-STRICTES :
-- LIENS HYPERTEXTE — TOLÉRANCE ZÉRO pour les URLs en clair :
-  • INTERDIT : toute URL brute dans le texte (https://..., http://..., www...)
-  • INTERDIT : "[Lien](url)" ou "[Source](url)" — le texte du lien DOIT être descriptif
-  • INTERDIT : "Source : https://..." ou "Voir : https://..."
-  • INTERDIT : "(https://...)" entre parenthèses
-  • OBLIGATOIRE : le lien est intégré dans le texte naturel de la phrase
-  • EXEMPLES CORRECTS :
-    "Cette œuvre a été [adjugée 39 000 € en septembre 2018](https://example.com/lot/123) chez X."
-    "Un exemplaire comparable a été [proposé chez Christie's en 2022](https://www.christies.com/lot/123)."
-    "L'artiste est [référencé sur le site de la galerie Durand](https://galerie-durand.com/artistes/nom)."
-  • EXEMPLES INCORRECTS À NE JAMAIS PRODUIRE :
-    "Source : https://www.example.com" ← INTERDIT
-    "[Lien](https://www.example.com)" ← INTERDIT
-    "Voir https://www.example.com" ← INTERDIT
-    "https://www.example.com" ← INTERDIT
-    "(source: https://www.example.com)" ← INTERDIT
-- MONTANTS : Toujours séparer les milliers avec un espace et indiquer la devise. Ex: "39 000 €", "150 000 HKD (≈ 18 000 €)", "1 200 €". JAMAIS "39000€" ou "39,000€".
-- DATES : Format français "mars 2024", "12 octobre 2023". Jamais de format anglo-saxon.
+- LIENS : TOUJOURS en markdown [texte descriptif](url). JAMAIS d'URL brute.
+- MONTANTS : Séparateur de milliers avec espace. "39 000 €".
+- DATES : Format français "mars 2024".
 
 CONCISION OBLIGATOIRE :
-- "identified_object" = UNE seule ligne (type, matériau, style/époque). Au conditionnel.
-- "summary" = 2-4 phrases courtes. Au conditionnel. MAIS si une vente confirmée ou une contradiction est détectée, ajoute 1-2 phrases supplémentaires pour le signaler clairement avec lien markdown.
-- Les détails longs vont dans authenticity_assessment, condition_notes, market_insights.
-- Ne JAMAIS mentionner les outils techniques utilisés (Google Vision, Google Lens, API, etc.).
+- "identified_object" = UNE seule ligne au conditionnel.
+- "summary" = 2-4 phrases courtes au conditionnel.
+- Ne JAMAIS mentionner les outils techniques utilisés.
 
-VÉRIFICATION FINALE OBLIGATOIRE — ÉTAPE CRITIQUE AVANT DE PRODUIRE LE JSON :
-Après avoir rempli "visual_comparisons", tu DOIS effectuer cette auto-vérification en 3 étapes :
-ÉTAPE A : Identifie quel match_index a le verdict le plus favorable ("identique" > "même_modèle" > "similaire" > "différent").
-ÉTAPE B : Vérifie que "identified_object" et "summary" sont BASÉS sur cette correspondance la plus favorable. Si tu as un "identique" ou "même_modèle" et que ton summary n'en parle pas ou cite une autre correspondance → CORRIGE IMMÉDIATEMENT avant de finaliser.
-ÉTAPE C : Vérifie que "estimated_range" utilise le prix de la correspondance "identique"/"même_modèle" (si disponible). Si tu utilises le prix d'une correspondance "similaire" ou "différent" comme référence directe → CORRIGE.
-RÈGLE ABSOLUE : Un summary qui contredit les verdicts visuels rend l'analyse INUTILE et NON PROFESSIONNELLE. Le commissaire-priseur voit les verdicts ET la synthèse côte à côte — une incohérence détruit sa confiance.
+VÉRIFICATION FINALE OBLIGATOIRE :
+ÉTAPE A : Identifie le match_index avec le meilleur verdict.
+ÉTAPE B : Vérifie que summary et identified_object sont basés sur cette correspondance.
+ÉTAPE C : Vérifie que estimated_range utilise le prix de la meilleure correspondance.
 
 JSON sans backticks :
 {
-  "identified_object": "1 ligne au conditionnel. DOIT correspondre au match 'identique'/'même_modèle' s'il y en a un.",
+  "identified_object": "1 ligne au conditionnel.",
   "alternative_identifications": ["Piste écartée avec explication et source"],
   "visual_comparisons": [
-    {"match_index": 0, "verdict": "similaire", "details": "Différences précises observées : socle rocheux vs plat, etc."},
-    {"match_index": 1, "verdict": "différent", "details": "Non comparable car..."},
-    {"match_index": 2, "verdict": "identique", "details": "Même composition, même socle, mêmes proportions..."}
+    {"match_index": 0, "verdict": "similaire", "details": "Différences précises observées."}
   ],
-  "summary": "DOIT citer en priorité le match 'identique'/'même_modèle' (ici match 2) comme référence. Si aucun match n'est identique, le dire explicitement. Liens en markdown.",
-  "estimated_range": "BASÉ sur le prix du match 'identique'/'même_modèle'. Si aucun : fourchette large et prudente.",
+  "summary": "Synthèse avec liens markdown.",
+  "estimated_range": "Fourchette en euros.",
   "authenticity_assessment": "Détails authenticité (au conditionnel)",
   "condition_notes": "Détails état",
-  "market_insights": "Pour CHAQUE prix cité, indiquer le verdict visuel correspondant. Seuls identique/même_modèle = référence directe de prix.",
+  "market_insights": "Pour CHAQUE prix cité, indiquer le verdict visuel correspondant.",
   "web_sources": [{"title":"","url":"JAMAIS de paywall","relevance":"même œuvre / similaire / différent"}],
   "recommendation": "très_intéressant|intéressant|à_examiner|peu_intéressant|hors_spécialité",
   "recommendation_text": "1 phrase",
@@ -566,19 +525,18 @@ JSON sans backticks :
           lensContext += `  ${idx}. "${identification}" (${sources.join(", ")})\n`;
           idx++;
         }
-        lensContext += `\nTu DOIS mentionner TOUTES ces pistes dans ton analyse et expliquer laquelle tu retiens et POURQUOI. Ne te contente pas d'une seule identification sans discuter les autres.\n`;
-        lensContext += `Si ta propre analyse visuelle diverge de certaines correspondances, EXPLIQUE la divergence au lieu de l'ignorer silencieusement.\n`;
+        lensContext += `\nTu DOIS mentionner TOUTES ces pistes dans ton analyse et expliquer laquelle tu retiens et POURQUOI.\n`;
       }
     }
     
     userContent.push({ type: "text", text: lensContext });
 
-    // ── CRITICAL: Include visual match THUMBNAIL IMAGES so the AI can ACTUALLY compare visual details ──
+    // Include visual match THUMBNAIL IMAGES
     const matchesWithThumbnails = lensResults.visualMatches.filter((m: any) => m.thumbnail).slice(0, 6);
     if (matchesWithThumbnails.length > 0) {
       userContent.push({
         type: "text",
-        text: "\n\n🔍 IMAGES DES CORRESPONDANCES VISUELLES — Compare CHAQUE image ci-dessous avec les photos du vendeur.\nPour CHAQUE correspondance, note les DIFFÉRENCES PRÉCISES (socle, pose, patine, dimensions apparentes, accessoires, drapés).\nSi le socle, la pose ou un détail majeur diffère → ce n'est PAS la même œuvre, c'est au mieux un modèle similaire.\nRAPPEL : Ton summary DOIT être COHÉRENT avec tes verdicts. Si tu trouves un 'même_modèle', cite-le dans le summary !",
+        text: "\n\n🔍 IMAGES DES CORRESPONDANCES VISUELLES — Compare CHAQUE image ci-dessous avec les photos du vendeur.\nPour CHAQUE correspondance, note les DIFFÉRENCES PRÉCISES (socle, pose, patine, dimensions apparentes, accessoires, drapés).",
       });
       for (const match of matchesWithThumbnails) {
         userContent.push({
@@ -593,7 +551,7 @@ JSON sans backticks :
     }
   }
 
-  // Web search results (Google Custom Search)
+  // Web search results
   if (webResults.length > 0) {
     let webContext = "\n\nRÉSULTATS DE RECHERCHE WEB GOOGLE (à croiser avec l'analyse visuelle) :\n";
     for (const r of webResults) {
@@ -627,13 +585,13 @@ JSON sans backticks :
     textDescription += `\nCatégorie : ${estimation.object_category}`;
   }
 
-  // FINAL REMINDER: coherence check
-  textDescription += `\n\n⚠️ RAPPEL FINAL : Après avoir rempli visual_comparisons, VÉRIFIE que ton summary et identified_object citent bien la correspondance avec le meilleur verdict (identique > même_modèle). Si tu as trouvé un "même_modèle" quelque part mais que ton summary ne le mentionne pas, CORRIGE AVANT DE RÉPONDRE.`;
+  // FINAL REMINDER
+  textDescription += `\n\n⚠️ RAPPEL FINAL : Après avoir rempli visual_comparisons, VÉRIFIE que ton summary et identified_object citent bien la correspondance avec le meilleur verdict.`;
 
   userContent.push({ type: "text", text: textDescription });
   messages.push({ role: "user", content: userContent });
 
-  console.log("[analyze-estimation] Step 3: Running final cross-referenced analysis...");
+  console.log("[analyze-estimation] Step 3: Running final analysis (depth:", analysisDepth, ")...");
 
   const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
     method: "POST",
@@ -675,7 +633,7 @@ JSON sans backticks :
       parsed.web_sources = parsed.web_sources.filter((s: any) => !isPaywalled(s.url));
     }
 
-    // Strip paywall links from markdown text fields (keep the text, remove the link)
+    // Strip paywall links from markdown text fields
     const stripPaywallLinks = (text: string): string => {
       if (!text) return text;
       for (const domain of PAYWALL_DOMAINS) {
@@ -686,7 +644,7 @@ JSON sans backticks :
       return text;
     };
 
-    // Strip bare/raw URLs that the AI wrote in clear text instead of markdown
+    // Strip bare/raw URLs
     const stripBareUrls = (text: string): string => {
       if (!text) return text;
       const mdLinks: string[] = [];
@@ -701,7 +659,6 @@ JSON sans backticks :
       return protected_;
     };
 
-    // Apply both cleanups to all text fields
     const cleanTextField = (text: string): string => {
       if (!text) return text;
       return stripBareUrls(stripPaywallLinks(text));
@@ -714,7 +671,7 @@ JSON sans backticks :
     if (parsed.condition_notes) parsed.condition_notes = cleanTextField(parsed.condition_notes);
     if (parsed.limitations) parsed.limitations = cleanTextField(parsed.limitations);
 
-    // ── POST-PROCESSING: Verify coherence between visual_comparisons and summary ──
+    // Verify coherence between visual_comparisons and summary
     if (parsed.visual_comparisons && Array.isArray(parsed.visual_comparisons)) {
       const bestVerdict = parsed.visual_comparisons.reduce((best: any, comp: any) => {
         const verdictOrder: Record<string, number> = { "identique": 4, "même_modèle": 3, "similaire": 2, "différent": 1 };
@@ -725,11 +682,9 @@ JSON sans backticks :
 
       if (bestVerdict) {
         console.log(`[analyze-estimation] Best visual verdict: ${bestVerdict.verdict} (match_index: ${bestVerdict.match_index})`);
-        
-        // Log warning if no match is identique/même_modèle
         const hasStrongMatch = parsed.visual_comparisons.some((c: any) => c.verdict === "identique" || c.verdict === "même_modèle");
         if (!hasStrongMatch) {
-          console.log("[analyze-estimation] WARNING: No 'identique' or 'même_modèle' visual match found — estimation should be cautious");
+          console.log("[analyze-estimation] WARNING: No 'identique' or 'même_modèle' visual match found");
         }
       }
     }
@@ -742,20 +697,33 @@ JSON sans backticks :
       identified_object: "Analyse non structurée",
       estimated_range: "Non déterminé",
       recommendation: "à_examiner",
-      recommendation_text: "L'analyse IA n'a pas pu être structurée correctement.",
+      recommendation_text: "L'analyse n'a pas pu être structurée correctement.",
       web_sources: [],
     };
   }
 }
 
-// ── Main handler ──
+// ══════════════════════════════════════════════════════════════════
+// MAIN HANDLER — Progressive 3-level pipeline
+// ══════════════════════════════════════════════════════════════════
+//
+// Level 1: Gemini Vision only (~$0.005)     → non-art + high confidence → STOP
+// Level 2: + Google Lens    (~$0.03)        → art objects → STOP, offer "Approfondir"
+// Level 3: + Full web research (~$0.10+)    → auto for non-art, manual for art
+//
+// Parameters:
+//   estimation_id: string (required)
+//   force: boolean — bypass 60s lock
+//   depth: "level_2" | "level_3" — force a specific depth (manual escalation)
+// ══════════════════════════════════════════════════════════════════
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
 
   try {
-    const { estimation_id, force } = await req.json();
+    const { estimation_id, force, depth } = await req.json();
     if (!estimation_id) {
       return new Response(JSON.stringify({ error: "estimation_id is required" }), {
         status: 400,
@@ -763,7 +731,8 @@ serve(async (req) => {
       });
     }
 
-    console.log(`[analyze-estimation] Starting 4-step analysis for ${estimation_id}`);
+    const requestedDepth = depth === "level_3" ? 3 : depth === "level_2" ? 2 : 0; // 0 = auto
+    console.log(`[analyze-estimation] Starting progressive analysis for ${estimation_id} (requested depth: ${requestedDepth || "auto"})`);
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -793,13 +762,13 @@ serve(async (req) => {
 
     console.log(`[analyze-estimation] Found: ${estimation.nom} - ${estimation.description?.substring(0, 50)}`);
 
-    // ── Anti-duplicate lock: skip if analyzed less than 60s ago (unless force=true) ──
-    if (!force && estimation.ai_analyzed_at) {
+    // ── Anti-duplicate lock: skip if analyzed less than 60s ago (unless force=true or deepening) ──
+    if (!force && !depth && estimation.ai_analyzed_at) {
       const analyzedAt = new Date(estimation.ai_analyzed_at).getTime();
       const now = Date.now();
       const elapsedSeconds = (now - analyzedAt) / 1000;
       if (elapsedSeconds < 60) {
-        console.log(`[analyze-estimation] Skipping: already analyzed ${Math.round(elapsedSeconds)}s ago (< 60s). Use force=true to override.`);
+        console.log(`[analyze-estimation] Skipping: already analyzed ${Math.round(elapsedSeconds)}s ago. Use force=true to override.`);
         return new Response(JSON.stringify({ 
           status: "skipped", 
           reason: "already_analyzed_recently",
@@ -812,230 +781,240 @@ serve(async (req) => {
     }
 
     const photoUrls: string[] = estimation.photo_urls || [];
-
-    // ── STEP 1: Visual description + search terms ──
-    let visualDescription = "";
-    let searchTerms: string[] = [];
-
     const userOwnMessage = (estimation.description || "").split("---")[0]?.trim() || "";
 
+    // ═══════════════════════════════════════════════
+    // STEP 1: Visual triage + search terms (ALWAYS)
+    // ═══════════════════════════════════════════════
+    let triage: TriageResult = {
+      description: "",
+      searchTerms: [],
+      is_art_or_antique: true,
+      triage_confidence: "low",
+      object_type: "inconnu",
+    };
+
     if (photoUrls.length > 0) {
-      const step1 = await extractVisualSearchTerms(photoUrls, supabaseUrl, lovableApiKey, userOwnMessage);
-      visualDescription = step1.description;
-      searchTerms = step1.searchTerms;
+      triage = await extractVisualSearchTermsWithTriage(photoUrls, supabaseUrl, lovableApiKey, userOwnMessage);
     }
 
-    // ── STEP 1b + STEP 2: Google Lens + Google Search in parallel ──
+    // ═══════════════════════════════════════════════
+    // DECIDE ANALYSIS DEPTH
+    // ═══════════════════════════════════════════════
+    let effectiveDepth: number;
+
+    if (requestedDepth > 0) {
+      // Manual escalation requested
+      effectiveDepth = requestedDepth;
+      console.log(`[analyze-estimation] Manual depth requested: level ${effectiveDepth}`);
+    } else if (!triage.is_art_or_antique && triage.triage_confidence === "high") {
+      // Non-art + high confidence → Level 1 (vision only)
+      effectiveDepth = 1;
+      console.log(`[analyze-estimation] Triage: non-art + high confidence → Level 1 (vision only)`);
+    } else if (!triage.is_art_or_antique && triage.triage_confidence === "medium") {
+      // Non-art + medium confidence → Level 2 (+ Google Lens)
+      effectiveDepth = serpApiKey ? 2 : 1;
+      console.log(`[analyze-estimation] Triage: non-art + medium confidence → Level ${effectiveDepth}`);
+    } else if (!triage.is_art_or_antique && triage.triage_confidence === "low") {
+      // Non-art + low confidence → Level 3 (full search, auto)
+      effectiveDepth = serpApiKey ? 3 : 1;
+      console.log(`[analyze-estimation] Triage: non-art + low confidence → Level ${effectiveDepth} (auto-escalated)`);
+    } else {
+      // Art/antique → Level 2 by default (CP can trigger Level 3)
+      effectiveDepth = serpApiKey ? 2 : 1;
+      console.log(`[analyze-estimation] Triage: art/antique → Level ${effectiveDepth} (CP can deepen to Level 3)`);
+    }
+
+    // ═══════════════════════════════════════════════
+    // EXECUTE PIPELINE BASED ON DEPTH
+    // ═══════════════════════════════════════════════
     let lensResults: LensResult | null = null;
     let webResults: Array<{ title: string; url: string; description: string }> = [];
+    let searchTerms = [...triage.searchTerms];
 
-    const parallelTasks: Promise<void>[] = [];
+    // ── Level 2+: Google Lens ──
+    if (effectiveDepth >= 2 && photoUrls.length > 0 && serpApiKey) {
+      lensResults = await runGoogleLens(photoUrls, supabaseUrl, serpApiKey);
+      if (lensResults.bestGuessLabels.length > 0) {
+        searchTerms.push(...lensResults.bestGuessLabels.filter(l => !searchTerms.includes(l)));
+      }
+    }
 
-    if (photoUrls.length > 0 && serpApiKey) {
-      parallelTasks.push(
-        runGoogleLens(photoUrls, supabaseUrl, serpApiKey).then((r) => {
-          lensResults = r;
-          if (r.bestGuessLabels.length > 0) {
-            searchTerms.push(...r.bestGuessLabels.filter((l) => !searchTerms.includes(l)));
+    // ── Level 3: Full web research ──
+    if (effectiveDepth >= 3 && serpApiKey) {
+      // Google Search with search terms
+      if (searchTerms.length > 0) {
+        webResults = await searchWebReferences(searchTerms, serpApiKey);
+      }
+
+      // Retry with Lens labels if no results
+      if (webResults.length === 0 && lensResults && lensResults.bestGuessLabels.length > 0) {
+        console.log("[analyze-estimation] Retrying search with Lens labels:", lensResults.bestGuessLabels);
+        webResults = await searchWebReferences(lensResults.bestGuessLabels, serpApiKey);
+      }
+
+      // Lens leads research
+      if (lensResults && lensResults.visualMatches.length > 0) {
+        const lensLeads = new Set<string>();
+        for (const match of lensResults.visualMatches.slice(0, 8)) {
+          const title = match.title || "";
+          if (title.length < 5) continue;
+          const cleaned = title
+            .replace(/\s*[-–|]\s*(eBay|Etsy|Amazon|Pinterest|Wikipedia|Wikimedia).*$/i, "")
+            .replace(/\s*[-–|]\s*\d+\s*€.*$/i, "")
+            .trim();
+          if (cleaned.length >= 5 && !lensLeads.has(cleaned)) {
+            lensLeads.add(cleaned);
           }
-        }),
-      );
-    } else if (!serpApiKey) {
-      console.warn("[analyze-estimation] SERPAPI_API_KEY not configured, skipping Google Lens");
-    }
-
-    if (searchTerms.length > 0 && serpApiKey) {
-      parallelTasks.push(
-        searchWebReferences(searchTerms, serpApiKey).then((r) => {
-          webResults = r;
-        }),
-      );
-    }
-
-    await Promise.all(parallelTasks);
-
-    if (webResults.length === 0 && lensResults && lensResults.bestGuessLabels.length > 0 && serpApiKey) {
-      console.log("[analyze-estimation] Retrying SerpAPI Search with Lens labels:", lensResults.bestGuessLabels);
-      webResults = await searchWebReferences(lensResults.bestGuessLabels, serpApiKey);
-    }
-
-    // ── EXTRA: Research leads from Google Lens visual matches ──
-    if (serpApiKey && lensResults && lensResults.visualMatches.length > 0) {
-      const lensLeads = new Set<string>();
-      
-      for (const match of lensResults.visualMatches.slice(0, 8)) {
-        const title = match.title || "";
-        if (title.length < 5) continue;
-        
-        const cleaned = title
-          .replace(/\s*[-–|]\s*(eBay|Etsy|Amazon|Pinterest|Wikipedia|Wikimedia).*$/i, "")
-          .replace(/\s*[-–|]\s*\d+\s*€.*$/i, "")
-          .trim();
-        
-        if (cleaned.length >= 5 && !lensLeads.has(cleaned)) {
-          lensLeads.add(cleaned);
+        }
+        for (const label of lensResults.bestGuessLabels) {
+          if (label.length >= 3) lensLeads.add(label);
+        }
+        const lensSearchTerms = Array.from(lensLeads).slice(0, 4);
+        if (lensSearchTerms.length > 0) {
+          console.log("[analyze-estimation] Lens leads to research:", lensSearchTerms);
+          const lensAuctionTerms = lensSearchTerms.map(t => `${t} enchères adjugé vente`);
+          const lensWebResults = await searchWebReferences(lensAuctionTerms, serpApiKey);
+          const existingUrls = new Set(webResults.map(r => r.url));
+          for (const r of lensWebResults) {
+            if (r.url && !existingUrls.has(r.url)) {
+              webResults.push(r);
+              existingUrls.add(r.url);
+            }
+          }
         }
       }
-      
-      for (const label of lensResults.bestGuessLabels) {
-        if (label.length >= 3) lensLeads.add(label);
-      }
-      
-      const lensSearchTerms = Array.from(lensLeads).slice(0, 4);
-      
-      if (lensSearchTerms.length > 0) {
-        console.log("[analyze-estimation] Lens leads to research:", lensSearchTerms);
-        
-        const lensAuctionTerms = lensSearchTerms.map(t => `${t} enchères adjugé vente`);
-        const lensWebResults = await searchWebReferences(lensAuctionTerms, serpApiKey);
-        
+
+      // Targeted auction platform searches
+      if (searchTerms.length > 0) {
+        const auctionTerms = searchTerms.slice(0, 2);
+        const auctionSites = [
+          "drouot.com", "interencheres.com", "gazette-drouot.com",
+          "invaluable.com", "artnet.com", "barnebys.com", "artprice.com", "mutualart.com",
+        ];
+        const siteFilter = auctionSites.map(s => `site:${s}`).join(" OR ");
+        const auctionQueries = auctionTerms.map(term => `(${siteFilter}) ${term}`);
+
+        console.log("[analyze-estimation] Auction platform search:", auctionQueries);
+
+        const auctionSearchPromises = auctionQueries.map(async (query) => {
+          try {
+            const params = new URLSearchParams({
+              engine: "google",
+              q: query,
+              api_key: serpApiKey,
+              hl: "fr",
+              gl: "fr",
+              num: "5",
+              safe: "off",
+            });
+            const response = await fetch(`https://serpapi.com/search?${params.toString()}`);
+            if (!response.ok) return [];
+            const data = await response.json();
+            return (data.organic_results || []).map((item: any) => ({
+              title: item.title || "",
+              url: item.link || "",
+              description: item.snippet || "",
+            }));
+          } catch {
+            return [];
+          }
+        });
+
+        const auctionResults = await Promise.all(auctionSearchPromises);
         const existingUrls = new Set(webResults.map(r => r.url));
-        for (const r of lensWebResults) {
-          if (r.url && !existingUrls.has(r.url)) {
-            webResults.push(r);
-            existingUrls.add(r.url);
+        for (const batch of auctionResults) {
+          for (const r of batch) {
+            if (r.url && !existingUrls.has(r.url)) {
+              webResults.push(r);
+              existingUrls.add(r.url);
+            }
           }
         }
-        console.log(`[analyze-estimation] After Lens lead research: ${webResults.length} total web results`);
+        console.log(`[analyze-estimation] After auction search: ${webResults.length} total web results`);
       }
+
+      // Search based on user text clues
+      if (userOwnMessage.length > 5) {
+        const extraTerms: string[] = [];
+        const flexiblePatterns = [
+          /(?:signature|signé|marqué|poinçon|inscrit|écrit)[\s\w,''éèêëàâäùûüîïôö]*?(?:comme\s+)?([a-zà-üA-ZÀ-Ü][a-zà-ü]{2,}(?:\s+[a-zà-üA-ZÀ-Ü][a-zà-ü]{2,})*)/gi,
+          /(?:artiste|par|de|auteur)\s+([A-ZÀ-Ü][a-zà-ü]{2,}(?:\s+[A-ZÀ-Ü][a-zà-ü]{2,})*)/g,
+        ];
+        const stopWords = new Set([
+          "derriere", "derrière", "devant", "dessus", "dessous", "comme", "très",
+          "pas", "peu", "assez", "plutôt", "bien", "mal", "une", "lisible",
+          "illisible", "visible", "invisible", "quelque", "chose", "objet",
+        ]);
+        const extractedNames = new Set<string>();
+        for (const pattern of flexiblePatterns) {
+          let match;
+          while ((match = pattern.exec(userOwnMessage)) !== null) {
+            const name = match[1]?.trim();
+            if (name && name.length >= 3 && !stopWords.has(name.toLowerCase())) {
+              extractedNames.add(name);
+            }
+          }
+        }
+        const commonWords = new Set(["Le", "La", "Les", "Un", "Une", "Des", "Du", "De", "En", "Au", "Il", "Je", "Mon", "Mes", "Son", "Ses", "Est", "Pas", "Très", "Comme", "Bonjour", "Merci"]);
+        const capitalizedWords = userOwnMessage.match(/[A-ZÀ-Ü][a-zà-ü]{2,}/g) || [];
+        for (const w of capitalizedWords) {
+          if (!commonWords.has(w) && !stopWords.has(w.toLowerCase())) {
+            extractedNames.add(w);
+          }
+        }
+        for (const name of extractedNames) {
+          extraTerms.push(`${name} artiste enchères`);
+          extraTerms.push(`${name} artiste sculpture peinture`);
+          extraTerms.push(`site:drouot.com ${name}`);
+          extraTerms.push(`site:interencheres.com ${name}`);
+        }
+        if (extraTerms.length > 0) {
+          console.log("[analyze-estimation] Extra search terms from user text:", extraTerms.slice(0, 6));
+          const extraResults = await searchWebReferences(extraTerms.slice(0, 6), serpApiKey);
+          const existingUrls = new Set(webResults.map(r => r.url));
+          for (const r of extraResults) {
+            if (!existingUrls.has(r.url)) {
+              webResults.push(r);
+              existingUrls.add(r.url);
+            }
+          }
+        }
+      }
+
+      console.log(`[analyze-estimation] Level 3 complete: ${webResults.length} total web results`);
     }
 
-    // ── EXTRA: Targeted auction platform searches ──
-    if (serpApiKey && searchTerms.length > 0) {
-      const auctionTerms = searchTerms.slice(0, 2);
-      const auctionSites = [
-        "drouot.com",
-        "interencheres.com",
-        "gazette-drouot.com",
-        "invaluable.com",
-        "artnet.com",
-        "barnebys.com",
-        "artprice.com",
-        "mutualart.com",
-      ];
-      const auctionQueries: string[] = [];
-      
-      const siteFilter = auctionSites.map(s => `site:${s}`).join(" OR ");
-      for (const term of auctionTerms) {
-        auctionQueries.push(`(${siteFilter}) ${term}`);
-      }
-
-      console.log("[analyze-estimation] Auction platform search:", auctionQueries);
-
-      const auctionSearchPromises = auctionQueries.map(async (query) => {
-        try {
-          const params = new URLSearchParams({
-            engine: "google",
-            q: query,
-            api_key: serpApiKey,
-            hl: "fr",
-            gl: "fr",
-            num: "5",
-            safe: "off",
-          });
-          const response = await fetch(`https://serpapi.com/search?${params.toString()}`);
-          if (!response.ok) return [];
-          const data = await response.json();
-          return (data.organic_results || []).map((item: any) => ({
-            title: item.title || "",
-            url: item.link || "",
-            description: item.snippet || "",
-          }));
-        } catch {
-          return [];
-        }
-      });
-
-      const auctionResults = await Promise.all(auctionSearchPromises);
-      const existingUrls = new Set(webResults.map((r) => r.url));
-      for (const batch of auctionResults) {
-        for (const r of batch) {
-          if (r.url && !existingUrls.has(r.url)) {
-            webResults.push(r);
-            existingUrls.add(r.url);
-          }
-        }
-      }
-      console.log(`[analyze-estimation] After auction search: ${webResults.length} total web results`);
-    }
-
-    // ── EXTRA: Search based on user text clues ──
-    if (serpApiKey && userOwnMessage.length > 5) {
-      const extraTerms: string[] = [];
-
-      const flexiblePatterns = [
-        /(?:signature|signé|marqué|poinçon|inscrit|écrit)[\s\w,''éèêëàâäùûüîïôö]*?(?:comme\s+)?([a-zà-üA-ZÀ-Ü][a-zà-ü]{2,}(?:\s+[a-zà-üA-ZÀ-Ü][a-zà-ü]{2,})*)/gi,
-        /(?:artiste|par|de|auteur)\s+([A-ZÀ-Ü][a-zà-ü]{2,}(?:\s+[A-ZÀ-Ü][a-zà-ü]{2,})*)/g,
-      ];
-
-      const stopWords = new Set([
-        "derriere", "derrière", "devant", "dessus", "dessous", "comme", "très",
-        "pas", "peu", "assez", "plutôt", "bien", "mal", "une", "lisible",
-        "illisible", "visible", "invisible", "quelque", "chose", "objet",
-      ]);
-
-      const extractedNames = new Set<string>();
-
-      for (const pattern of flexiblePatterns) {
-        let match;
-        while ((match = pattern.exec(userOwnMessage)) !== null) {
-          const name = match[1]?.trim();
-          if (name && name.length >= 3 && !stopWords.has(name.toLowerCase())) {
-            extractedNames.add(name);
-          }
-        }
-      }
-
-      const commonWords = new Set(["Le", "La", "Les", "Un", "Une", "Des", "Du", "De", "En", "Au", "Il", "Je", "Mon", "Mes", "Son", "Ses", "Est", "Pas", "Très", "Comme", "Bonjour", "Merci"]);
-      const capitalizedWords = userOwnMessage.match(/[A-ZÀ-Ü][a-zà-ü]{2,}/g) || [];
-      for (const w of capitalizedWords) {
-        if (!commonWords.has(w) && !stopWords.has(w.toLowerCase())) {
-          extractedNames.add(w);
-        }
-      }
-
-      for (const name of extractedNames) {
-        extraTerms.push(`${name} artiste enchères`);
-        extraTerms.push(`${name} artiste sculpture peinture`);
-        extraTerms.push(`site:drouot.com ${name}`);
-        extraTerms.push(`site:interencheres.com ${name}`);
-      }
-
-      if (extraTerms.length > 0) {
-        console.log("[analyze-estimation] Extracted names from user text:", Array.from(extractedNames));
-        console.log("[analyze-estimation] Extra search terms:", extraTerms);
-        const extraResults = await searchWebReferences(extraTerms.slice(0, 6), serpApiKey);
-        const existingUrls = new Set(webResults.map(r => r.url));
-        for (const r of extraResults) {
-          if (!existingUrls.has(r.url)) {
-            webResults.push(r);
-            existingUrls.add(r.url);
-          }
-        }
-        console.log(`[analyze-estimation] After text-based search: ${webResults.length} total web results`);
-      }
-    }
-
-    // ── STEP 3: Final cross-referenced analysis ──
+    // ═══════════════════════════════════════════════
+    // FINAL ANALYSIS (always runs)
+    // ═══════════════════════════════════════════════
     const analysis = await runFinalAnalysis(
       estimation,
       photoUrls,
       supabaseUrl,
       lovableApiKey,
-      visualDescription,
+      triage.description,
       webResults,
       lensResults,
+      effectiveDepth,
     );
 
-    console.log("[analyze-estimation] Analysis complete:", analysis.recommendation, "| confidence_score:", analysis.confidence_score);
+    console.log("[analyze-estimation] Analysis complete:", analysis.recommendation, "| confidence_score:", analysis.confidence_score, "| depth:", effectiveDepth);
 
-    // Attach Google Lens metadata to analysis for display
+    // Attach metadata
     if (lensResults) {
       analysis.lens_detection = {
         bestGuessLabels: lensResults.bestGuessLabels,
         visualMatches: lensResults.visualMatches.slice(0, 8),
       };
     }
+
+    // ── Progressive pipeline metadata ──
+    analysis.analysis_depth = effectiveDepth;
+    analysis.is_art_or_antique = triage.is_art_or_antique;
+    analysis.object_type = triage.object_type;
+    // can_deepen: true if analysis stopped before Level 3
+    analysis.can_deepen = effectiveDepth < 3;
 
     // Save to database
     const { error: updateError } = await supabase
@@ -1052,10 +1031,10 @@ serve(async (req) => {
       throw new Error(`Failed to update estimation: ${updateError.message}`);
     }
 
-    console.log("[analyze-estimation] Estimation updated successfully");
+    console.log(`[analyze-estimation] Saved successfully (depth: ${effectiveDepth}, can_deepen: ${analysis.can_deepen})`);
 
     return new Response(
-      JSON.stringify({ success: true, analysis, estimation_id }),
+      JSON.stringify({ success: true, analysis, estimation_id, depth: effectiveDepth }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (error: any) {
