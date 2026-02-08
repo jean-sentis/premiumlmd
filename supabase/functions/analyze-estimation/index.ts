@@ -253,8 +253,12 @@ async function scrapeVisualMatchUrls(
   matches: Array<{ title: string; link: string; source: string; thumbnail?: string; price?: string }>,
   firecrawlApiKey: string,
 ): Promise<Array<{ title: string; url: string; description: string }>> {
-  // Domains that won't yield useful scrapeable content
+  // Domains that won't yield useful scrapeable content (paywalls + social)
   const BLOCKED_DOMAINS = [
+    // Paywalls enchères / art market
+    "invaluable.com", "drouot.com", "artnet.com", "artnet.fr",
+    "artprice.com", "mutualart.com", "barnebys.com",
+    // Social / plateformes génériques
     "pinterest.com", "pinterest.fr", "facebook.com", "instagram.com",
     "twitter.com", "x.com", "youtube.com", "tiktok.com",
     "wikipedia.org", "wikimedia.org", "amazon.com", "amazon.fr",
