@@ -140,6 +140,7 @@ export type Database = {
           response_message: string | null
           response_mode: string | null
           response_template: string | null
+          second_opinion: string | null
           source: string
           status: string
           telephone: string | null
@@ -166,6 +167,7 @@ export type Database = {
           response_message?: string | null
           response_mode?: string | null
           response_template?: string | null
+          second_opinion?: string | null
           source?: string
           status?: string
           telephone?: string | null
@@ -192,6 +194,7 @@ export type Database = {
           response_message?: string | null
           response_mode?: string | null
           response_template?: string | null
+          second_opinion?: string | null
           source?: string
           status?: string
           telephone?: string | null

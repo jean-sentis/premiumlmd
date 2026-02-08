@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
@@ -9,6 +9,8 @@ import { AnalysisPanel } from "./detail/AnalysisPanel";
 import { ResponsePanel } from "./detail/ResponsePanel";
 import { SellerInfoPanel } from "./detail/SellerInfoPanel";
 import { NotesPanel } from "./detail/NotesPanel";
+import { SecondOpinionPanel } from "./detail/SecondOpinionPanel";
+import { InterestDropdown } from "./detail/InterestDropdown";
 import { EstimationStatusBar } from "./EstimationStatusBar";
 
 interface EstimationRequest {
@@ -32,6 +34,7 @@ interface EstimationRequest {
   responded_at: string | null;
   created_at: string;
   related_lot_id: string | null;
+  second_opinion?: string | null;
 }
 
 interface EstimationDetailProps {
@@ -49,6 +52,7 @@ export function EstimationDetail({
   const [reanalyzing, setReanalyzing] = useState(false);
   const [freshData, setFreshData] = useState<EstimationRequest | null>(null);
   const [showAiAnalysis, setShowAiAnalysis] = useState(false);
+  const aiSectionRef = useRef<HTMLDivElement>(null);
 
   // Re-fetch fresh data on mount, and poll every 5s while analysis is pending
   useEffect(() => {
@@ -141,6 +145,30 @@ export function EstimationDetail({
     }
   };
 
+  const handleInterestChange = async (level: string) => {
+    try {
+      const { error } = await supabase
+        .from("estimation_requests")
+        .update({
+          auctioneer_decision: level,
+          decided_at: new Date().toISOString(),
+        } as any)
+        .eq("id", estimation.id);
+      if (error) throw error;
+      toast({ title: "Intérêt mis à jour ✓" });
+      onUpdate();
+    } catch {
+      toast({ title: "Erreur", variant: "destructive" });
+    }
+  };
+
+  const scrollToAi = () => {
+    setShowAiAnalysis(true);
+    setTimeout(() => {
+      aiSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 100);
+  };
+
   return (
     <div className="flex flex-col h-full overflow-y-auto">
       {/* ── Header with status bar ── */}
@@ -162,31 +190,56 @@ export function EstimationDetail({
               })}
             </p>
           </div>
+          {/* AI anchor icon — framed, at right */}
+          <button
+            onClick={scrollToAi}
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border-2 border-primary/30 text-primary hover:bg-primary/5 transition-colors text-xs font-medium"
+            title="Aide à la décision IA"
+          >
+            <Sparkles className="w-4 h-4" />
+            <span className="hidden sm:inline">IA</span>
+          </button>
         </div>
         <EstimationStatusBar estimation={current} onUpdate={onUpdate} />
       </div>
 
-      {/* ══════════════════════════════════════════ */}
-      {/* 3-COLUMN LAYOUT: Client | Notes | Réponse */}
-      {/* ══════════════════════════════════════════ */}
+      {/* ══════════════════════════════════════════════════════════ */}
+      {/* LAYOUT: Client | Votre avis | ▼Intérêt | 2ème avis | Répondre */}
+      {/* ══════════════════════════════════════════════════════════ */}
       <div className="flex-1 overflow-y-auto">
         <div className="p-4 md:p-6">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="flex flex-col lg:flex-row gap-6">
             {/* Column 1: Seller info */}
-            <div className="lg:border-r lg:pr-6">
+            <div className="lg:w-[22%] lg:min-w-[200px] lg:border-r lg:pr-4">
               <SellerInfoPanel estimation={current} getPhotoUrl={getPhotoUrl} />
             </div>
 
-            {/* Column 2: Auctioneer notes */}
-            <div className="lg:border-r lg:pr-6">
+            {/* Column 2: Votre avis */}
+            <div className="lg:w-[22%] lg:min-w-[180px] lg:border-r lg:pr-4">
               <NotesPanel
                 estimationId={estimation.id}
                 initialNotes={estimation.auctioneer_notes || ""}
               />
             </div>
 
-            {/* Column 3: Response panel */}
-            <div>
+            {/* Interest dropdown — centered between the two opinion panels */}
+            <div className="lg:w-[8%] flex lg:flex-col items-center justify-start pt-1">
+              <InterestDropdown
+                value={current.auctioneer_decision}
+                onChange={handleInterestChange}
+              />
+            </div>
+
+            {/* Column 3: 2ème avis */}
+            <div className="lg:w-[22%] lg:min-w-[180px] lg:border-r lg:pr-4">
+              <SecondOpinionPanel
+                estimationId={estimation.id}
+                initialOpinion={(current as any).second_opinion || ""}
+              />
+            </div>
+
+            {/* Column 4: Response panel */}
+            <div className="lg:w-[26%] lg:min-w-[200px]">
               <ResponsePanel estimation={current} onUpdate={onUpdate} />
             </div>
           </div>
@@ -194,7 +247,7 @@ export function EstimationDetail({
           {/* ══════════════════════════════════════ */}
           {/* FULL-WIDTH: AI analysis (expandable)  */}
           {/* ══════════════════════════════════════ */}
-          <div className="mt-6 border-t pt-4">
+          <div ref={aiSectionRef} className="mt-6 border-t pt-4">
             <button
               onClick={() => setShowAiAnalysis(!showAiAnalysis)}
               className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors group w-full"
