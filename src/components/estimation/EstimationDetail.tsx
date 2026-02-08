@@ -204,7 +204,7 @@ export function EstimationDetail({
             title="Aide à la décision IA"
           >
             <Sparkles className="w-4 h-4" />
-            <span className="hidden sm:inline">IA</span>
+            <span className="hidden sm:inline">Aide IA</span>
           </button>
         </div>
       </div>
@@ -280,7 +280,7 @@ export function EstimationDetail({
           {/* ══════════════════════════════════════ */}
           {/* FULL-WIDTH: AI analysis (expandable)  */}
           {/* ══════════════════════════════════════ */}
-          <div ref={aiSectionRef} className="mt-6 border-t pt-4 max-w-none">
+          <div ref={aiSectionRef} className="mt-24 border-t pt-4 max-w-none">
             <button
               onClick={() => setShowAiAnalysis(!showAiAnalysis)}
               className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors group w-full"
