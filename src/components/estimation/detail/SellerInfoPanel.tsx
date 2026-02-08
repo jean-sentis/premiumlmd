@@ -35,24 +35,24 @@ export function SellerInfoPanel({ estimation, getPhotoUrl }: SellerInfoPanelProp
   return (
     <div className="space-y-3 h-full overflow-y-auto pr-1">
       {/* Contact details */}
-      <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
-        <span className="flex items-center gap-1">
-          <User className="w-3 h-3" />
+      <div className="flex flex-wrap gap-2 text-sm text-muted-foreground">
+        <span className="flex items-center gap-1.5">
+          <User className="w-3.5 h-3.5" />
           {estimation.nom}
         </span>
-        <span className="flex items-center gap-1">
-          <Mail className="w-3 h-3" />
+        <span className="flex items-center gap-1.5">
+          <Mail className="w-3.5 h-3.5" />
           {estimation.email}
         </span>
         {estimation.telephone && (
-          <span className="flex items-center gap-1">
-            <Phone className="w-3 h-3" />
+          <span className="flex items-center gap-1.5">
+            <Phone className="w-3.5 h-3.5" />
             {estimation.telephone}
           </span>
         )}
         {estimation.estimated_value && (
-          <span className="flex items-center gap-1">
-            <Euro className="w-3 h-3" />
+          <span className="flex items-center gap-1.5">
+            <Euro className="w-3.5 h-3.5" />
             {estimation.estimated_value}
           </span>
         )}
@@ -70,7 +70,7 @@ export function SellerInfoPanel({ estimation, getPhotoUrl }: SellerInfoPanelProp
             className="w-full object-contain max-h-56"
           />
           {photoUrls.length > 1 && (
-            <span className="absolute bottom-1.5 right-1.5 bg-black/60 text-white text-[10px] px-1.5 py-0.5 rounded-md">
+            <span className="absolute bottom-1.5 right-1.5 bg-black/60 text-white text-xs px-1.5 py-0.5 rounded-md">
               +{photoUrls.length - 1} photo{photoUrls.length > 2 ? "s" : ""}
             </span>
           )}
@@ -79,8 +79,8 @@ export function SellerInfoPanel({ estimation, getPhotoUrl }: SellerInfoPanelProp
 
       {/* Description */}
       <div className="space-y-1">
-        <p className="text-xs font-medium text-muted-foreground">Description</p>
-        <p className="text-sm bg-muted/30 p-3 rounded-lg border border-border/30 leading-relaxed">
+        <p className="text-sm font-medium text-muted-foreground">Description</p>
+        <p className="text-base bg-muted/30 p-3 rounded-lg border border-border/30 leading-relaxed">
           {formatDescription(estimation.description)}
         </p>
       </div>
@@ -90,9 +90,9 @@ export function SellerInfoPanel({ estimation, getPhotoUrl }: SellerInfoPanelProp
           href={`/lot/${estimation.related_lot_id}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline"
+          className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline"
         >
-          <ExternalLink className="w-3 h-3" />
+          <ExternalLink className="w-3.5 h-3.5" />
           Voir le lot référencé
         </a>
       )}
