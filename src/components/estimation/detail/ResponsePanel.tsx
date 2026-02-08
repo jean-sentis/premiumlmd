@@ -246,9 +246,7 @@ export function ResponsePanel({ estimation, onUpdate }: ResponsePanelProps) {
           sellerName={estimation.nom}
           sellerEmail={estimation.email}
           aiQuestions={aiQuestions}
-          interest={interest}
-          onInterestChange={setInterest}
-          onSend={handleSendEmail}
+          onSend={(message) => handleSendEmail(message, interest)}
           saving={saving}
           existingMessage={estimation.response_message || ""}
         />

@@ -64,33 +64,23 @@ export function SellerInfoPanel({ estimation, getPhotoUrl }: SellerInfoPanelProp
         )}
       </div>
 
-      {/* Photos — clickable to open viewer */}
+      {/* Photo — single preview, click to open viewer with all photos */}
       {photoUrls.length > 0 && (
-        <div className={`grid gap-2 ${
-          photoUrls.length === 1 ? "grid-cols-1" : "grid-cols-2"
-        }`}>
-          {photoUrls.map((url, i) => (
-            <button
-              key={i}
-              onClick={() => openViewer(i)}
-              className="rounded-lg overflow-hidden border hover:opacity-90 transition-opacity bg-muted/20 cursor-zoom-in relative group"
-            >
-              <img
-                src={url}
-                alt={`Photo ${i + 1}`}
-                className={`w-full object-contain ${
-                  photoUrls.length === 1 ? "max-h-72" : "max-h-56"
-                }`}
-              />
-              {/* Photo count badge on first photo */}
-              {i === 0 && photoUrls.length > 1 && (
-                <span className="absolute bottom-1.5 right-1.5 bg-black/60 text-white text-[10px] px-1.5 py-0.5 rounded-md">
-                  {photoUrls.length} photos
-                </span>
-              )}
-            </button>
-          ))}
-        </div>
+        <button
+          onClick={() => openViewer(0)}
+          className="w-full rounded-lg overflow-hidden border hover:opacity-90 transition-opacity bg-muted/20 cursor-zoom-in relative group"
+        >
+          <img
+            src={photoUrls[0]}
+            alt="Photo principale"
+            className="w-full object-contain max-h-56"
+          />
+          {photoUrls.length > 1 && (
+            <span className="absolute bottom-1.5 right-1.5 bg-black/60 text-white text-[10px] px-1.5 py-0.5 rounded-md">
+              +{photoUrls.length - 1} photo{photoUrls.length > 2 ? "s" : ""}
+            </span>
+          )}
+        </button>
       )}
 
       {/* Description */}

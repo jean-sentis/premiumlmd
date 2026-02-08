@@ -9,7 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { INTEREST_LEVELS, type InterestLevel } from "./interest-config";
+
 
 const GREETING_SNIPPETS = [
   { label: "Bonjour personnalisé", build: (name: string) => `Bonjour ${name},\n\n` },
@@ -42,9 +42,7 @@ interface EmailComposerProps {
   sellerName: string;
   sellerEmail: string;
   aiQuestions: string[];
-  interest: string;
-  onInterestChange: (v: string) => void;
-  onSend: (message: string, interest: string) => void;
+  onSend: (message: string) => void;
   saving: boolean;
   existingMessage: string;
 }
@@ -53,8 +51,6 @@ export function EmailComposer({
   sellerName,
   sellerEmail,
   aiQuestions,
-  interest,
-  onInterestChange,
   onSend,
   saving,
   existingMessage,
@@ -94,9 +90,6 @@ export function EmailComposer({
 
   return (
     <div className="space-y-3">
-      {/* Interest selector */}
-      <InterestSelector value={interest} onChange={onInterestChange} />
-
       {/* Toolbar: insert snippets into body */}
       <div className="flex items-center gap-1.5 flex-wrap">
         <DropdownMenu>
@@ -157,21 +150,17 @@ export function EmailComposer({
 
       {/* Send */}
       <div className="space-y-2">
-        {(!interest || !message.trim()) && (
+        {!message.trim() && (
           <p className="text-xs text-orange-700 dark:text-orange-400 bg-orange-50 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-800 rounded px-2 py-1">
-            {!interest && !message.trim()
-              ? "⚠ Sélectionnez un niveau d'intérêt et rédigez un message"
-              : !interest
-              ? "⚠ Sélectionnez un niveau d'intérêt ci-dessus"
-              : "⚠ Rédigez un message avant d'envoyer"}
+            ⚠ Rédigez un message avant d'envoyer
           </p>
         )}
         <div className="flex items-center justify-between">
           <p className="text-xs text-muted-foreground">Envoi à : {sellerEmail}</p>
           <Button
             size="sm"
-            disabled={saving || !interest || !message.trim()}
-            onClick={() => onSend(message, interest)}
+            disabled={saving || !message.trim()}
+            onClick={() => onSend(message)}
             className="gap-2"
           >
             {saving ? (
@@ -187,39 +176,3 @@ export function EmailComposer({
   );
 }
 
-function InterestSelector({
-  value,
-  onChange,
-}: {
-  value: string;
-  onChange: (v: string) => void;
-}) {
-  return (
-    <div className="space-y-1.5">
-      <p className="text-xs font-medium text-muted-foreground">
-        Niveau d'intérêt
-      </p>
-      <div className="flex flex-wrap gap-1.5">
-        {Object.entries(INTEREST_LEVELS).map(([key, config]) => {
-          const isSelected = value === key;
-          return (
-            <button
-              key={key}
-              onClick={() => onChange(key)}
-              className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
-                isSelected
-                  ? `${config.bg} ${config.text} ${config.border} font-medium`
-                  : "border-border text-muted-foreground hover:bg-muted/50"
-              }`}
-            >
-              <span
-                className={`inline-block w-2 h-2 rounded-full ${config.dot} mr-1.5`}
-              />
-              {config.label}
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
