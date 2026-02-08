@@ -1,20 +1,6 @@
-import { Check, Search, TrendingUp, Loader2, ChevronRight } from "lucide-react";
+import { Check, Loader2 } from "lucide-react";
 
-type StepStatus = "done" | "empty" | "pending" | "unavailable";
-
-const STATUS_STYLES: Record<StepStatus, string> = {
-  done: "bg-green-50 text-green-700 border-green-200",
-  empty: "bg-amber-50 text-amber-700 border-amber-200",
-  pending: "bg-muted/50 text-muted-foreground border-dashed border-border",
-  unavailable: "bg-muted/30 text-muted-foreground/50 border-border/30",
-};
-
-const DOT_STYLES: Record<StepStatus, string> = {
-  done: "bg-green-500",
-  empty: "bg-amber-500",
-  pending: "bg-muted-foreground/30",
-  unavailable: "bg-muted-foreground/20",
-};
+type StepStatus = "done" | "empty" | "pending" | "active";
 
 interface PipelineStepperProps {
   analysisDepth: number;
@@ -34,93 +20,81 @@ export function PipelineStepper({
   deepening,
 }: PipelineStepperProps) {
   return (
-    <div className="flex items-center gap-1 flex-wrap">
-      {/* ── Stade 1 : Première impression (toujours fait quand l'IA a répondu) ── */}
-      <StepBadge
-        status="done"
-        label="Première impression"
-        icon={<Check className="w-2.5 h-2.5" />}
-      />
+    <div className="flex items-center gap-1.5 flex-wrap">
+      {/* ── Stade 1 : Première impression (toujours fait) ── */}
+      <DoneBadge label="Première impression" />
 
-      <ChevronRight className="w-3 h-3 text-muted-foreground/30 shrink-0" />
+      <Separator />
 
       {/* ── Stade 2 : Correspondances visuelles ── */}
       {analysisDepth >= 2 ? (
-        <StepBadge
-          status={lensCount > 0 ? "done" : "empty"}
+        <DoneBadge
           label={
             lensCount > 0
               ? `${lensCount} correspondance${lensCount > 1 ? "s" : ""}`
               : "Pas de correspondance"
           }
-          icon={<Search className="w-2.5 h-2.5" />}
         />
       ) : (
-        <StepBadge
-          status="pending"
-          label="Correspondances"
-          icon={<Search className="w-2.5 h-2.5" />}
-        />
+        <PendingBadge label="Correspondances visuelles ?" />
       )}
 
-      <ChevronRight className="w-3 h-3 text-muted-foreground/30 shrink-0" />
+      <Separator />
 
-      {/* ── Stade 3 : Résultats / Marché ── */}
+      {/* ── Stade 3 : Résultats sur le marché ── */}
       {analysisDepth >= 3 ? (
-        <StepBadge
-          status={scrapedCount > 0 ? "done" : "empty"}
+        <DoneBadge
           label={
             scrapedCount > 0
-              ? `${scrapedCount} résultat${scrapedCount > 1 ? "s" : ""}`
-              : "Pas de résultat"
+              ? `${scrapedCount} référence${scrapedCount > 1 ? "s" : ""} marché`
+              : "Pas de référence"
           }
-          icon={<TrendingUp className="w-2.5 h-2.5" />}
         />
       ) : canDeepen && onDeepen ? (
         <button
           onClick={onDeepen}
           disabled={deepening}
-          className={`inline-flex items-center gap-1 text-[10px] font-medium px-2 py-1 rounded-full border border-dashed transition-colors ${
+          className={`inline-flex items-center gap-1.5 text-[10px] font-medium px-2.5 py-1 rounded-full border transition-colors ${
             deepening
-              ? "border-primary/30 text-primary/70 cursor-wait"
-              : "border-primary/40 text-primary hover:bg-primary/5 cursor-pointer"
+              ? "bg-muted/40 text-muted-foreground border-border cursor-wait"
+              : "bg-muted/30 text-foreground border-border hover:bg-muted/60 cursor-pointer"
           }`}
         >
           {deepening ? (
             <Loader2 className="w-2.5 h-2.5 animate-spin" />
           ) : (
-            <TrendingUp className="w-2.5 h-2.5" />
+            <span className="text-[9px]">?</span>
           )}
-          {deepening ? "Recherche…" : "Résultats / Marché"}
+          {deepening ? "Recherche…" : "Résultats sur le marché ?"}
         </button>
       ) : (
-        <StepBadge
-          status="unavailable"
-          label="Résultats / Marché"
-          icon={<TrendingUp className="w-2.5 h-2.5" />}
-        />
+        <PendingBadge label="Résultats sur le marché ?" />
       )}
     </div>
   );
 }
 
-/* ── Badge individuel ── */
-function StepBadge({
-  status,
-  label,
-  icon,
-}: {
-  status: StepStatus;
-  label: string;
-  icon: React.ReactNode;
-}) {
+/* ── Badge terminé (fond gris + check vert) ── */
+function DoneBadge({ label }: { label: string }) {
   return (
-    <span
-      className={`inline-flex items-center gap-1 text-[10px] font-medium px-2 py-1 rounded-full border ${STATUS_STYLES[status]}`}
-    >
-      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${DOT_STYLES[status]}`} />
-      {icon}
+    <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold px-2.5 py-1 rounded-full bg-muted/50 text-foreground border border-border/50">
+      <Check className="w-3 h-3 text-green-600 shrink-0" />
       {label}
     </span>
   );
+}
+
+/* ── Badge en attente (fond gris clair + ?) ── */
+function PendingBadge({ label }: { label: string }) {
+  return (
+    <span className="inline-flex items-center gap-1.5 text-[10px] font-medium px-2.5 py-1 rounded-full bg-muted/30 text-muted-foreground border border-dashed border-border/50">
+      <span className="text-[9px]">?</span>
+      {label}
+    </span>
+  );
+}
+
+/* ── Séparateur discret ── */
+function Separator() {
+  return <span className="text-muted-foreground/30 text-[10px] shrink-0">›</span>;
 }

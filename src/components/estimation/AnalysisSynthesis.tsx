@@ -147,7 +147,7 @@ export function AnalysisSynthesis({ ai, reanalyzing, onReanalyze }: AnalysisSynt
           )}
 
           {/* ── Détails (repliables) ── */}
-          {(ai.authenticity_assessment || ai.condition_notes || ai.market_insights || ai.questions_for_owner?.length > 0) && (
+          {(ai.identity_biography || ai.authenticity_assessment || ai.condition_notes || ai.market_insights || ai.questions_for_owner?.length > 0) && (
             <DetailSection ai={ai} />
           )}
 
@@ -259,7 +259,9 @@ function DetailSection({ ai }: { ai: any }) {
   const [open, setOpen] = useState(false);
 
   const items: Array<{ icon: React.ReactNode; title: string; content: string }> = [];
-  if (ai.authenticity_assessment) items.push({ icon: <Shield className="w-3.5 h-3.5" />, title: "Authenticité", content: ai.authenticity_assessment });
+  if (ai.identity_biography) items.push({ icon: <Shield className="w-3.5 h-3.5" />, title: "Identité / Biographie", content: ai.identity_biography });
+  // Fallback for old analyses that still have authenticity_assessment
+  else if (ai.authenticity_assessment) items.push({ icon: <Shield className="w-3.5 h-3.5" />, title: "Authenticité", content: ai.authenticity_assessment });
   if (ai.condition_notes) items.push({ icon: <Wrench className="w-3.5 h-3.5" />, title: "État", content: ai.condition_notes });
   if (ai.market_insights) items.push({ icon: <TrendingUp className="w-3.5 h-3.5" />, title: "Contexte marché", content: ai.market_insights });
 

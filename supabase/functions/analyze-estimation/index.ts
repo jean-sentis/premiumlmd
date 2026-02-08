@@ -508,8 +508,23 @@ FORMATAGE DES TEXTES — RÈGLES ULTRA-STRICTES :
 
 CONCISION OBLIGATOIRE :
 - "identified_object" = UNE seule ligne au conditionnel.
+- "identity_biography" = Section IDENTITÉ / BIOGRAPHIE structurée (voir règle ci-dessous).
 - "summary" = 2-4 phrases courtes au conditionnel.
 - Ne JAMAIS mentionner les outils techniques utilisés.
+
+IDENTITÉ / BIOGRAPHIE — RÈGLE STRUCTURANTE :
+Le champ "identity_biography" est le cœur de l'expertise. Son contenu varie selon la nature de l'objet :
+
+CAS 1 — Œuvre d'art ou artisanat d'art (peinture, sculpture, céramique, estampe, bijou signé, mobilier d'ébéniste, etc.) :
+- IDENTITÉ : Nature précise de l'œuvre, attribution au conditionnel, technique, époque.
+- AUTHENTICITÉ : Éléments visuels observés (signatures, poinçons, marques) et leur cohérence. Si l'authenticité est un enjeu, l'indiquer clairement.
+- BIOGRAPHIE : Éléments biographiques connus sur l'auteur/créateur (dates, mouvement, école, faits notables). Circonstances de création de l'œuvre si connues (commande, exposition, série, édition limitée).
+- Le tout en 3-6 phrases maximum, au conditionnel quand approprié.
+
+CAS 2 — Objet usuel ou de consommation (électroménager, vélo, imprimante, meuble contemporain, etc.) :
+- IDENTITÉ : Marque, modèle, référence, année approximative.
+- SPÉCIFICATIONS TECHNIQUES : Caractéristiques qui impactent la cote (ex: "imprime en A3", "moteur 125cc", "capacité 10 kg", "résolution 4K", "année 2019").
+- Le tout en 2-4 phrases factuelles.
 
 VÉRIFICATION FINALE OBLIGATOIRE :
 ÉTAPE A : Identifie le match_index avec le meilleur verdict.
@@ -519,13 +534,13 @@ VÉRIFICATION FINALE OBLIGATOIRE :
 JSON sans backticks :
 {
   "identified_object": "1 ligne au conditionnel.",
+  "identity_biography": "Identité, authenticité (si pertinent), biographie/spécifications techniques selon le type d'objet.",
   "alternative_identifications": ["Piste écartée avec explication et source"],
   "visual_comparisons": [
     {"match_index": 0, "verdict": "similaire", "details": "Différences précises observées."}
   ],
   "summary": "Synthèse avec liens markdown.",
   "estimated_range": "Fourchette en euros.",
-  "authenticity_assessment": "Détails authenticité (au conditionnel)",
   "condition_notes": "Détails état",
   "market_insights": "Pour CHAQUE prix cité, indiquer le verdict visuel correspondant.",
   "web_sources": [{"title":"","url":"JAMAIS de paywall","relevance":"même œuvre / similaire / différent"}],
