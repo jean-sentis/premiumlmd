@@ -66,7 +66,8 @@ export function ResponsePanel({ estimation, onUpdate }: ResponsePanelProps) {
   };
 
   const handleSaveDelegate = async () => {
-    if (!interest || !delegateName.trim()) return;
+    if (!delegateName.trim()) return;
+    const effectiveInterest = interest || estimation.auctioneer_decision || "";
     setSaving(true);
     try {
       // Build a summary of the estimation for the delegate email
@@ -80,7 +81,7 @@ export function ResponsePanel({ estimation, onUpdate }: ResponsePanelProps) {
       const { error } = await supabase
         .from("estimation_requests")
         .update({
-          auctioneer_decision: interest,
+          auctioneer_decision: effectiveInterest || undefined,
           response_mode: "delegate",
           delegate_to: delegateName.trim(),
           status: "in_review",
@@ -221,7 +222,6 @@ export function ResponsePanel({ estimation, onUpdate }: ResponsePanelProps) {
           <p className="text-xs text-muted-foreground">
             Un email avec le résumé de la demande sera ouvert pour envoi.
           </p>
-          <InterestSelector value={interest} onChange={setInterest} />
           <Input
             placeholder="Nom du collaborateur / expert…"
             value={delegateName}
@@ -229,7 +229,7 @@ export function ResponsePanel({ estimation, onUpdate }: ResponsePanelProps) {
           />
           <Button
             size="sm"
-            disabled={saving || !interest || !delegateName.trim()}
+            disabled={saving || !delegateName.trim()}
             onClick={handleSaveDelegate}
             className="w-full gap-2"
           >
@@ -250,6 +250,16 @@ export function ResponsePanel({ estimation, onUpdate }: ResponsePanelProps) {
           saving={saving}
           existingMessage={estimation.response_message || ""}
         />
+      )}
+
+      {/* ── Sent message recall ── */}
+      {!mode && estimation.response_message && estimation.response_mode === "email" && (
+        <div className="space-y-1.5">
+          <p className="text-xs font-medium text-muted-foreground">Message envoyé</p>
+          <div className="text-xs font-mono bg-muted/30 border border-border/30 rounded-lg p-3 whitespace-pre-wrap leading-relaxed max-h-48 overflow-y-auto">
+            {estimation.response_message}
+          </div>
+        </div>
       )}
     </div>
   );
