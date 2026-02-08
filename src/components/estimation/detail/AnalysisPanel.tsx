@@ -11,6 +11,7 @@ import {
   Save,
   Pencil,
   X,
+  MessageSquareQuote,
 } from "lucide-react";
 import { PipelineStepper } from "./PipelineStepper";
 import { Button } from "@/components/ui/button";
@@ -107,7 +108,7 @@ export function AnalysisPanel({
   const [identifiedObject, setIdentifiedObject] = useState<string>(ai?.identified_object || "");
   const [summary, setSummary] = useState<string>(ai?.summary || "");
   const [estimatedRange, setEstimatedRange] = useState<string>(ai?.estimated_range || "");
-  const [authText, setAuthText] = useState<string>(ai?.authenticity_assessment || "");
+  const [authText, setAuthText] = useState<string>(ai?.identity_biography || ai?.authenticity_assessment || "");
   const [conditionText, setConditionText] = useState<string>(ai?.condition_notes || "");
   const [marketText, setMarketText] = useState<string>(ai?.market_insights || "");
 
@@ -126,7 +127,7 @@ export function AnalysisPanel({
       if (identifiedObject === (prev?.identified_object || "")) setIdentifiedObject(ai.identified_object || "");
       if (summary === (prev?.summary || "")) setSummary(ai.summary || "");
       if (estimatedRange === (prev?.estimated_range || "")) setEstimatedRange(ai.estimated_range || "");
-      if (authText === (prev?.authenticity_assessment || "")) setAuthText(ai.authenticity_assessment || "");
+      if (authText === (prev?.identity_biography || prev?.authenticity_assessment || "")) setAuthText(ai.identity_biography || ai.authenticity_assessment || "");
       if (conditionText === (prev?.condition_notes || "")) setConditionText(ai.condition_notes || "");
       if (marketText === (prev?.market_insights || "")) setMarketText(ai.market_insights || "");
       prevAiRef.current = ai;
@@ -140,7 +141,7 @@ export function AnalysisPanel({
     identifiedObject !== (ai?.identified_object || "") ||
     summary !== (ai?.summary || "") ||
     estimatedRange !== (ai?.estimated_range || "") ||
-    authText !== (ai?.authenticity_assessment || "") ||
+    authText !== (ai?.identity_biography || ai?.authenticity_assessment || "") ||
     conditionText !== (ai?.condition_notes || "") ||
     marketText !== (ai?.market_insights || "");
 
@@ -154,9 +155,10 @@ export function AnalysisPanel({
         confidence_score: fiabilite,
         confidence_level: scoreToLevel[fiabilite] || "moyenne",
         identified_object: identifiedObject,
+        identity_biography: authText,
         summary,
         estimated_range: estimatedRange,
-        authenticity_assessment: authText,
+        authenticity_assessment: authText, // keep legacy field in sync
         condition_notes: conditionText,
         market_insights: marketText,
       };
@@ -312,64 +314,86 @@ export function AnalysisPanel({
         </div>
       </div>
 
-      {/* ── Boutons détail — pleine largeur avec avant-goûts ── */}
-      {(authText || conditionText || marketText || sourceCount > 0) && (
-        <div className="space-y-0">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
-            <DetailButton
-              icon={<Fingerprint className="w-3.5 h-3.5" />}
-              label="Identité"
-              preview={authText ? authText.substring(0, 60) + (authText.length > 60 ? "…" : "") : undefined}
-              isOpen={openSection === "auth"}
-              onClick={() => toggleSection("auth")}
-            />
-            <DetailButton
-              icon={<Wrench className="w-3.5 h-3.5" />}
-              label="État"
-              preview={conditionText ? conditionText.substring(0, 60) + (conditionText.length > 60 ? "…" : "") : undefined}
-              isOpen={openSection === "condition"}
-              onClick={() => toggleSection("condition")}
-            />
-            <DetailButton
-              icon={<Image className="w-3.5 h-3.5" />}
-              label="Correspondances"
-              count={lensCount}
-              preview={lensCount > 0 ? `${lensCount} image(s) similaire(s) trouvée(s)` : "Aucune correspondance"}
-              isOpen={openSection === "lens"}
-              onClick={() => toggleSection("lens")}
-            />
-            <DetailButton
-              icon={<TrendingUp className="w-3.5 h-3.5" />}
-              label="Résultats"
-              count={webCount > 0 ? webCount : undefined}
-              preview={marketText ? marketText.substring(0, 60) + (marketText.length > 60 ? "…" : "") : (webCount > 0 ? `${webCount} source(s) trouvée(s)` : undefined)}
-              isOpen={openSection === "market"}
-              onClick={() => toggleSection("market")}
-            />
-          </div>
-
-          {openSection === "auth" && (
-            <EditableDetailContent
-              value={authText}
-              onChange={setAuthText}
-              placeholder="Notes sur l'identité / authenticité…"
-            />
-          )}
-          {openSection === "condition" && (
-            <EditableDetailContent
-              value={conditionText}
-              onChange={setConditionText}
-              placeholder="Notes sur l'état…"
-            />
-          )}
-          {openSection === "lens" && (
-            <LensContent ai={ai} sellerPhotoUrls={photoUrls} />
-          )}
-          {openSection === "market" && (
-            <MarketContent ai={ai} marketText={marketText} onMarketTextChange={setMarketText} />
-          )}
+      {/* ── 5 cartouches aide à la décision — une seule ligne ── */}
+      <div className="space-y-0">
+        <div className="flex gap-1.5">
+          <DetailButton
+            icon={<Fingerprint className="w-4 h-4" />}
+            label="Identité"
+            hasContent={!!authText}
+            isOpen={openSection === "auth"}
+            onClick={() => toggleSection("auth")}
+          />
+          <DetailButton
+            icon={<Wrench className="w-4 h-4" />}
+            label="État"
+            hasContent={!!conditionText}
+            isOpen={openSection === "condition"}
+            onClick={() => toggleSection("condition")}
+          />
+          <DetailButton
+            icon={<Image className="w-4 h-4" />}
+            label="Visuels"
+            count={lensCount}
+            hasContent={lensCount > 0}
+            isOpen={openSection === "lens"}
+            onClick={() => toggleSection("lens")}
+          />
+          <DetailButton
+            icon={<TrendingUp className="w-4 h-4" />}
+            label="Marché"
+            count={webCount > 0 ? webCount : undefined}
+            hasContent={!!marketText || webCount > 0}
+            isOpen={openSection === "market"}
+            onClick={() => toggleSection("market")}
+          />
+          <DetailButton
+            icon={<MessageSquareQuote className="w-4 h-4" />}
+            label="Questions"
+            count={ai.questions_for_owner?.length || undefined}
+            hasContent={ai.questions_for_owner?.length > 0}
+            isOpen={openSection === "questions"}
+            onClick={() => toggleSection("questions")}
+          />
         </div>
-      )}
+
+        {openSection === "auth" && (
+          <EditableDetailContent
+            value={authText}
+            onChange={setAuthText}
+            placeholder="Notes sur l'identité / biographie…"
+          />
+        )}
+        {openSection === "condition" && (
+          <EditableDetailContent
+            value={conditionText}
+            onChange={setConditionText}
+            placeholder="Notes sur l'état…"
+          />
+        )}
+        {openSection === "lens" && (
+          <LensContent ai={ai} sellerPhotoUrls={photoUrls} />
+        )}
+        {openSection === "market" && (
+          <MarketContent ai={ai} marketText={marketText} onMarketTextChange={setMarketText} />
+        )}
+        {openSection === "questions" && (
+          <div className="mt-1.5 p-3 bg-muted/30 rounded-lg border border-border/30 animate-in slide-in-from-top-1 duration-200">
+            {ai.questions_for_owner?.length > 0 ? (
+              <ul className="space-y-1.5 text-sm text-muted-foreground">
+                {ai.questions_for_owner.map((q: string, i: number) => (
+                  <li key={i} className="flex items-start gap-2">
+                    <span className="text-foreground font-medium">{i + 1}.</span>
+                    <span>{q}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-sm text-muted-foreground italic">Aucune question suggérée.</p>
+            )}
+          </div>
+        )}
+      </div>
 
       {/* Limitations - discret */}
       {ai.limitations && (
@@ -506,47 +530,41 @@ function EditableDetailContent({
   );
 }
 
-/* ── Bouton de détail — pleine largeur avec avant-goût ── */
+/* ── Cartouche aide à la décision — compact, une ligne ── */
 function DetailButton({
   icon,
   label,
   count,
-  preview,
+  hasContent,
   isOpen,
   onClick,
 }: {
   icon: React.ReactNode;
   label: string;
   count?: number;
-  preview?: string;
+  hasContent?: boolean;
   isOpen: boolean;
   onClick: () => void;
 }) {
   return (
     <button
       onClick={onClick}
-      className={`flex flex-col items-start gap-1 px-3 py-2.5 rounded-lg border text-xs font-medium transition-colors w-full text-left ${
+      className={`flex-1 min-w-0 flex items-center justify-center gap-1.5 px-2 py-2 rounded-lg border text-[11px] font-semibold uppercase tracking-wide transition-colors ${
         isOpen
           ? "bg-muted border-border text-foreground"
-          : "border-border/50 text-muted-foreground hover:bg-muted/30"
+          : hasContent
+          ? "bg-muted/40 border-border/60 text-foreground hover:bg-muted/60"
+          : "border-border/30 text-muted-foreground/50 hover:bg-muted/20"
       }`}
     >
-      <div className="flex items-center gap-1.5 w-full">
+      <span className={isOpen ? "text-foreground" : hasContent ? "text-foreground" : "text-muted-foreground/40"}>
         {icon}
-        <span>{label}</span>
-        {count !== undefined && count > 0 && (
-          <span className="text-[10px] bg-primary/10 text-primary rounded-full px-1.5 py-0 font-semibold">
-            {count}
-          </span>
-        )}
-        <ChevronDown
-          className={`w-3 h-3 ml-auto transition-transform ${isOpen ? "rotate-180" : ""}`}
-        />
-      </div>
-      {preview && !isOpen && (
-        <p className="text-[10px] font-normal text-muted-foreground/70 line-clamp-2 leading-snug">
-          {preview}
-        </p>
+      </span>
+      <span className="truncate">{label}</span>
+      {count !== undefined && count > 0 && (
+        <span className="text-[9px] bg-foreground/10 text-foreground rounded-full px-1.5 py-0 font-bold shrink-0">
+          {count}
+        </span>
       )}
     </button>
   );
