@@ -394,16 +394,21 @@ DÉTECTION DE CONTRADICTIONS AVEC LE DESCRIPTIF VENDEUR :
 - Ne fais ce signalement QUE si la correspondance visuelle est très forte (même œuvre, pas juste le même artiste).
 - Ce n'est pas une accusation, c'est un signalement factuel et mesuré pour aider le commissaire-priseur.
 
-SOURCES DROUOT — RÈGLE STRICTE :
-- Les données trouvées sur drouot.com et gazette-drouot.com sont PRÉCIEUSES pour l'analyse. UTILISE-LES ACTIVEMENT pour ton raisonnement, ton estimation et tes insights marché. Drouot est une mine d'or d'informations.
-- MAIS les liens vers drouot.com et gazette-drouot.com sont INACCESSIBLES aux humains (paywall strict). Ne JAMAIS inclure de lien drouot.com dans web_sources, dans les liens markdown, ni nulle part.
-- STRATÉGIE OBLIGATOIRE quand tu trouves une info sur Drouot (ex: "adjugé 39 000 € chez Biarritz Enchères en septembre 2018") :
-  1. Note le NOM DE LA MAISON DE VENTE (ex: "Biarritz Enchères", "Maître Dupont").
-  2. Cherche dans les résultats web si cette maison a son propre site internet avec un historique de ses ventes.
-  3. Cherche aussi sur interencheres.com, invaluable.com, barnebys.com si la même vente est référencée.
-  4. Si tu trouves un lien ACCESSIBLE : intègre-le en hypertexte. Ex: "[vendue en septembre 2018 chez Biarritz Enchères](https://www.biarritz-encheres.com/vente/123)".
+SITES À PAYWALL — RÈGLE STRICTE :
+- Certains sites sont des mines d'or pour l'ANALYSE mais leurs liens sont INACCESSIBLES aux humains (paywall, abonnement requis). Liste des domaines bloqués :
+  • drouot.com, gazette-drouot.com (paywall Drouot)
+  • invaluable.com (abonnement requis pour les résultats détaillés)
+  • artnet.com (base de prix payante)
+  • artprice.com (abonnement requis)
+- UTILISE ACTIVEMENT les données trouvées sur ces sites pour ton raisonnement et ton estimation. Ce sont des sources de premier plan.
+- MAIS ne JAMAIS inclure de lien vers ces domaines dans web_sources ni dans les liens markdown. L'utilisateur cliquera et verra "accès refusé", c'est une perte de temps.
+- STRATÉGIE OBLIGATOIRE quand tu trouves une info sur un site à paywall :
+  1. Note le NOM DE LA MAISON DE VENTE (ex: "Biarritz Enchères", "Maître Dupont", "Christie's Paris").
+  2. Cherche dans les résultats web si cette maison a son PROPRE SITE INTERNET avec un historique de ses ventes.
+  3. Cherche aussi sur les sites ACCESSIBLES : interencheres.com, barnebys.com, christies.com, sothebys.com, les sites des maisons de vente régionales.
+  4. Si tu trouves un lien ACCESSIBLE : intègre-le en hypertexte dans le texte. Ex: "[vendue en septembre 2018 chez Biarritz Enchères](https://www.biarritz-encheres.com/vente/123)".
   5. Si AUCUN lien accessible n'existe : cite l'info sans lien. Ex: "vendue en septembre 2018 chez Biarritz Enchères pour 39 000 €".
-  6. Ne JAMAIS écrire "(source : Drouot)" ni mentionner Drouot comme source visible.
+  6. Ne JAMAIS mentionner le nom du site à paywall comme source visible.
 
 FORMATAGE DES TEXTES — RÈGLES STRICTES :
 - LIENS HYPERTEXTE : Ne JAMAIS écrire une URL en clair dans le texte. TOUJOURS intégrer le lien dans les mots en markdown : [texte descriptif](url). Le lien doit être DANS le texte naturel, pas à côté. Exemples :
@@ -429,7 +434,7 @@ JSON sans backticks :
   "authenticity_assessment": "Détails authenticité (au conditionnel)",
   "condition_notes": "Détails état",
   "market_insights": "Contexte marché. Montants formatés (35 000 €). Liens en markdown. Distinguer ventes comparables vs autres.",
-  "web_sources": [{"title":"","url":"JAMAIS drouot.com ni gazette-drouot.com — utiliser le site de la maison de vente, interencheres, invaluable ou barnebys","relevance":"Préciser si c'est la même œuvre, une œuvre similaire, ou une œuvre différente du même artiste"}],
+  "web_sources": [{"title":"","url":"JAMAIS de domaine à paywall (drouot, invaluable, artnet, artprice) — utiliser le site de la maison de vente, interencheres ou barnebys","relevance":"Préciser si c'est la même œuvre, similaire ou différente"}],
   "recommendation": "très_intéressant|intéressant|à_examiner|peu_intéressant|hors_spécialité",
   "recommendation_text": "1 phrase",
   "questions_for_owner": ["2-3 questions"],
@@ -552,22 +557,26 @@ JSON sans backticks :
     const cleaned = rawContent.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
     const parsed = JSON.parse(cleaned);
     
-    // Post-processing: strip any drouot.com links that slipped through
+    // Post-processing: strip links to paywall domains
+    const PAYWALL_DOMAINS = ["drouot.com", "gazette-drouot", "invaluable.com", "artnet.com", "artprice.com"];
+    const isPaywalled = (url: string) => PAYWALL_DOMAINS.some(d => url?.includes(d));
+    
     if (parsed.web_sources && Array.isArray(parsed.web_sources)) {
-      parsed.web_sources = parsed.web_sources.filter(
-        (s: any) => !s.url?.includes("drouot.com") && !s.url?.includes("gazette-drouot")
-      );
+      parsed.web_sources = parsed.web_sources.filter((s: any) => !isPaywalled(s.url));
     }
-    // Strip drouot links from markdown text fields
-    const stripDrouotLinks = (text: string): string => {
+    // Strip paywall links from markdown text fields (keep the text, remove the link)
+    const stripPaywallLinks = (text: string): string => {
       if (!text) return text;
-      // Replace [text](drouot-url) with just "text"
-      return text.replace(/\[([^\]]+)\]\(https?:\/\/[^)]*drouot\.com[^)]*\)/g, "$1")
-                 .replace(/\[([^\]]+)\]\(https?:\/\/[^)]*gazette-drouot[^)]*\)/g, "$1");
+      for (const domain of PAYWALL_DOMAINS) {
+        const escaped = domain.replace(/\./g, "\\.");
+        const regex = new RegExp(`\\[([^\\]]+)\\]\\(https?:\\/\\/[^)]*${escaped}[^)]*\\)`, "g");
+        text = text.replace(regex, "$1");
+      }
+      return text;
     };
-    if (parsed.summary) parsed.summary = stripDrouotLinks(parsed.summary);
-    if (parsed.market_insights) parsed.market_insights = stripDrouotLinks(parsed.market_insights);
-    if (parsed.authenticity_assessment) parsed.authenticity_assessment = stripDrouotLinks(parsed.authenticity_assessment);
+    if (parsed.summary) parsed.summary = stripPaywallLinks(parsed.summary);
+    if (parsed.market_insights) parsed.market_insights = stripPaywallLinks(parsed.market_insights);
+    if (parsed.authenticity_assessment) parsed.authenticity_assessment = stripPaywallLinks(parsed.authenticity_assessment);
     
     return parsed;
   } catch {
