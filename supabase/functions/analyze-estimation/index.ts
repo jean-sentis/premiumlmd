@@ -247,7 +247,84 @@ async function runGoogleLens(
 }
 
 // ══════════════════════════════════════════════════════════════════
-// STEP 2: Search the web using SerpAPI Google Search
+// STEP 2b: Firecrawl scraping of visual match URLs (Level 3)
+// ══════════════════════════════════════════════════════════════════
+async function scrapeVisualMatchUrls(
+  matches: Array<{ title: string; link: string; source: string; thumbnail?: string; price?: string }>,
+  firecrawlApiKey: string,
+): Promise<Array<{ title: string; url: string; description: string }>> {
+  // Domains that won't yield useful scrapeable content
+  const BLOCKED_DOMAINS = [
+    "pinterest.com", "pinterest.fr", "facebook.com", "instagram.com",
+    "twitter.com", "x.com", "youtube.com", "tiktok.com",
+    "wikipedia.org", "wikimedia.org", "amazon.com", "amazon.fr",
+    "ebay.com", "ebay.fr", "etsy.com",
+  ];
+  const isBlocked = (url: string) => BLOCKED_DOMAINS.some(d => url?.includes(d));
+
+  const toScrape = matches
+    .filter(m => m.link && !isBlocked(m.link))
+    .slice(0, 5);
+
+  if (toScrape.length === 0) {
+    console.log("[analyze-estimation] Step 2b: No scrapeable URLs from visual matches");
+    return [];
+  }
+
+  console.log(`[analyze-estimation] Step 2b: Scraping ${toScrape.length} visual match URLs with Firecrawl...`);
+
+  const scrapePromises = toScrape.map(async (match) => {
+    try {
+      console.log(`[analyze-estimation]   → Scraping: ${match.link}`);
+      const response = await fetch("https://api.firecrawl.dev/v1/scrape", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${firecrawlApiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          url: match.link,
+          formats: ["markdown"],
+          onlyMainContent: true,
+        }),
+      });
+
+      if (!response.ok) {
+        console.log(`[analyze-estimation]   ✗ Scrape failed for ${match.link}: HTTP ${response.status}`);
+        return null;
+      }
+
+      const data = await response.json();
+      const markdown = data.data?.markdown || data.markdown || "";
+
+      if (markdown.length < 50) {
+        console.log(`[analyze-estimation]   ✗ Content too short for ${match.link}: ${markdown.length} chars`);
+        return null;
+      }
+
+      console.log(`[analyze-estimation]   ✓ Scraped ${match.link}: ${markdown.length} chars`);
+
+      // Truncate to ~2000 chars to keep prompt manageable
+      return {
+        title: match.title || data.data?.metadata?.title || "",
+        url: match.link,
+        description: markdown.substring(0, 2000),
+      };
+    } catch (err) {
+      console.error(`[analyze-estimation]   ✗ Scrape error for ${match.link}:`, err);
+      return null;
+    }
+  });
+
+  const results = await Promise.all(scrapePromises);
+  const validResults = results.filter((r): r is NonNullable<typeof r> => r !== null);
+
+  console.log(`[analyze-estimation] Step 2b: Successfully scraped ${validResults.length}/${toScrape.length} URLs`);
+  return validResults;
+}
+
+// ══════════════════════════════════════════════════════════════════
+// STEP 2c (fallback): Search the web using SerpAPI Google Search
 // ══════════════════════════════════════════════════════════════════
 async function searchWebReferences(
   searchTerms: string[],
@@ -551,12 +628,15 @@ JSON sans backticks :
     }
   }
 
-  // Web search results
+  // Web/scraped results
   if (webResults.length > 0) {
-    let webContext = "\n\nRÉSULTATS DE RECHERCHE WEB GOOGLE (à croiser avec l'analyse visuelle) :\n";
+    const headerText = analysisDepth >= 3
+      ? "CONTENU EXTRAIT DES PAGES SOURCES (sites des correspondances visuelles)"
+      : "RÉSULTATS DE RECHERCHE WEB (à croiser avec l'analyse visuelle)";
+    let webContext = `\n\n${headerText} :\n`;
     for (const r of webResults) {
       webContext += `\n--- Source : ${r.title} (${r.url}) ---\n`;
-      if (r.description) webContext += `Résumé : ${r.description}\n`;
+      if (r.description) webContext += `${r.description}\n`;
     }
     userContent.push({ type: "text", text: webContext });
   } else if (!lensResults || lensResults.visualMatches.length === 0) {
@@ -840,149 +920,23 @@ serve(async (req) => {
       }
     }
 
-    // ── Level 3: Full web research ──
-    if (effectiveDepth >= 3 && serpApiKey) {
-      // Google Search with search terms
-      if (searchTerms.length > 0) {
+    // ── Level 3: Scrape visual match URLs with Firecrawl (primary), fallback to SerpAPI Search ──
+    if (effectiveDepth >= 3) {
+      const firecrawlApiKey = Deno.env.get("FIRECRAWL_API_KEY");
+
+      // Primary strategy: scrape the URLs from Google Lens visual matches
+      if (firecrawlApiKey && lensResults && lensResults.visualMatches.length > 0) {
+        console.log("[analyze-estimation] Level 3: Using Firecrawl to scrape visual match URLs");
+        webResults = await scrapeVisualMatchUrls(lensResults.visualMatches, firecrawlApiKey);
+      }
+
+      // Fallback: if Firecrawl is not configured or returned nothing, use SerpAPI Google Search
+      if (webResults.length === 0 && serpApiKey && searchTerms.length > 0) {
+        console.log("[analyze-estimation] Level 3 fallback: Using SerpAPI Google Search");
         webResults = await searchWebReferences(searchTerms, serpApiKey);
       }
 
-      // Retry with Lens labels if no results
-      if (webResults.length === 0 && lensResults && lensResults.bestGuessLabels.length > 0) {
-        console.log("[analyze-estimation] Retrying search with Lens labels:", lensResults.bestGuessLabels);
-        webResults = await searchWebReferences(lensResults.bestGuessLabels, serpApiKey);
-      }
-
-      // Lens leads research
-      if (lensResults && lensResults.visualMatches.length > 0) {
-        const lensLeads = new Set<string>();
-        for (const match of lensResults.visualMatches.slice(0, 8)) {
-          const title = match.title || "";
-          if (title.length < 5) continue;
-          const cleaned = title
-            .replace(/\s*[-–|]\s*(eBay|Etsy|Amazon|Pinterest|Wikipedia|Wikimedia).*$/i, "")
-            .replace(/\s*[-–|]\s*\d+\s*€.*$/i, "")
-            .trim();
-          if (cleaned.length >= 5 && !lensLeads.has(cleaned)) {
-            lensLeads.add(cleaned);
-          }
-        }
-        for (const label of lensResults.bestGuessLabels) {
-          if (label.length >= 3) lensLeads.add(label);
-        }
-        const lensSearchTerms = Array.from(lensLeads).slice(0, 4);
-        if (lensSearchTerms.length > 0) {
-          console.log("[analyze-estimation] Lens leads to research:", lensSearchTerms);
-          const lensAuctionTerms = lensSearchTerms.map(t => `${t} enchères adjugé vente`);
-          const lensWebResults = await searchWebReferences(lensAuctionTerms, serpApiKey);
-          const existingUrls = new Set(webResults.map(r => r.url));
-          for (const r of lensWebResults) {
-            if (r.url && !existingUrls.has(r.url)) {
-              webResults.push(r);
-              existingUrls.add(r.url);
-            }
-          }
-        }
-      }
-
-      // Targeted auction platform searches
-      if (searchTerms.length > 0) {
-        const auctionTerms = searchTerms.slice(0, 2);
-        const auctionSites = [
-          "drouot.com", "interencheres.com", "gazette-drouot.com",
-          "invaluable.com", "artnet.com", "barnebys.com", "artprice.com", "mutualart.com",
-        ];
-        const siteFilter = auctionSites.map(s => `site:${s}`).join(" OR ");
-        const auctionQueries = auctionTerms.map(term => `(${siteFilter}) ${term}`);
-
-        console.log("[analyze-estimation] Auction platform search:", auctionQueries);
-
-        const auctionSearchPromises = auctionQueries.map(async (query) => {
-          try {
-            const params = new URLSearchParams({
-              engine: "google",
-              q: query,
-              api_key: serpApiKey,
-              hl: "fr",
-              gl: "fr",
-              num: "5",
-              safe: "off",
-            });
-            const response = await fetch(`https://serpapi.com/search?${params.toString()}`);
-            if (!response.ok) return [];
-            const data = await response.json();
-            return (data.organic_results || []).map((item: any) => ({
-              title: item.title || "",
-              url: item.link || "",
-              description: item.snippet || "",
-            }));
-          } catch {
-            return [];
-          }
-        });
-
-        const auctionResults = await Promise.all(auctionSearchPromises);
-        const existingUrls = new Set(webResults.map(r => r.url));
-        for (const batch of auctionResults) {
-          for (const r of batch) {
-            if (r.url && !existingUrls.has(r.url)) {
-              webResults.push(r);
-              existingUrls.add(r.url);
-            }
-          }
-        }
-        console.log(`[analyze-estimation] After auction search: ${webResults.length} total web results`);
-      }
-
-      // Search based on user text clues
-      if (userOwnMessage.length > 5) {
-        const extraTerms: string[] = [];
-        const flexiblePatterns = [
-          /(?:signature|signé|marqué|poinçon|inscrit|écrit)[\s\w,''éèêëàâäùûüîïôö]*?(?:comme\s+)?([a-zà-üA-ZÀ-Ü][a-zà-ü]{2,}(?:\s+[a-zà-üA-ZÀ-Ü][a-zà-ü]{2,})*)/gi,
-          /(?:artiste|par|de|auteur)\s+([A-ZÀ-Ü][a-zà-ü]{2,}(?:\s+[A-ZÀ-Ü][a-zà-ü]{2,})*)/g,
-        ];
-        const stopWords = new Set([
-          "derriere", "derrière", "devant", "dessus", "dessous", "comme", "très",
-          "pas", "peu", "assez", "plutôt", "bien", "mal", "une", "lisible",
-          "illisible", "visible", "invisible", "quelque", "chose", "objet",
-        ]);
-        const extractedNames = new Set<string>();
-        for (const pattern of flexiblePatterns) {
-          let match;
-          while ((match = pattern.exec(userOwnMessage)) !== null) {
-            const name = match[1]?.trim();
-            if (name && name.length >= 3 && !stopWords.has(name.toLowerCase())) {
-              extractedNames.add(name);
-            }
-          }
-        }
-        const commonWords = new Set(["Le", "La", "Les", "Un", "Une", "Des", "Du", "De", "En", "Au", "Il", "Je", "Mon", "Mes", "Son", "Ses", "Est", "Pas", "Très", "Comme", "Bonjour", "Merci"]);
-        const capitalizedWords = userOwnMessage.match(/[A-ZÀ-Ü][a-zà-ü]{2,}/g) || [];
-        for (const w of capitalizedWords) {
-          if (!commonWords.has(w) && !stopWords.has(w.toLowerCase())) {
-            extractedNames.add(w);
-          }
-        }
-        for (const name of extractedNames) {
-          extraTerms.push(`${name} artiste enchères`);
-          extraTerms.push(`${name} artiste sculpture peinture`);
-          extraTerms.push(`site:drouot.com ${name}`);
-          extraTerms.push(`site:interencheres.com ${name}`);
-        }
-        if (extraTerms.length > 0) {
-          console.log("[analyze-estimation] Extra search terms from user text:", extraTerms.slice(0, 6));
-          const extraResults = await searchWebReferences(extraTerms.slice(0, 6), serpApiKey);
-          const existingUrls = new Set(webResults.map(r => r.url));
-          for (const r of extraResults) {
-            if (!existingUrls.has(r.url)) {
-              webResults.push(r);
-              existingUrls.add(r.url);
-            }
-          }
-        }
-      }
-
-      console.log(`[analyze-estimation] Level 3 complete: ${webResults.length} total web results`);
+      console.log(`[analyze-estimation] Level 3 complete: ${webResults.length} enriched results`);
     }
 
     // ═══════════════════════════════════════════════
@@ -1015,7 +969,7 @@ serve(async (req) => {
     analysis.object_type = triage.object_type;
     // can_deepen: true if analysis stopped before Level 3
     analysis.can_deepen = effectiveDepth < 3;
-
+    analysis.scraped_results_count = webResults.length;
     // Save to database
     const { error: updateError } = await supabase
       .from("estimation_requests")
