@@ -138,7 +138,7 @@ export function ResponsePanel({ estimation, onUpdate }: ResponsePanelProps) {
   return (
     <div className={containerClasses}>
       <div className="flex items-center justify-between">
-        <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+        <h3 className="text-xs font-semibold uppercase tracking-wider text-foreground text-center flex-1">
           Actions
         </h3>
         {isResponded && interestStyle && (

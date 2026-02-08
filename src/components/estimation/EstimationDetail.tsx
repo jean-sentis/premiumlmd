@@ -220,7 +220,7 @@ export function EstimationDetail({
       {/* ═══════════════════════════════════════════════════ */}
       <div className="flex-1 overflow-y-auto">
         <div className="p-4 md:p-6">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6" style={{ minHeight: "calc(60vh + 100px)" }}>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6" style={{ minHeight: "calc(60vh + 50px)" }}>
             {/* Column 1: Seller info (no redundant header) */}
             <div className="lg:border-r lg:pr-6">
               <SellerInfoPanel estimation={current} getPhotoUrl={getPhotoUrl} />
@@ -229,23 +229,23 @@ export function EstimationDetail({
             {/* Column 2: Browser-style tabbed opinions */}
             <div className="lg:border-r lg:pr-6 flex flex-col">
               {/* Browser-style tab bar */}
-              <div className="flex items-end gap-px -mb-px">
+              <div className="flex items-end justify-between -mb-px">
                 <button
                   onClick={() => setActiveTab("first")}
-                  className={`px-4 py-2 text-xs font-medium rounded-t-lg border border-b-0 transition-colors ${
+                  className={`px-5 py-2 text-xs font-semibold rounded-tl-xl border transition-colors ${
                     activeTab === "first"
-                      ? "bg-background text-foreground border-border"
-                      : "bg-muted/50 text-muted-foreground border-transparent hover:bg-muted hover:text-foreground"
+                      ? "bg-background text-foreground border-border border-b-background"
+                      : "bg-muted/40 text-muted-foreground/60 border-transparent hover:bg-muted/70 hover:text-foreground"
                   }`}
                 >
                   1er Avis
                 </button>
                 <button
                   onClick={() => setActiveTab("second")}
-                  className={`px-4 py-2 text-xs font-medium rounded-t-lg border border-b-0 transition-colors ${
+                  className={`px-5 py-2 text-xs font-semibold rounded-tr-xl border transition-colors ${
                     activeTab === "second"
-                      ? "bg-background text-foreground border-border"
-                      : "bg-muted/50 text-muted-foreground border-transparent hover:bg-muted hover:text-foreground"
+                      ? "bg-background text-foreground border-border border-b-background"
+                      : "bg-muted/40 text-muted-foreground/60 border-transparent hover:bg-muted/70 hover:text-foreground"
                   }`}
                 >
                   2ème Avis
@@ -253,7 +253,7 @@ export function EstimationDetail({
               </div>
 
               {/* Tab content area */}
-              <div className="flex-1 border rounded-b-lg rounded-tr-lg p-3 bg-background">
+              <div className="flex-1 border rounded-b-xl p-3 bg-background">
                 {activeTab === "first" ? (
                   <NotesPanel
                     estimationId={estimation.id}
@@ -277,7 +277,7 @@ export function EstimationDetail({
           {/* ══════════════════════════════════════ */}
           {/* FULL-WIDTH: AI analysis (expandable)  */}
           {/* ══════════════════════════════════════ */}
-          <div ref={aiSectionRef} className="mt-6 border-t pt-4">
+          <div ref={aiSectionRef} className="mt-6 border-t pt-4 max-w-none">
             <button
               onClick={() => setShowAiAnalysis(!showAiAnalysis)}
               className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors group w-full"
