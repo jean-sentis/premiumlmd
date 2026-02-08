@@ -214,7 +214,7 @@ export function EstimationDetail({
       {/* ═══════════════════════════════════════════════════ */}
       <div className="flex-1 overflow-y-auto">
         <div className="p-4 md:p-6">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6" style={{ minHeight: "calc(30vh + 25px)" }}>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6" style={{ minHeight: "calc(30vh + 95px)" }}>
             {/* Column 1: Seller info */}
             <div className="lg:border-r lg:pr-6">
               <SellerInfoPanel estimation={current} getPhotoUrl={getPhotoUrl} />
@@ -280,7 +280,7 @@ export function EstimationDetail({
           {/* ══════════════════════════════════════ */}
           {/* FULL-WIDTH: AI analysis (expandable)  */}
           {/* ══════════════════════════════════════ */}
-          <div ref={aiSectionRef} className="mt-24 border-t pt-4 max-w-none">
+          <div ref={aiSectionRef} className="mt-32 border-t pt-4 max-w-none">
             <button
               onClick={() => setShowAiAnalysis(!showAiAnalysis)}
               className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors group w-full"

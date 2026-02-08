@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { X, ZoomIn, ZoomOut, RotateCcw, ChevronLeft, ChevronRight, Maximize2, Minimize2 } from "lucide-react";
+import { X, ZoomIn, ZoomOut, RotateCcw, ChevronLeft, ChevronRight } from "lucide-react";
 
 interface ImageViewerProps {
   images: string[];
@@ -20,7 +20,6 @@ const ImageViewer = ({
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
-  const [isFitToScreen, setIsFitToScreen] = useState(true);
   const containerRef = useRef<HTMLDivElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
 
@@ -34,33 +33,47 @@ const ImageViewer = ({
   const resetView = useCallback(() => {
     setZoom(1);
     setPosition({ x: 0, y: 0 });
-    setIsFitToScreen(true);
   }, []);
 
   const handleZoomIn = useCallback(() => {
-    setZoom((z) => Math.min(z * 1.5, 5));
-    setIsFitToScreen(false);
+    setZoom((z) => Math.min(z * 1.3, 12));
   }, []);
 
   const handleZoomOut = useCallback(() => {
     setZoom((z) => {
-      const newZoom = Math.max(z / 1.5, 0.5);
+      const newZoom = Math.max(z / 1.3, 0.3);
       if (newZoom <= 1) {
         setPosition({ x: 0, y: 0 });
-        setIsFitToScreen(true);
       }
       return newZoom;
     });
   }, []);
 
+  // Smooth progressive scroll zoom centered on cursor
   const handleWheel = useCallback((e: React.WheelEvent) => {
     e.preventDefault();
-    if (e.deltaY < 0) {
-      handleZoomIn();
-    } else {
-      handleZoomOut();
-    }
-  }, [handleZoomIn, handleZoomOut]);
+    e.stopPropagation();
+
+    const factor = e.deltaY < 0 ? 1.08 : 1 / 1.08;
+    
+    setZoom((prevZoom) => {
+      const newZoom = Math.min(Math.max(prevZoom * factor, 0.3), 12);
+
+      // Zoom toward cursor position
+      if (containerRef.current) {
+        const rect = containerRef.current.getBoundingClientRect();
+        const cursorX = e.clientX - rect.left - rect.width / 2;
+        const cursorY = e.clientY - rect.top - rect.height / 2;
+        const ratio = 1 - newZoom / prevZoom;
+
+        setPosition((prev) => ({
+          x: prev.x + (cursorX - prev.x) * ratio,
+          y: prev.y + (cursorY - prev.y) * ratio,
+        }));
+      }
+      return newZoom;
+    });
+  }, []);
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     if (zoom > 1) {
@@ -150,83 +163,80 @@ const ImageViewer = ({
   // Double-click to toggle zoom
   const handleDoubleClick = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
-    if (zoom === 1) {
-      setZoom(2.5);
-      setIsFitToScreen(false);
-      // Center on click position
-      if (containerRef.current && imageRef.current) {
+    if (zoom < 2) {
+      const newZoom = 3;
+      if (containerRef.current) {
         const rect = containerRef.current.getBoundingClientRect();
         const clickX = e.clientX - rect.left - rect.width / 2;
         const clickY = e.clientY - rect.top - rect.height / 2;
-        setPosition({ x: -clickX, y: -clickY });
+        setPosition({ x: -clickX * (newZoom - 1), y: -clickY * (newZoom - 1) });
       }
+      setZoom(newZoom);
     } else {
       resetView();
     }
   }, [zoom, resetView]);
 
+  // Click on backdrop (outside image) to close
+  const handleBackdropClick = useCallback((e: React.MouseEvent) => {
+    if (e.target === e.currentTarget) {
+      onClose();
+    }
+  }, [onClose]);
+
   return (
     <div
       ref={containerRef}
       className="fixed inset-0 z-[200] flex flex-col"
-      style={{ backgroundColor: "hsl(217 100% 10%)" }}
+      style={{ backgroundColor: "rgba(0, 0, 0, 0.85)", backdropFilter: "blur(8px)" }}
     >
-      {/* Top toolbar */}
-      <div className="flex items-center justify-between px-4 py-3 bg-black/40">
-        <div className="flex items-center gap-2">
-          <span className="text-white/70 text-sm">
+      {/* Top toolbar — semi-transparent */}
+      <div className="flex items-center justify-between px-4 py-2.5" style={{ backgroundColor: "rgba(0,0,0,0.4)" }}>
+        <div className="flex items-center gap-3">
+          <span className="text-white/80 text-sm font-medium">
             {currentIndex + 1} / {images.length}
           </span>
-          <span className="text-white/50 text-sm hidden md:inline">
-            — {alt}
-          </span>
+          {zoom !== 1 && (
+            <span className="text-white/50 text-xs">
+              {Math.round(zoom * 100)}%
+            </span>
+          )}
         </div>
 
-        <div className="flex items-center gap-1">
-          {/* Zoom controls */}
+        <div className="flex items-center gap-0.5">
           <button
             onClick={handleZoomOut}
-            className="p-2 text-white/70 hover:text-white hover:bg-white/10 rounded transition-colors"
+            className="p-2 text-white/60 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
             title="Zoom arrière (−)"
           >
-            <ZoomOut className="w-5 h-5" />
+            <ZoomOut className="w-4.5 h-4.5" />
           </button>
-          <span className="text-white/70 text-sm w-14 text-center">
-            {Math.round(zoom * 100)}%
-          </span>
           <button
             onClick={handleZoomIn}
-            className="p-2 text-white/70 hover:text-white hover:bg-white/10 rounded transition-colors"
+            className="p-2 text-white/60 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
             title="Zoom avant (+)"
           >
-            <ZoomIn className="w-5 h-5" />
+            <ZoomIn className="w-4.5 h-4.5" />
           </button>
           <button
             onClick={resetView}
-            className="p-2 text-white/70 hover:text-white hover:bg-white/10 rounded transition-colors"
+            className="p-2 text-white/60 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
             title="Réinitialiser (0)"
           >
-            <RotateCcw className="w-5 h-5" />
+            <RotateCcw className="w-4.5 h-4.5" />
           </button>
-          <button
-            onClick={() => setIsFitToScreen(!isFitToScreen)}
-            className="p-2 text-white/70 hover:text-white hover:bg-white/10 rounded transition-colors"
-            title={isFitToScreen ? "Taille réelle" : "Ajuster à l'écran"}
-          >
-            {isFitToScreen ? <Maximize2 className="w-5 h-5" /> : <Minimize2 className="w-5 h-5" />}
-          </button>
-          <div className="w-px h-6 bg-white/20 mx-2" />
+          <div className="w-px h-5 bg-white/20 mx-1.5" />
           <button
             onClick={onClose}
-            className="p-2 text-white hover:bg-white/20 rounded transition-colors"
+            className="p-2 text-white/80 hover:text-white hover:bg-white/20 rounded-lg transition-colors"
             title="Fermer (Échap)"
           >
-            <X className="w-6 h-6" />
+            <X className="w-5 h-5" />
           </button>
         </div>
       </div>
 
-      {/* Image area */}
+      {/* Image area — transparent background */}
       <div
         className="flex-1 relative overflow-hidden"
         onWheel={handleWheel}
@@ -238,56 +248,61 @@ const ImageViewer = ({
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
         onDoubleClick={handleDoubleClick}
+        onClick={handleBackdropClick}
         style={{ cursor: zoom > 1 ? (isDragging ? "grabbing" : "grab") : "zoom-in" }}
       >
         {/* Navigation arrows */}
         {images.length > 1 && (
           <>
-            <button
-              onClick={(e) => { e.stopPropagation(); prevImage(); }}
-              disabled={currentIndex === 0}
-              className="absolute left-4 top-1/2 -translate-y-1/2 z-10 p-3 bg-black/30 hover:bg-black/50 disabled:opacity-30 disabled:cursor-not-allowed text-white rounded-full transition-colors"
-            >
-              <ChevronLeft className="w-8 h-8" />
-            </button>
-            <button
-              onClick={(e) => { e.stopPropagation(); nextImage(); }}
-              disabled={currentIndex === images.length - 1}
-              className="absolute right-4 top-1/2 -translate-y-1/2 z-10 p-3 bg-black/30 hover:bg-black/50 disabled:opacity-30 disabled:cursor-not-allowed text-white rounded-full transition-colors"
-            >
-              <ChevronRight className="w-8 h-8" />
-            </button>
+            {currentIndex > 0 && (
+              <button
+                onClick={(e) => { e.stopPropagation(); prevImage(); }}
+                className="absolute left-3 top-1/2 -translate-y-1/2 z-10 p-2.5 bg-black/40 hover:bg-black/60 text-white/80 hover:text-white rounded-full transition-all"
+              >
+                <ChevronLeft className="w-7 h-7" />
+              </button>
+            )}
+            {currentIndex < images.length - 1 && (
+              <button
+                onClick={(e) => { e.stopPropagation(); nextImage(); }}
+                className="absolute right-3 top-1/2 -translate-y-1/2 z-10 p-2.5 bg-black/40 hover:bg-black/60 text-white/80 hover:text-white rounded-full transition-all"
+              >
+                <ChevronRight className="w-7 h-7" />
+              </button>
+            )}
           </>
         )}
 
         {/* Image */}
-        <div className="absolute inset-0 flex items-center justify-center">
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <img
             ref={imageRef}
             src={currentImage}
             alt={alt}
-            className="max-w-full max-h-full transition-transform duration-150 select-none"
+            className="max-w-[90vw] max-h-[80vh] select-none pointer-events-auto"
             style={{
               transform: `translate(${position.x}px, ${position.y}px) scale(${zoom})`,
               transformOrigin: "center center",
+              transition: isDragging ? "none" : "transform 0.15s ease-out",
+              filter: "drop-shadow(0 8px 32px rgba(0,0,0,0.5))",
             }}
             draggable={false}
           />
         </div>
       </div>
 
-      {/* Bottom thumbnails */}
+      {/* Bottom thumbnails — only if multiple images */}
       {images.length > 1 && (
-        <div className="px-4 py-3 bg-black/40">
+        <div className="px-4 py-2.5" style={{ backgroundColor: "rgba(0,0,0,0.4)" }}>
           <div className="flex items-center justify-center gap-2 overflow-x-auto">
             {images.map((img, idx) => (
               <button
                 key={idx}
                 onClick={() => onNavigate(idx)}
-                className={`flex-shrink-0 w-16 h-16 rounded overflow-hidden border-2 transition-all ${
+                className={`flex-shrink-0 w-14 h-14 rounded-lg overflow-hidden border-2 transition-all ${
                   idx === currentIndex
-                    ? "border-brand-gold opacity-100"
-                    : "border-transparent opacity-50 hover:opacity-80"
+                    ? "border-white opacity-100 scale-105"
+                    : "border-transparent opacity-40 hover:opacity-70"
                 }`}
               >
                 <img
@@ -301,10 +316,9 @@ const ImageViewer = ({
         </div>
       )}
 
-      {/* Help tooltip */}
-      <div className="absolute bottom-20 left-4 text-white/40 text-xs hidden md:block">
-        <p>Double-clic : zoom × 2.5 • Molette : zoom • Glisser : déplacer</p>
-        <p>Raccourcis : ← → naviguer • + − zoom • 0 réinitialiser • Échap fermer</p>
+      {/* Help hint */}
+      <div className="absolute bottom-20 left-4 text-white/30 text-[10px] hidden md:block">
+        Molette : zoom progressif • Double-clic : zoom ×3 • Glisser : déplacer • ← → : naviguer • Échap : fermer
       </div>
     </div>
   );
