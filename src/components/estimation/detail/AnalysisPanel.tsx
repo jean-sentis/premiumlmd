@@ -294,40 +294,40 @@ export function AnalysisPanel({
         </div>
       </div>
 
-      {/* ── Boutons détail ── */}
+      {/* ── Boutons détail — pleine largeur avec avant-goûts ── */}
       {(authText || conditionText || marketText || sourceCount > 0) && (
         <div className="space-y-0">
-          <div className="flex flex-wrap gap-1.5">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
             <DetailButton
               icon={<Fingerprint className="w-3.5 h-3.5" />}
               label="Identité"
+              preview={authText ? authText.substring(0, 60) + (authText.length > 60 ? "…" : "") : undefined}
               isOpen={openSection === "auth"}
               onClick={() => toggleSection("auth")}
             />
             <DetailButton
               icon={<Wrench className="w-3.5 h-3.5" />}
               label="État"
+              preview={conditionText ? conditionText.substring(0, 60) + (conditionText.length > 60 ? "…" : "") : undefined}
               isOpen={openSection === "condition"}
               onClick={() => toggleSection("condition")}
             />
-            {lensCount > 0 && (
-              <DetailButton
-                icon={<Image className="w-3.5 h-3.5" />}
-                label="Correspondances"
-                count={lensCount}
-                isOpen={openSection === "lens"}
-                onClick={() => toggleSection("lens")}
-              />
-            )}
-            {(webCount > 0 || marketText) && (
-              <DetailButton
-                icon={<TrendingUp className="w-3.5 h-3.5" />}
-                label="Résultats"
-                count={webCount > 0 ? webCount : undefined}
-                isOpen={openSection === "market"}
-                onClick={() => toggleSection("market")}
-              />
-            )}
+            <DetailButton
+              icon={<Image className="w-3.5 h-3.5" />}
+              label="Correspondances"
+              count={lensCount}
+              preview={lensCount > 0 ? `${lensCount} image(s) similaire(s) trouvée(s)` : "Aucune correspondance"}
+              isOpen={openSection === "lens"}
+              onClick={() => toggleSection("lens")}
+            />
+            <DetailButton
+              icon={<TrendingUp className="w-3.5 h-3.5" />}
+              label="Résultats"
+              count={webCount > 0 ? webCount : undefined}
+              preview={marketText ? marketText.substring(0, 60) + (marketText.length > 60 ? "…" : "") : (webCount > 0 ? `${webCount} source(s) trouvée(s)` : undefined)}
+              isOpen={openSection === "market"}
+              onClick={() => toggleSection("market")}
+            />
           </div>
 
           {openSection === "auth" && (
@@ -488,39 +488,48 @@ function EditableDetailContent({
   );
 }
 
-/* ── Bouton de détail ── */
+/* ── Bouton de détail — pleine largeur avec avant-goût ── */
 function DetailButton({
   icon,
   label,
   count,
+  preview,
   isOpen,
   onClick,
 }: {
   icon: React.ReactNode;
   label: string;
   count?: number;
+  preview?: string;
   isOpen: boolean;
   onClick: () => void;
 }) {
   return (
     <button
       onClick={onClick}
-      className={`flex items-center justify-center gap-1.5 px-2 py-2 rounded-lg border text-xs font-medium transition-colors ${
+      className={`flex flex-col items-start gap-1 px-3 py-2.5 rounded-lg border text-xs font-medium transition-colors w-full text-left ${
         isOpen
           ? "bg-muted border-border text-foreground"
           : "border-border/50 text-muted-foreground hover:bg-muted/30"
       }`}
     >
-      {icon}
-      <span className="hidden sm:inline">{label}</span>
-      {count !== undefined && (
-        <span className="text-[10px] bg-primary/10 text-primary rounded-full px-1.5 py-0 font-semibold">
-          {count}
-        </span>
+      <div className="flex items-center gap-1.5 w-full">
+        {icon}
+        <span>{label}</span>
+        {count !== undefined && count > 0 && (
+          <span className="text-[10px] bg-primary/10 text-primary rounded-full px-1.5 py-0 font-semibold">
+            {count}
+          </span>
+        )}
+        <ChevronDown
+          className={`w-3 h-3 ml-auto transition-transform ${isOpen ? "rotate-180" : ""}`}
+        />
+      </div>
+      {preview && !isOpen && (
+        <p className="text-[10px] font-normal text-muted-foreground/70 line-clamp-2 leading-snug">
+          {preview}
+        </p>
       )}
-      <ChevronDown
-        className={`w-3 h-3 transition-transform ${isOpen ? "rotate-180" : ""}`}
-      />
     </button>
   );
 }

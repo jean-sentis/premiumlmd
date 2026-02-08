@@ -70,36 +70,6 @@ export function EstimationStatusBar({ estimation, onUpdate }: EstimationStatusBa
       {/* Separator */}
       <div className="w-px h-4 bg-border mx-0.5" />
 
-      {/* Interest levels */}
-      {Object.entries(INTEREST_LEVELS).map(([key, config]) => {
-        const isActive = estimation.auctioneer_decision === key;
-        return (
-          <button
-            key={key}
-            onClick={() =>
-              handleSetStatus(
-                { auctioneer_decision: key, decided_at: new Date().toISOString() },
-                config.label
-              )
-            }
-            disabled={saving}
-            className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium transition-colors border
-              ${isActive
-                ? `${config.bg} ${config.text} ${config.border}`
-                : "border-border/40 text-muted-foreground hover:bg-muted/50"
-              }
-            `}
-            title={config.label}
-          >
-            <span className={`inline-block w-1.5 h-1.5 rounded-full ${config.dot}`} />
-            {config.label}
-          </button>
-        );
-      })}
-
-      {/* Separator */}
-      <div className="w-px h-4 bg-border mx-0.5" />
-
       {/* Mark as responded */}
       <Button
         variant={isResponded ? "default" : "ghost"}

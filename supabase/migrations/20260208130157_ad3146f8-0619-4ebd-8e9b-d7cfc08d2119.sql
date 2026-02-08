@@ -1,0 +1,1 @@
+ALTER TABLE public.estimation_requests ADD COLUMN second_opinion TEXT;
