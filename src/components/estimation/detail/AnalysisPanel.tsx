@@ -12,6 +12,7 @@ import {
   Pencil,
   X,
 } from "lucide-react";
+import { PipelineStepper } from "./PipelineStepper";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
@@ -178,16 +179,10 @@ export function AnalysisPanel({
 
   const lensCount = ai.lens_detection?.visualMatches?.length || 0;
   const webCount = (ai.web_sources?.length || 0);
-  const sourceCount = lensCount + webCount;
+  const scrapedCount = ai.scraped_results_count || 0;
+  const sourceCount = lensCount + webCount + scrapedCount;
   const analysisDepth = ai.analysis_depth || 3; // legacy analyses default to 3
   const canDeepen = ai.can_deepen === true;
-
-  const DEPTH_LABELS: Record<number, { label: string; color: string; description: string }> = {
-    1: { label: "Niv. 1 — Vision", color: "bg-blue-50 text-blue-700 border-blue-200", description: "Analyse visuelle uniquement" },
-    2: { label: "Niv. 2 — Lens", color: "bg-indigo-50 text-indigo-700 border-indigo-200", description: "Vision + correspondances visuelles" },
-    3: { label: "Niv. 3 — Complet", color: "bg-purple-50 text-purple-700 border-purple-200", description: "Vision + Lens + recherche web" },
-  };
-  const depthInfo = DEPTH_LABELS[analysisDepth] || DEPTH_LABELS[3];
 
   const toggleSection = (key: string) => {
     setOpenSection((prev) => (prev === key ? null : key));
@@ -255,51 +250,31 @@ export function AnalysisPanel({
             )}
           </div>
         </div>
-        <div className="flex items-center gap-1.5">
-          {/* Depth badge */}
-          <Badge
-            variant="outline"
-            className={`text-[10px] px-2 py-0.5 ${depthInfo.color} border`}
-            title={depthInfo.description}
-          >
-            {depthInfo.label}
-          </Badge>
-
-          {/* Deepen button — only shown when analysis can go deeper */}
-          {canDeepen && onDeepen && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onDeepen}
-              disabled={deepening}
-              className="h-7 text-xs gap-1 border-primary/30 text-primary hover:bg-primary/5"
-              title="Lancer une recherche web approfondie (consomme des crédits supplémentaires)"
-            >
-              {deepening ? (
-                <Loader2 className="w-3 h-3 animate-spin" />
-              ) : (
-                <TrendingUp className="w-3 h-3" />
-              )}
-              Approfondir
-            </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onReanalyze}
+          disabled={reanalyzing}
+          className="h-7 text-xs text-muted-foreground"
+        >
+          {reanalyzing ? (
+            <Loader2 className="w-3 h-3 animate-spin" />
+          ) : (
+            <RefreshCw className="w-3 h-3 mr-1" />
           )}
-
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onReanalyze}
-            disabled={reanalyzing}
-            className="h-7 text-xs text-muted-foreground"
-          >
-            {reanalyzing ? (
-              <Loader2 className="w-3 h-3 animate-spin" />
-            ) : (
-              <RefreshCw className="w-3 h-3 mr-1" />
-            )}
-            Ré-analyser
-          </Button>
-        </div>
+          Ré-analyser
+        </Button>
       </div>
+
+      {/* ── Signalétique pipeline : 3 stades ── */}
+      <PipelineStepper
+        analysisDepth={analysisDepth}
+        lensCount={lensCount}
+        scrapedCount={scrapedCount}
+        canDeepen={canDeepen}
+        onDeepen={onDeepen}
+        deepening={deepening}
+      />
 
       {/* ── Synthèse éditable ── */}
       <div className="p-4 bg-muted/30 rounded-lg border border-border/30 space-y-2">
