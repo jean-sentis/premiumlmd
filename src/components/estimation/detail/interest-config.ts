@@ -1,4 +1,12 @@
 export const INTEREST_LEVELS = {
+  exceptionnel: {
+    label: "Exceptionnel",
+    dot: "bg-purple-500",
+    text: "text-purple-700",
+    bg: "bg-purple-50",
+    border: "border-purple-400",
+    borderLeft: "border-l-purple-500",
+  },
   très_intéressant: {
     label: "Très intéressant",
     dot: "bg-green-500",
