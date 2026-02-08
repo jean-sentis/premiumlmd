@@ -129,6 +129,18 @@ export function AnalysisSynthesis({ ai, reanalyzing, onReanalyze }: AnalysisSynt
             </div>
           )}
 
+          {/* Pistes alternatives d'identification */}
+          {ai.alternative_identifications?.length > 0 && (
+            <div className="p-3 bg-amber-50/50 rounded border border-amber-200/50">
+              <p className="font-medium text-xs text-amber-700 mb-1">Pistes alternatives</p>
+              <ul className="space-y-0.5 text-xs text-muted-foreground">
+                {ai.alternative_identifications.map((alt: string, i: number) => (
+                  <li key={i}>• {renderMarkdownLinks(alt)}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
           {/* Résumé */}
           {ai.summary && (
             <p className="text-muted-foreground leading-relaxed">{renderMarkdownLinks(ai.summary)}</p>

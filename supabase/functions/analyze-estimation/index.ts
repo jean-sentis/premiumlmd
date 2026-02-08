@@ -339,16 +339,18 @@ RÈGLES IMPÉRATIVES :
 - PRUDENCE OBLIGATOIRE : Ne JAMAIS écrire "il s'agit de", toujours utiliser des formulations conditionnelles.
 - FIABILITÉ : Note ta confiance de 1 à 4 (0 et 5 réservés au commissaire-priseur).
 
-CORRESPONDANCES VISUELLES — RÈGLE CRITIQUE DE CROISEMENT :
-- Les correspondances visuelles (recherche d'image inversée) peuvent identifier un artiste, une œuvre ou un objet DIFFÉRENT de ton analyse visuelle initiale.
-- Tu DOIS traiter CHAQUE correspondance visuelle comme une PISTE SÉRIEUSE à explorer, surtout si elle propose une identification différente de la tienne.
-- Si une correspondance visuelle identifie l'objet comme étant de l'artiste X, et que ton analyse initiale suggère l'artiste Y :
-  → NE REJETTE PAS la piste X. Confronte les deux hypothèses.
-  → Cherche dans les résultats web si la piste X est corroborée.
-  → Présente les deux possibilités avec leur niveau de vraisemblance.
-  → Ex: "L'analyse visuelle évoque le style de Y, mais une correspondance identifie cette œuvre comme pouvant être de X. Les sources web tendent à confirmer la piste X car [raisons]."
-- Si une correspondance visuelle donne un titre d'œuvre précis, un nom d'artiste, ou une attribution spécifique, C'EST SOUVENT LA BONNE RÉPONSE. Google Lens est très performant pour identifier des œuvres connues.
-- NE SOIS PAS plus affirmatif que les preuves ne le permettent. Si ta seule analyse visuelle te donne une idée mais que Lens dit autre chose avec des sources concordantes, Lens a probablement raison.
+CORRESPONDANCES VISUELLES — RÈGLE LA PLUS CRITIQUE :
+- Les correspondances visuelles (recherche d'image inversée) identifient souvent CORRECTEMENT l'objet. Google Lens est TRÈS PERFORMANT pour reconnaître des œuvres, des artistes, des modèles connus. NE SOUS-ESTIME JAMAIS ses résultats.
+- ÉTAPE OBLIGATOIRE AVANT TOUTE CONCLUSION :
+  1. Liste TOUTES les identifications différentes trouvées dans les correspondances visuelles (noms d'artistes, titres d'œuvres, sujets).
+  2. Pour CHAQUE identification distincte, vérifie si les résultats web la corroborent.
+  3. Compare avec ta propre analyse visuelle.
+  4. Présente TOUTES les pistes dans "summary" avec leur niveau de vraisemblance, même si tu en privilégies une.
+- EXEMPLES :
+  → Les correspondances montrent "Louis XIV" ET "Charles VII" ET "Grand Condé" → tu DOIS mentionner les 3 pistes et expliquer pourquoi tu retiens l'une plutôt que les autres.
+  → Tu penses à l'artiste X mais Lens identifie Y → "L'analyse visuelle pourrait évoquer X, mais les correspondances visuelles identifient cette œuvre comme étant Y (source : ...). Les résultats web confirment/infirment cette piste car..."
+- Si tu ignores une piste issue des correspondances visuelles SANS l'expliquer, c'est une FAUTE GRAVE.
+- Le champ "alternative_identifications" est OBLIGATOIRE dès qu'il y a plus d'une piste. Liste-y chaque identification alternative avec sa source et ton avis.
 
 LECTURE CRITIQUE DES SOURCES — RÈGLE LA PLUS IMPORTANTE :
 - Tu DOIS lire CHAQUE source web et correspondance visuelle ATTENTIVEMENT et INTÉGRALEMENT.
@@ -451,8 +453,9 @@ CONCISION OBLIGATOIRE :
 
 JSON sans backticks :
 {
-  "identified_object": "1 ligne au conditionnel",
-  "summary": "2-4 phrases au conditionnel. Liens en markdown [texte](url). Montants avec séparateur de milliers + devise. Si vente confirmée : mentionner avec prix + lien markdown. Si contradiction : 'Sauf erreur, ...'",
+  "identified_object": "1 ligne au conditionnel. Si plusieurs pistes, la piste principale.",
+  "alternative_identifications": ["Piste 2 : Charles VII d'après Galeries Nicolas Bourriaud — écartée car les dimensions ne correspondent pas", "Piste 3 : Grand Condé d'après Proantic — possible mais les sources web sont moins convaincantes"],
+  "summary": "2-4 phrases au conditionnel. DOIT mentionner les pistes alternatives si elles existent. Liens en markdown [texte](url). Montants avec séparateur de milliers + devise. Si vente confirmée : mentionner avec prix + lien markdown. Si contradiction : 'Sauf erreur, ...'",
   "estimated_range": "Fourchette en € avec séparateur de milliers. Ex: 35 000 – 45 000 €",
   "authenticity_assessment": "Détails authenticité (au conditionnel)",
   "condition_notes": "Détails état",
@@ -489,7 +492,7 @@ JSON sans backticks :
     });
   }
 
-  // Google Lens visual matches (SerpAPI)
+  // Google Lens visual matches (SerpAPI) — with divergence analysis
   if (lensResults && (lensResults.bestGuessLabels.length > 0 || lensResults.visualMatches.length > 0)) {
     let lensContext = "\n\nCORRESPONDANCES VISUELLES (recherche visuelle inversée) :\n";
     
@@ -503,6 +506,35 @@ JSON sans backticks :
         lensContext += `- "${match.title}" (source: ${match.source}) ${match.link}`;
         if (match.price) lensContext += ` — Prix: ${match.price}`;
         lensContext += `\n`;
+      }
+      
+      // Extract distinct identifications from visual matches to flag divergences
+      const identifications = new Map<string, string[]>();
+      for (const match of lensResults.visualMatches.slice(0, 10)) {
+        const title = match.title || "";
+        const cleanTitle = title
+          .replace(/\s*[-–|]\s*(eBay|Etsy|Amazon|Pinterest|Invaluable\.com).*$/i, "")
+          .replace(/Sold at Auction:\s*/i, "")
+          .trim();
+        if (cleanTitle.length > 5) {
+          const key = cleanTitle.substring(0, 60);
+          if (!identifications.has(key)) {
+            identifications.set(key, []);
+          }
+          identifications.get(key)!.push(match.source);
+        }
+      }
+      
+      if (identifications.size > 1) {
+        lensContext += `\n⚠️ ATTENTION — IDENTIFICATIONS DIVERGENTES DÉTECTÉES dans les correspondances visuelles :\n`;
+        lensContext += `Les correspondances ci-dessus suggèrent PLUSIEURS identifications possibles :\n`;
+        let idx = 1;
+        for (const [identification, sources] of identifications) {
+          lensContext += `  ${idx}. "${identification}" (${sources.join(", ")})\n`;
+          idx++;
+        }
+        lensContext += `\nTu DOIS mentionner TOUTES ces pistes dans ton analyse et expliquer laquelle tu retiens et POURQUOI. Ne te contente pas d'une seule identification sans discuter les autres.\n`;
+        lensContext += `Si ta propre analyse visuelle diverge de certaines correspondances, EXPLIQUE la divergence au lieu de l'ignorer silencieusement.\n`;
       }
     }
     
