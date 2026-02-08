@@ -1,4 +1,6 @@
+import { useState } from "react";
 import { User, Mail, Phone, Tag, Euro, ExternalLink } from "lucide-react";
+import ImageViewer from "@/components/ImageViewer";
 
 interface SellerInfoPanelProps {
   estimation: {
@@ -20,10 +22,18 @@ function formatDescription(desc: string) {
 }
 
 export function SellerInfoPanel({ estimation, getPhotoUrl }: SellerInfoPanelProps) {
+  const [viewerOpen, setViewerOpen] = useState(false);
+  const [viewerIndex, setViewerIndex] = useState(0);
+
+  const photoUrls = estimation.photo_urls?.map(getPhotoUrl) || [];
+
+  const openViewer = (index: number) => {
+    setViewerIndex(index);
+    setViewerOpen(true);
+  };
+
   return (
     <div className="space-y-3 h-full overflow-y-auto pr-1">
-      {/* No redundant header — already shown in the menu bar */}
-
       {/* Contact details */}
       <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
         <span className="flex items-center gap-1">
@@ -54,31 +64,31 @@ export function SellerInfoPanel({ estimation, getPhotoUrl }: SellerInfoPanelProp
         )}
       </div>
 
-      {/* Photos */}
-      {estimation.photo_urls?.length > 0 && (
+      {/* Photos — clickable to open viewer */}
+      {photoUrls.length > 0 && (
         <div className={`grid gap-2 ${
-          estimation.photo_urls.length === 1 
-            ? "grid-cols-1" 
-            : "grid-cols-2"
+          photoUrls.length === 1 ? "grid-cols-1" : "grid-cols-2"
         }`}>
-          {estimation.photo_urls.map((url, i) => (
-            <a
+          {photoUrls.map((url, i) => (
+            <button
               key={i}
-              href={getPhotoUrl(url)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={`rounded-lg overflow-hidden border hover:opacity-90 transition-opacity bg-muted/20 ${
-                estimation.photo_urls.length === 1 ? "" : ""
-              }`}
+              onClick={() => openViewer(i)}
+              className="rounded-lg overflow-hidden border hover:opacity-90 transition-opacity bg-muted/20 cursor-zoom-in relative group"
             >
               <img
-                src={getPhotoUrl(url)}
+                src={url}
                 alt={`Photo ${i + 1}`}
                 className={`w-full object-contain ${
-                  estimation.photo_urls.length === 1 ? "max-h-72" : "max-h-56"
+                  photoUrls.length === 1 ? "max-h-72" : "max-h-56"
                 }`}
               />
-            </a>
+              {/* Photo count badge on first photo */}
+              {i === 0 && photoUrls.length > 1 && (
+                <span className="absolute bottom-1.5 right-1.5 bg-black/60 text-white text-[10px] px-1.5 py-0.5 rounded-md">
+                  {photoUrls.length} photos
+                </span>
+              )}
+            </button>
           ))}
         </div>
       )}
@@ -101,6 +111,17 @@ export function SellerInfoPanel({ estimation, getPhotoUrl }: SellerInfoPanelProp
           <ExternalLink className="w-3 h-3" />
           Voir le lot référencé
         </a>
+      )}
+
+      {/* Full-screen image viewer */}
+      {viewerOpen && (
+        <ImageViewer
+          images={photoUrls}
+          currentIndex={viewerIndex}
+          onClose={() => setViewerOpen(false)}
+          onNavigate={setViewerIndex}
+          alt={`Estimation ${estimation.nom}`}
+        />
       )}
     </div>
   );
