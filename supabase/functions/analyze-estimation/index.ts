@@ -517,7 +517,7 @@ JSON sans backticks :
     });
   }
 
-  // Google Lens visual matches (SerpAPI) — with divergence analysis
+  // Google Lens visual matches (SerpAPI) — with divergence analysis + THUMBNAIL IMAGES
   if (lensResults && (lensResults.bestGuessLabels.length > 0 || lensResults.visualMatches.length > 0)) {
     let lensContext = "\n\nCORRESPONDANCES VISUELLES (recherche visuelle inversée) :\n";
     
@@ -564,6 +564,26 @@ JSON sans backticks :
     }
     
     userContent.push({ type: "text", text: lensContext });
+
+    // ── CRITICAL: Include visual match THUMBNAIL IMAGES so the AI can ACTUALLY compare visual details ──
+    // Without this, the AI cannot compare socles, poses, patinas, etc.
+    const matchesWithThumbnails = lensResults.visualMatches.filter((m: any) => m.thumbnail).slice(0, 6);
+    if (matchesWithThumbnails.length > 0) {
+      userContent.push({
+        type: "text",
+        text: "\n\n🔍 IMAGES DES CORRESPONDANCES VISUELLES — Compare CHAQUE image ci-dessous avec les photos du vendeur.\nPour CHAQUE correspondance, note les DIFFÉRENCES PRÉCISES (socle, pose, patine, dimensions apparentes, accessoires, drapés).\nSi le socle, la pose ou un détail majeur diffère → ce n'est PAS la même œuvre, c'est au mieux un modèle similaire.",
+      });
+      for (const match of matchesWithThumbnails) {
+        userContent.push({
+          type: "text",
+          text: `\n↓ Correspondance visuelle : "${match.title}" (${match.source})${match.price ? ` — ${match.price}` : ""}`,
+        });
+        userContent.push({
+          type: "image_url",
+          image_url: { url: match.thumbnail },
+        });
+      }
+    }
   }
 
   // Web search results (Google Custom Search)
