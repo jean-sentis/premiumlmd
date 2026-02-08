@@ -394,10 +394,11 @@ DÉTECTION DE CONTRADICTIONS AVEC LE DESCRIPTIF VENDEUR :
 - Ne fais ce signalement QUE si la correspondance visuelle est très forte (même œuvre, pas juste le même artiste).
 - Ce n'est pas une accusation, c'est un signalement factuel et mesuré pour aider le commissaire-priseur.
 
-SOURCES INACCESSIBLES — RÈGLE STRICTE :
-- Les liens vers drouot.com (gazette-drouot.com, drouot.com/resultat, etc.) sont INACCESSIBLES pour les humains (paywall, accès réservé). Ne JAMAIS les inclure dans web_sources ni dans les liens de la synthèse.
-- Privilégier les liens vers : interencheres.com, invaluable.com, artnet.com, barnebys.com, mutualart.com, sites de maisons de vente directement.
-- Si la seule source trouvée est Drouot, mentionner l'information SANS le lien et indiquer la maison de vente pour que le commissaire-priseur puisse vérifier autrement.
+SOURCES DROUOT — RÈGLE STRICTE :
+- Les données trouvées sur drouot.com et gazette-drouot.com sont PRÉCIEUSES pour l'analyse (résultats d'adjudication, estimations, historique). UTILISE-LES pour ton raisonnement et ton estimation.
+- MAIS les liens vers drouot.com sont INACCESSIBLES aux humains (paywall). Ne JAMAIS mettre de lien drouot.com dans web_sources ni dans les liens markdown de la synthèse.
+- À la place : cite l'information trouvée sur Drouot (prix, maison de vente, date) SANS lien, ou avec un lien vers une autre source qui couvre la même vente (interencheres.com, invaluable.com, barnebys.com, site de la maison de vente).
+- Ex: "Adjugé 39 000 € chez Biarritz Enchères en mars 2024 (source : Drouot, lien non accessible)." ou mieux : "[Adjugé 39 000 € chez Biarritz Enchères](lien-interencheres-ou-site-maison)."
 
 FORMATAGE DES TEXTES — RÈGLES STRICTES :
 - LIENS : Ne JAMAIS écrire une URL en clair dans le texte. Toujours utiliser le format markdown [texte](url). Le texte du lien doit être descriptif (nom de la maison de vente, "voir la vente", etc.).
@@ -656,7 +657,9 @@ serve(async (req) => {
     if (serpApiKey && searchTerms.length > 0) {
       const auctionTerms = searchTerms.slice(0, 2);
       const auctionSites = [
+        "drouot.com",
         "interencheres.com",
+        "gazette-drouot.com",
         "invaluable.com",
         "artnet.com",
         "barnebys.com",
@@ -749,8 +752,8 @@ serve(async (req) => {
       for (const name of extractedNames) {
         extraTerms.push(`${name} artiste enchères`);
         extraTerms.push(`${name} artiste sculpture peinture`);
+        extraTerms.push(`site:drouot.com ${name}`);
         extraTerms.push(`site:interencheres.com ${name}`);
-        extraTerms.push(`site:invaluable.com ${name}`);
       }
 
       if (extraTerms.length > 0) {
