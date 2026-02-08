@@ -1,6 +1,5 @@
 import { Mail, MailOpen, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { INTEREST_LEVELS } from "./detail/interest-config";
 import type { EstimationRequest } from "./EstimationCard";
 import type { FilterType } from "./EstimationFilters";
 
@@ -8,14 +7,6 @@ function getPhotoUrl(path: string) {
   if (path.startsWith("http")) return path;
   return `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/${path}`;
 }
-
-const FILTER_LABELS: Record<string, string> = {
-  all: "Tous",
-  unread: "Non lus",
-  pending: "En attente",
-  overdue: "En retard",
-  responded: "Répondus",
-};
 
 interface EstimationNavStripProps {
   estimations: EstimationRequest[];
@@ -31,16 +22,12 @@ export function EstimationNavStrip({
   selectedId,
   onSelect,
   onBackToList,
-  activeFilter,
-  onFilterChange,
 }: EstimationNavStripProps) {
-  // Build quick filter buttons for the vertical strip
-  const filterLabel = FILTER_LABELS[activeFilter] || INTEREST_LEVELS[activeFilter as keyof typeof INTEREST_LEVELS]?.label || activeFilter;
 
   return (
     <div className="flex flex-col h-full bg-muted/20">
       {/* Header: current filter + TOUS button */}
-      <div className="p-2 border-b space-y-1.5">
+      <div className="p-2 border-b">
         <Button
           variant="default"
           size="sm"
@@ -50,9 +37,6 @@ export function EstimationNavStrip({
           <ArrowLeft className="w-3 h-3" />
           TOUS
         </Button>
-        <div className="text-[10px] text-center text-muted-foreground font-medium uppercase tracking-wider px-1 truncate">
-          {filterLabel}
-        </div>
       </div>
 
       {/* Thumbnail list */}
