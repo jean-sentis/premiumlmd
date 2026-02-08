@@ -26,16 +26,16 @@ export function EstimationNavStrip({
 
   return (
     <div className="flex flex-col h-full bg-muted/20">
-      {/* Header: current filter + TOUS button */}
-      <div className="p-2 border-b">
+      {/* Header: back button only */}
+      <div className="p-1.5 border-b flex justify-center">
         <Button
-          variant="default"
-          size="sm"
+          variant="ghost"
+          size="icon"
           onClick={onBackToList}
-          className="w-full gap-1.5 text-xs"
+          className="h-7 w-7"
+          title="Retour à la liste"
         >
-          <ArrowLeft className="w-3 h-3" />
-          TOUS
+          <ArrowLeft className="w-4 h-4" />
         </Button>
       </div>
 
