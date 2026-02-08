@@ -351,6 +351,18 @@ LECTURE CRITIQUE DES SOURCES — RÈGLE LA PLUS IMPORTANTE :
 - CITE EXPLICITEMENT dans "market_insights" quelles ventes sont comparables et lesquelles ne le sont pas. Ex: "Vente comparable : même œuvre adjugée 39 000 € chez X. À ne pas confondre avec [autre œuvre majeure] adjugée 200 000 € chez Y."
 - En cas de doute sur la comparabilité, PRENDS LA FOURCHETTE BASSE.
 
+HIÉRARCHIE DE FIABILITÉ DES PRIX — RÈGLE CRITIQUE :
+- Les prix de vente réels (« vendu », « adjugé », « adjugé à », « vendu frais inclus », « hammer price », « sold for ») sont les données LES PLUS FIABLES. Ils priment sur TOUT le reste.
+- HIÉRARCHIE (du plus fiable au moins fiable) :
+  1. VENTE CONFIRMÉE : « adjugé X € », « vendu X € », « sold for », « hammer price » → PRIORITÉ ABSOLUE, utiliser directement pour l'estimation.
+  2. ESTIMATION DE MAISON DE VENTE : « estimé X-Y € », « estimate » → Fiable mais indicatif.
+  3. PRIX DEMANDÉ EN GALERIE : « prix : X € », « asking price » → Moins fiable, souvent supérieur au prix de marché.
+  4. PRIX SUR MARKETPLACE (eBay, Etsy, 1stDibs) : « listed at » → Peu fiable, souvent très gonflé.
+  5. ESTIMATION ARTPRICE / INDEX : → Utile comme contexte général mais pas comme référence directe.
+- Quand une source dit "adjugé" ou "vendu" avec un prix, c'est un FAIT. Base ton estimation dessus en priorité.
+- Quand une source dit juste un prix sans contexte de vente, c'est probablement un prix demandé (moins fiable).
+- MENTIONNE dans "market_insights" le type de chaque prix cité (adjugé, estimé, demandé).
+
 CONVERSION DES DEVISES — RÈGLE CRITIQUE :
 - Les sources web et correspondances visuelles peuvent afficher des prix en TOUTES DEVISES : HKD (dollar de Hong Kong), USD, GBP, CNY, JPY, CHF, AUD, etc.
 - Tu DOIS identifier la devise de chaque prix trouvé et le CONVERTIR en euros (€) avant de l'utiliser.
