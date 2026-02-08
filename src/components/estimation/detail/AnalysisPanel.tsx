@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import {
   RefreshCw,
   Loader2,
@@ -82,6 +82,24 @@ export function AnalysisPanel({
   const [showRecommendationPicker, setShowRecommendationPicker] = useState(false);
   const [showFiabilitePicker, setShowFiabilitePicker] = useState(false);
   const [editingField, setEditingField] = useState<string | null>(null);
+
+  // Re-sync state when AI data arrives (e.g. after polling fetches fresh results)
+  const prevAiRef = useRef(ai);
+  useEffect(() => {
+    if (ai && ai !== prevAiRef.current) {
+      // Only sync fields that haven't been manually edited (still at their old/empty value)
+      const prev = prevAiRef.current;
+      if (recommendation === (prev?.recommendation || "")) setRecommendation(ai.recommendation || "");
+      if (fiabilite === getInitialFiabilite(prev)) setFiabilite(getInitialFiabilite(ai));
+      if (identifiedObject === (prev?.identified_object || "")) setIdentifiedObject(ai.identified_object || "");
+      if (summary === (prev?.summary || "")) setSummary(ai.summary || "");
+      if (estimatedRange === (prev?.estimated_range || "")) setEstimatedRange(ai.estimated_range || "");
+      if (authText === (prev?.authenticity_assessment || "")) setAuthText(ai.authenticity_assessment || "");
+      if (conditionText === (prev?.condition_notes || "")) setConditionText(ai.condition_notes || "");
+      if (marketText === (prev?.market_insights || "")) setMarketText(ai.market_insights || "");
+      prevAiRef.current = ai;
+    }
+  }, [ai]);
 
   // Detect changes
   const hasChanges =
