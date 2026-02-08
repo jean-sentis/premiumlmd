@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import Header from "@/components/Header";
-import Footer from "@/components/Footer";
 import { EstimationCard, type EstimationRequest } from "@/components/estimation/EstimationCard";
 import { EstimationFilters, type FilterType } from "@/components/estimation/EstimationFilters";
 import { EstimationNavStrip } from "@/components/estimation/EstimationNavStrip";
@@ -27,14 +26,20 @@ const AdminEstimations = () => {
     if (error) {
       console.error("Error fetching estimations:", error);
     } else {
-      setEstimations((data as any[]) || []);
+      const fresh = (data as any[]) || [];
+      setEstimations(fresh);
+      // Keep selected estimation in sync with fresh data
+      if (selectedEstimation) {
+        const updated = fresh.find((e) => e.id === selectedEstimation.id);
+        if (updated) setSelectedEstimation(updated);
+      }
     }
     setLoading(false);
-  }, []);
+  }, [selectedEstimation?.id]);
 
   useEffect(() => {
     fetchEstimations();
-  }, [fetchEstimations]);
+  }, []);
 
   const handleUpdate = useCallback(() => {
     fetchEstimations();
@@ -43,7 +48,6 @@ const AdminEstimations = () => {
   // Filtering logic
   const filtered = useMemo(() => {
     return estimations.filter((e) => {
-      // Search
       const matchesSearch =
         !searchQuery ||
         e.nom.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -51,26 +55,24 @@ const AdminEstimations = () => {
         e.email.toLowerCase().includes(searchQuery.toLowerCase());
       if (!matchesSearch) return false;
 
-      // Filter
       switch (activeFilter) {
         case "all":
           return true;
         case "unread":
-          return e.status !== "responded";
+          return e.status === "new";
         case "pending":
-          return e.status !== "responded";
+          return e.status !== "responded" && e.status !== "archived";
         case "overdue":
           return e.status !== "responded" && getOverdueInfo(e.created_at, e.status) !== null;
         case "responded":
           return e.status === "responded";
         default:
-          // Interest level filter
           return e.auctioneer_decision === activeFilter;
       }
     });
   }, [estimations, searchQuery, activeFilter]);
 
-  // Counts for filters
+  // Counts
   const counts = useMemo(() => {
     const byInterest: Record<string, number> = {};
     Object.keys(INTEREST_LEVELS).forEach((key) => {
@@ -79,8 +81,8 @@ const AdminEstimations = () => {
 
     return {
       all: estimations.length,
-      unread: estimations.filter((e) => e.status !== "responded").length,
-      pending: estimations.filter((e) => e.status !== "responded").length,
+      unread: estimations.filter((e) => e.status === "new").length,
+      pending: estimations.filter((e) => e.status !== "responded" && e.status !== "archived").length,
       overdue: estimations.filter(
         (e) => e.status !== "responded" && getOverdueInfo(e.created_at, e.status) !== null
       ).length,
@@ -99,6 +101,30 @@ const AdminEstimations = () => {
       <Header />
 
       <main className="min-h-screen bg-background" style={{ paddingTop: "var(--header-height, 180px)" }}>
+        {/* ════════════════════════════════════ */}
+        {/* PERSISTENT FILTER BAR               */}
+        {/* ════════════════════════════════════ */}
+        <div className="sticky top-0 z-20 bg-background/95 backdrop-blur-sm border-b">
+          <div className="max-w-[1600px] mx-auto px-4 py-3">
+            <div className="flex items-center gap-3 mb-3">
+              <Inbox className="w-5 h-5 text-brand-gold" />
+              <h1 className="font-serif text-lg">Demandes d'estimation</h1>
+              <span className="text-xs text-muted-foreground">({estimations.length})</span>
+            </div>
+            <EstimationFilters
+              searchQuery={searchQuery}
+              onSearchChange={setSearchQuery}
+              activeFilter={activeFilter}
+              onFilterChange={(f) => {
+                setActiveFilter(f);
+                if (isDetailView) setSelectedEstimation(null);
+              }}
+              counts={counts}
+              onRefresh={fetchEstimations}
+            />
+          </div>
+        </div>
+
         {loading ? (
           <div className="flex items-center justify-center py-24">
             <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
@@ -107,8 +133,8 @@ const AdminEstimations = () => {
           /* ════════════════════════════════════ */
           /* DETAIL VIEW                          */
           /* ════════════════════════════════════ */
-          <div className="flex h-[calc(100vh-80px)]">
-            {/* Left nav strip — ~1/6 */}
+          <div className="flex" style={{ height: "calc(100vh - var(--header-height, 180px) - 90px)" }}>
+            {/* Left nav strip */}
             <div className="w-20 md:w-24 flex-shrink-0 border-r overflow-hidden">
               <EstimationNavStrip
                 estimations={filtered}
@@ -123,7 +149,7 @@ const AdminEstimations = () => {
               />
             </div>
 
-            {/* Right detail panel — ~5/6 */}
+            {/* Right detail panel */}
             <div className="flex-1 overflow-hidden">
               <EstimationDetail
                 key={selectedEstimation.id}
@@ -137,25 +163,7 @@ const AdminEstimations = () => {
           /* ════════════════════════════════════ */
           /* LIST VIEW                            */
           /* ════════════════════════════════════ */
-          <div className="max-w-[1600px] mx-auto px-4 py-6 space-y-5">
-            {/* Title */}
-            <div className="flex items-center gap-3">
-              <Inbox className="w-6 h-6 text-brand-gold" />
-              <h1 className="font-serif text-2xl">Demandes d'estimation</h1>
-              <span className="text-sm text-muted-foreground">({estimations.length})</span>
-            </div>
-
-            {/* Filters bar */}
-            <EstimationFilters
-              searchQuery={searchQuery}
-              onSearchChange={setSearchQuery}
-              activeFilter={activeFilter}
-              onFilterChange={setActiveFilter}
-              counts={counts}
-              onRefresh={fetchEstimations}
-            />
-
-            {/* Grid */}
+          <div className="max-w-[1600px] mx-auto px-4 py-6">
             {filtered.length === 0 ? (
               <div className="text-center py-16 text-muted-foreground">
                 <Inbox className="w-12 h-12 mx-auto mb-3 opacity-20" />
