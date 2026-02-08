@@ -139,7 +139,7 @@ export function ResponsePanel({ estimation, onUpdate }: ResponsePanelProps) {
     <div className={containerClasses}>
       <div className="flex items-center justify-between">
         <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-          Répondre
+          Actions
         </h3>
         {isResponded && interestStyle && (
           <span className={`text-xs px-2.5 py-1 rounded-full flex items-center gap-1 ${interestStyle.bg} ${interestStyle.text} ${interestStyle.border} border`}>
