@@ -139,12 +139,12 @@ export function ResponsePanel({ estimation, onUpdate }: ResponsePanelProps) {
   return (
     <div className={containerClasses}>
       <div className="flex items-center justify-between">
-        <h3 className="text-xs font-semibold uppercase tracking-wider text-foreground text-center flex-1">
+        <h3 className="text-sm font-semibold uppercase tracking-wider text-foreground text-center flex-1">
           Actions
         </h3>
         {isResponded && interestStyle && (
-          <span className={`text-xs px-2.5 py-1 rounded-full flex items-center gap-1 ${interestStyle.bg} ${interestStyle.text} ${interestStyle.border} border`}>
-            <CheckCircle2 className="w-3 h-3" />
+          <span className={`text-sm px-2.5 py-1 rounded-full flex items-center gap-1.5 ${interestStyle.bg} ${interestStyle.text} ${interestStyle.border} border`}>
+            <CheckCircle2 className="w-3.5 h-3.5" />
             {interestStyle.label}
             {estimation.response_mode === "phone" && " · Appelé"}
             {estimation.response_mode === "email" && " · Emailé"}
@@ -157,35 +157,35 @@ export function ResponsePanel({ estimation, onUpdate }: ResponsePanelProps) {
       <div className="grid grid-cols-3 gap-2">
         <Button
           variant={mode === "phone" ? "default" : "outline"}
-          size="sm"
+          size="default"
           onClick={() => hasPhone && setMode("phone")}
           disabled={!hasPhone}
-          className={`gap-1.5 text-xs ${!hasPhone ? "opacity-50 cursor-not-allowed" : ""}`}
+          className={`gap-1.5 text-sm ${!hasPhone ? "opacity-50 cursor-not-allowed" : ""}`}
           title={hasPhone ? `Appeler ${estimation.telephone}` : "Pas de numéro fourni"}
         >
           {hasPhone ? (
-            <Phone className="w-3.5 h-3.5" />
+            <Phone className="w-4 h-4" />
           ) : (
-            <PhoneOff className="w-3.5 h-3.5" />
+            <PhoneOff className="w-4 h-4" />
           )}
           Appeler
         </Button>
         <Button
           variant={mode === "email" ? "default" : "outline"}
-          size="sm"
+          size="default"
           onClick={() => setMode("email")}
-          className="gap-1.5 text-xs"
+          className="gap-1.5 text-sm"
         >
-          <Mail className="w-3.5 h-3.5" />
+          <Mail className="w-4 h-4" />
           Email
         </Button>
         <Button
           variant={mode === "delegate" ? "default" : "outline"}
-          size="sm"
+          size="default"
           onClick={() => setMode("delegate")}
-          className="gap-1.5 text-xs"
+          className="gap-1.5 text-sm"
         >
-          <UserPlus className="w-3.5 h-3.5" />
+          <UserPlus className="w-4 h-4" />
           Déléguer
         </Button>
       </div>
@@ -197,20 +197,20 @@ export function ResponsePanel({ estimation, onUpdate }: ResponsePanelProps) {
             <Phone className="w-4 h-4 text-primary" />
             <a
               href={`tel:${estimation.telephone}`}
-              className="text-sm font-semibold text-primary hover:underline"
+              className="text-base font-semibold text-primary hover:underline"
             >
               {estimation.telephone}
             </a>
           </div>
           <InterestSelector value={interest} onChange={setInterest} />
           <Button
-            size="sm"
+            size="default"
             disabled={saving || !interest}
             onClick={handleSavePhone}
-            className="w-full gap-2"
+            className="w-full gap-2 text-sm"
           >
-            {saving && <Loader2 className="w-3 h-3 animate-spin" />}
-            <Phone className="w-3 h-3" />
+            {saving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+            <Phone className="w-3.5 h-3.5" />
             Marquer comme appelé
           </Button>
         </div>
@@ -219,7 +219,7 @@ export function ResponsePanel({ estimation, onUpdate }: ResponsePanelProps) {
       {/* ── Delegate mode ── */}
       {mode === "delegate" && (
         <div className="space-y-3">
-          <p className="text-xs text-muted-foreground">
+          <p className="text-sm text-muted-foreground">
             Un email avec le résumé de la demande sera ouvert pour envoi.
           </p>
           <Input
@@ -228,13 +228,13 @@ export function ResponsePanel({ estimation, onUpdate }: ResponsePanelProps) {
             onChange={(e) => setDelegateName(e.target.value)}
           />
           <Button
-            size="sm"
+            size="default"
             disabled={saving || !delegateName.trim()}
             onClick={handleSaveDelegate}
-            className="w-full gap-2"
+            className="w-full gap-2 text-sm"
           >
-            {saving && <Loader2 className="w-3 h-3 animate-spin" />}
-            <UserPlus className="w-3 h-3" />
+            {saving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+            <UserPlus className="w-3.5 h-3.5" />
             Confier à {delegateName.trim() || "…"}
           </Button>
         </div>
@@ -255,8 +255,8 @@ export function ResponsePanel({ estimation, onUpdate }: ResponsePanelProps) {
       {/* ── Sent message recall ── */}
       {!mode && estimation.response_message && estimation.response_mode === "email" && (
         <div className="space-y-1.5">
-          <p className="text-xs font-medium text-muted-foreground">Message envoyé</p>
-          <div className="text-xs font-mono bg-muted/30 border border-border/30 rounded-lg p-3 whitespace-pre-wrap leading-relaxed max-h-48 overflow-y-auto">
+          <p className="text-sm font-medium text-muted-foreground">Message envoyé</p>
+          <div className="text-sm font-mono bg-muted/30 border border-border/30 rounded-lg p-3 whitespace-pre-wrap leading-relaxed max-h-48 overflow-y-auto">
             {estimation.response_message}
           </div>
         </div>
@@ -274,7 +274,7 @@ function InterestSelector({
 }) {
   return (
     <div className="space-y-1.5">
-      <p className="text-xs font-medium text-muted-foreground">
+      <p className="text-sm font-medium text-muted-foreground">
         Niveau d'intérêt
       </p>
       <div className="flex flex-wrap gap-1.5">
@@ -284,14 +284,14 @@ function InterestSelector({
             <button
               key={key}
               onClick={() => onChange(key)}
-              className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
+              className={`text-sm px-3 py-1.5 rounded-full border transition-colors ${
                 isSelected
                   ? `${config.bg} ${config.text} ${config.border} font-medium`
                   : "border-border text-muted-foreground hover:bg-muted/50"
               }`}
             >
               <span
-                className={`inline-block w-2 h-2 rounded-full ${config.dot} mr-1.5`}
+                className={`inline-block w-2.5 h-2.5 rounded-full ${config.dot} mr-1.5`}
               />
               {config.label}
             </button>

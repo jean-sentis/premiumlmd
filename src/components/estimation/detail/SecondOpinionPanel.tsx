@@ -34,14 +34,14 @@ export function SecondOpinionPanel({ estimationId, initialOpinion }: SecondOpini
 
   return (
     <div className="space-y-3 h-full flex flex-col">
-      <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+      <h3 className="text-sm font-medium uppercase tracking-wider text-muted-foreground">
         2ème avis
       </h3>
       <Textarea
         placeholder="Avis complémentaire, expertise externe, remarques d'un collaborateur…"
         value={opinion}
         onChange={(e) => setOpinion(e.target.value)}
-        className="text-sm flex-1 min-h-[120px] resize-none"
+        className="text-base flex-1 min-h-[120px] resize-none"
       />
       {isDirty && (
         <Button
@@ -49,7 +49,7 @@ export function SecondOpinionPanel({ estimationId, initialOpinion }: SecondOpini
           size="sm"
           onClick={handleSave}
           disabled={saving}
-          className="text-xs self-start"
+          className="text-sm self-start"
         >
           Enregistrer
         </Button>

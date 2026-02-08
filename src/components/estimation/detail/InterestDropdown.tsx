@@ -30,7 +30,7 @@ export function InterestDropdown({ value, onChange, disabled }: InterestDropdown
         onClick={() => !disabled && setOpen(!open)}
         disabled={disabled}
         className={`
-          flex items-center gap-1.5 px-3 py-1 rounded-full border text-xs font-medium transition-colors
+          flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border text-sm font-medium transition-colors
           ${currentStyle
             ? `${currentStyle.bg} ${currentStyle.text} ${currentStyle.border}`
             : "border-border text-muted-foreground hover:bg-muted/50"
@@ -39,14 +39,14 @@ export function InterestDropdown({ value, onChange, disabled }: InterestDropdown
         `}
       >
         {currentStyle && (
-          <span className={`inline-block w-2 h-2 rounded-full ${currentStyle.dot}`} />
+          <span className={`inline-block w-2.5 h-2.5 rounded-full ${currentStyle.dot}`} />
         )}
         <span>{currentStyle?.label || "Intérêt…"}</span>
-        <ChevronDown className={`w-3 h-3 transition-transform ${open ? "rotate-180" : ""}`} />
+        <ChevronDown className={`w-3.5 h-3.5 transition-transform ${open ? "rotate-180" : ""}`} />
       </button>
 
       {open && (
-        <div className="absolute top-full left-0 mt-1 z-30 bg-background border rounded-lg shadow-lg p-1.5 min-w-[160px]">
+        <div className="absolute top-full left-0 mt-1 z-30 bg-background border rounded-lg shadow-lg p-1.5 min-w-[180px]">
           {Object.entries(INTEREST_LEVELS).map(([key, config]) => (
             <button
               key={key}
@@ -54,13 +54,13 @@ export function InterestDropdown({ value, onChange, disabled }: InterestDropdown
                 onChange(key);
                 setOpen(false);
               }}
-              className={`w-full text-left flex items-center gap-2 px-2.5 py-1.5 rounded text-xs transition-colors ${
+              className={`w-full text-left flex items-center gap-2 px-2.5 py-1.5 rounded text-sm transition-colors ${
                 value === key
                   ? `${config.bg} ${config.text} font-medium`
                   : "hover:bg-muted"
               }`}
             >
-              <span className={`inline-block w-2 h-2 rounded-full ${config.dot}`} />
+              <span className={`inline-block w-2.5 h-2.5 rounded-full ${config.dot}`} />
               {config.label}
             </button>
           ))}

@@ -226,7 +226,7 @@ export function EstimationDetail({
               <div className="flex items-end -mb-px">
                 <button
                   onClick={() => setActiveTab("first")}
-                  className={`px-5 py-2 text-xs font-semibold rounded-tl-xl border transition-colors ${
+                  className={`px-5 py-2 text-sm font-semibold rounded-tl-xl border transition-colors ${
                     activeTab === "first"
                       ? "bg-background text-foreground border-border border-b-background"
                       : "bg-muted/40 text-muted-foreground/60 border-transparent hover:bg-muted/70 hover:text-foreground"
@@ -245,7 +245,7 @@ export function EstimationDetail({
 
                 <button
                   onClick={() => setActiveTab("second")}
-                  className={`px-5 py-2 text-xs font-semibold rounded-tr-xl border transition-colors ${
+                  className={`px-5 py-2 text-sm font-semibold rounded-tr-xl border transition-colors ${
                     activeTab === "second"
                       ? "bg-background text-foreground border-border border-b-background"
                       : "bg-muted/40 text-muted-foreground/60 border-transparent hover:bg-muted/70 hover:text-foreground"
