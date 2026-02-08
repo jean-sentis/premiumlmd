@@ -2,18 +2,13 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import {
   RefreshCw,
   Loader2,
-  ChevronDown,
-  Fingerprint,
-  Wrench,
-  TrendingUp,
+  Check,
   ExternalLink,
   Image,
   Save,
   Pencil,
   X,
-  MessageSquareQuote,
 } from "lucide-react";
-import { PipelineStepper } from "./PipelineStepper";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
@@ -97,7 +92,7 @@ export function AnalysisPanel({
   onSaveAnalysis,
   photoUrls,
 }: AnalysisPanelProps) {
-  const [openSection, setOpenSection] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
   // Editable state — initialized from AI data
@@ -186,27 +181,43 @@ export function AnalysisPanel({
   const analysisDepth = ai.analysis_depth || 3; // legacy analyses default to 3
   const canDeepen = ai.can_deepen === true;
 
-  const toggleSection = (key: string) => {
-    setOpenSection((prev) => (prev === key ? null : key));
-  };
+
+
+
+  // Tab definitions
+  const tabs = [
+    { key: "identity", label: "IDENTITÉ / BIOGRAPHIE", hasContent: !!authText },
+    { key: "lens", label: "CORRESPONDANCES VISUELLES", hasContent: lensCount > 0 },
+    { key: "market", label: "RÉSULTATS MARCHÉ", hasContent: !!marketText || webCount > 0 },
+    { key: "condition", label: "ÉTAT", hasContent: !!conditionText },
+    { key: "questions", label: "QUESTIONS", hasContent: (ai.questions_for_owner?.length || 0) > 0 },
+  ];
 
   return (
     <div className="space-y-4">
-      {/* ── Badges recommandation + fiabilité + Re-analyze ── */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2 relative">
-          {/* Recommendation badge - clickable */}
-          <div className="relative">
-            <Badge
-              className={`${interestStyle?.bg || "bg-muted"} ${interestStyle?.text || ""} ${interestStyle?.border || ""} border text-xs px-3 py-1 cursor-pointer hover:opacity-80`}
+      {/* ── Ligne 1 : 3 badges info (même style que les 5 onglets) + Ré-analyser ── */}
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex gap-1.5 flex-1 min-w-0">
+          {/* Première impression — toujours fait */}
+          <div className="flex-1 min-w-0 flex items-center justify-center gap-1.5 px-2 py-2 rounded-lg bg-muted/40 border border-border/60 text-[11px] font-semibold uppercase tracking-wide text-foreground">
+            <Check className="w-3.5 h-3.5 text-green-600 shrink-0" />
+            <span className="truncate">Première impression</span>
+          </div>
+
+          {/* Niveau d'intérêt — clickable */}
+          <div className="relative flex-1 min-w-0">
+            <button
               onClick={() => { setShowRecommendationPicker(!showRecommendationPicker); setShowFiabilitePicker(false); }}
+              className={`w-full flex items-center justify-center gap-1.5 px-2 py-2 rounded-lg border text-[11px] font-semibold uppercase tracking-wide transition-colors ${
+                interestStyle
+                  ? `${interestStyle.bg} ${interestStyle.text} ${interestStyle.border}`
+                  : "bg-muted/40 border-border/60 text-foreground"
+              }`}
             >
-              {interestStyle && (
-                <span className={`inline-block w-2 h-2 rounded-full ${interestStyle.dot} mr-1.5`} />
-              )}
-              {interestStyle?.label || "Cotation"}
-              <Pencil className="w-2.5 h-2.5 ml-1.5 opacity-50" />
-            </Badge>
+              {interestStyle && <span className={`inline-block w-2 h-2 rounded-full ${interestStyle.dot} shrink-0`} />}
+              <span className="truncate">{interestStyle?.label || "Niveau d'intérêt"}</span>
+              <Pencil className="w-2.5 h-2.5 opacity-40 shrink-0" />
+            </button>
             {showRecommendationPicker && (
               <div className="absolute top-full left-0 mt-1 z-20 bg-background border rounded-lg shadow-lg p-1.5 min-w-[160px]">
                 {Object.entries(INTEREST_LEVELS).map(([key, config]) => (
@@ -225,16 +236,19 @@ export function AnalysisPanel({
             )}
           </div>
 
-          {/* Fiabilité badge - clickable */}
-          <div className="relative">
-            <Badge
-              variant="outline"
-              className={`text-xs px-3 py-1 cursor-pointer hover:opacity-80 ${FIABILITE_STYLES[fiabilite] || ""}`}
+          {/* Niveau de fiabilité — clickable */}
+          <div className="relative flex-1 min-w-0">
+            <button
               onClick={() => { setShowFiabilitePicker(!showFiabilitePicker); setShowRecommendationPicker(false); }}
+              className={`w-full flex items-center justify-center gap-1.5 px-2 py-2 rounded-lg border text-[11px] font-semibold uppercase tracking-wide transition-colors ${
+                FIABILITE_STYLES[fiabilite] || "bg-muted/40 border-border/60 text-foreground"
+              }`}
             >
-              {fiabilite === 0 ? "Erreur" : `Fiabilité ${fiabilite}/5`}
-              <Pencil className="w-2.5 h-2.5 ml-1.5 opacity-50" />
-            </Badge>
+              <span className="truncate">
+                {fiabilite === 0 ? "Erreur" : `Fiabilité ${fiabilite}/5`}
+              </span>
+              <Pencil className="w-2.5 h-2.5 opacity-40 shrink-0" />
+            </button>
             {showFiabilitePicker && (
               <div className="absolute top-full left-0 mt-1 z-20 bg-background border rounded-lg shadow-lg p-1.5 min-w-[120px]">
                 {FIABILITE_OPTIONS.map((opt) => (
@@ -252,33 +266,20 @@ export function AnalysisPanel({
             )}
           </div>
         </div>
+
         <Button
           variant="ghost"
           size="sm"
           onClick={onReanalyze}
           disabled={reanalyzing}
-          className="h-7 text-xs text-muted-foreground"
+          className="h-7 text-xs text-muted-foreground shrink-0"
         >
-          {reanalyzing ? (
-            <Loader2 className="w-3 h-3 animate-spin" />
-          ) : (
-            <RefreshCw className="w-3 h-3 mr-1" />
-          )}
+          {reanalyzing ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3 mr-1" />}
           Ré-analyser
         </Button>
       </div>
 
-      {/* ── Signalétique pipeline : 3 stades ── */}
-      <PipelineStepper
-        analysisDepth={analysisDepth}
-        lensCount={lensCount}
-        scrapedCount={scrapedCount}
-        canDeepen={canDeepen}
-        onDeepen={onDeepen}
-        deepening={deepening}
-      />
-
-      {/* ── Synthèse éditable ── */}
+      {/* ── Synthèse éditable (contenu Première impression) ── */}
       <div className="p-4 bg-muted/30 rounded-lg border border-border/30 space-y-2">
         <EditableField
           value={identifiedObject}
@@ -314,88 +315,77 @@ export function AnalysisPanel({
         </div>
       </div>
 
-      {/* ── 5 cartouches aide à la décision — une seule ligne ── */}
-      <div className="space-y-0">
-        <div className="flex gap-1.5">
-          <DetailButton
-            icon={<Fingerprint className="w-4 h-4" />}
-            label="Identité"
-            hasContent={!!authText}
-            isOpen={openSection === "auth"}
-            onClick={() => toggleSection("auth")}
-          />
-          <DetailButton
-            icon={<Wrench className="w-4 h-4" />}
-            label="État"
-            hasContent={!!conditionText}
-            isOpen={openSection === "condition"}
-            onClick={() => toggleSection("condition")}
-          />
-          <DetailButton
-            icon={<Image className="w-4 h-4" />}
-            label="Visuels"
-            count={lensCount}
-            hasContent={lensCount > 0}
-            isOpen={openSection === "lens"}
-            onClick={() => toggleSection("lens")}
-          />
-          <DetailButton
-            icon={<TrendingUp className="w-4 h-4" />}
-            label="Marché"
-            count={webCount > 0 ? webCount : undefined}
-            hasContent={!!marketText || webCount > 0}
-            isOpen={openSection === "market"}
-            onClick={() => toggleSection("market")}
-          />
-          <DetailButton
-            icon={<MessageSquareQuote className="w-4 h-4" />}
-            label="Questions"
-            count={ai.questions_for_owner?.length || undefined}
-            hasContent={ai.questions_for_owner?.length > 0}
-            isOpen={openSection === "questions"}
-            onClick={() => toggleSection("questions")}
-          />
+      {/* ── 5 onglets-tabs + cadre de contenu partagé ── */}
+      <div>
+        {/* Onglets */}
+        <div className="flex">
+          {tabs.map((tab) => {
+            const isActive = activeTab === tab.key;
+            return (
+              <button
+                key={tab.key}
+                onClick={() => setActiveTab(isActive ? null : tab.key)}
+                className={`flex-1 min-w-0 flex items-center justify-center gap-1.5 px-1.5 py-2 text-[10px] font-semibold uppercase tracking-wide transition-colors border-t border-l border-r first:rounded-tl-lg last:rounded-tr-lg ${
+                  isActive
+                    ? "bg-background border-border text-foreground -mb-px z-10"
+                    : tab.hasContent
+                    ? "bg-muted/40 border-border/40 text-foreground hover:bg-muted/60"
+                    : "bg-muted/20 border-border/20 text-muted-foreground/50 hover:bg-muted/30"
+                }`}
+              >
+                {tab.hasContent && (
+                  <Check className="w-3 h-3 text-green-600 shrink-0" />
+                )}
+                <span className="truncate">{tab.label}</span>
+              </button>
+            );
+          })}
         </div>
 
-        {openSection === "auth" && (
-          <EditableDetailContent
-            value={authText}
-            onChange={setAuthText}
-            placeholder="Notes sur l'identité / biographie…"
-          />
-        )}
-        {openSection === "condition" && (
-          <EditableDetailContent
-            value={conditionText}
-            onChange={setConditionText}
-            placeholder="Notes sur l'état…"
-          />
-        )}
-        {openSection === "lens" && (
-          <LensContent ai={ai} sellerPhotoUrls={photoUrls} />
-        )}
-        {openSection === "market" && (
-          <MarketContent ai={ai} marketText={marketText} onMarketTextChange={setMarketText} />
-        )}
-        {openSection === "questions" && (
-          <div className="mt-1.5 p-3 bg-muted/30 rounded-lg border border-border/30 animate-in slide-in-from-top-1 duration-200">
-            {ai.questions_for_owner?.length > 0 ? (
-              <ul className="space-y-1.5 text-sm text-muted-foreground">
-                {ai.questions_for_owner.map((q: string, i: number) => (
-                  <li key={i} className="flex items-start gap-2">
-                    <span className="text-foreground font-medium">{i + 1}.</span>
-                    <span>{q}</span>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-sm text-muted-foreground italic">Aucune question suggérée.</p>
+        {/* Cadre de contenu */}
+        {activeTab && (
+          <div className="border border-border rounded-b-lg p-3 bg-background">
+            {activeTab === "identity" && (
+              <EditableDetailContent
+                value={authText}
+                onChange={setAuthText}
+                placeholder="Notes sur l'identité / biographie…"
+              />
+            )}
+            {activeTab === "condition" && (
+              <EditableDetailContent
+                value={conditionText}
+                onChange={setConditionText}
+                placeholder="Notes sur l'état…"
+              />
+            )}
+            {activeTab === "lens" && (
+              <LensContent ai={ai} sellerPhotoUrls={photoUrls} />
+            )}
+            {activeTab === "market" && (
+              <MarketContent ai={ai} marketText={marketText} onMarketTextChange={setMarketText} />
+            )}
+            {activeTab === "questions" && (
+              <>
+                {ai.questions_for_owner?.length > 0 ? (
+                  <ul className="space-y-1.5 text-sm text-muted-foreground">
+                    {ai.questions_for_owner.map((q: string, i: number) => (
+                      <li key={i} className="flex items-start gap-2">
+                        <span className="text-foreground font-medium">{i + 1}.</span>
+                        <span>{q}</span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-sm text-muted-foreground italic">Aucune question suggérée.</p>
+                )}
+              </>
             )}
           </div>
         )}
       </div>
 
-      {/* Limitations - discret */}
+      {/* Limitations */}
       {ai.limitations && (
         <p className="text-xs text-muted-foreground italic">{renderMarkdownLinks(ai.limitations)}</p>
       )}
@@ -530,45 +520,7 @@ function EditableDetailContent({
   );
 }
 
-/* ── Cartouche aide à la décision — compact, une ligne ── */
-function DetailButton({
-  icon,
-  label,
-  count,
-  hasContent,
-  isOpen,
-  onClick,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  count?: number;
-  hasContent?: boolean;
-  isOpen: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className={`flex-1 min-w-0 flex items-center justify-center gap-1.5 px-2 py-2 rounded-lg border text-[11px] font-semibold uppercase tracking-wide transition-colors ${
-        isOpen
-          ? "bg-muted border-border text-foreground"
-          : hasContent
-          ? "bg-muted/40 border-border/60 text-foreground hover:bg-muted/60"
-          : "border-border/30 text-muted-foreground/50 hover:bg-muted/20"
-      }`}
-    >
-      <span className={isOpen ? "text-foreground" : hasContent ? "text-foreground" : "text-muted-foreground/40"}>
-        {icon}
-      </span>
-      <span className="truncate">{label}</span>
-      {count !== undefined && count > 0 && (
-        <span className="text-[9px] bg-foreground/10 text-foreground rounded-full px-1.5 py-0 font-bold shrink-0">
-          {count}
-        </span>
-      )}
-    </button>
-  );
-}
+
 
 /* ── Section Correspondances visuelles — Objet original + grille numérotée ── */
 function LensContent({ ai, sellerPhotoUrls }: { ai: any; sellerPhotoUrls?: string[] }) {
