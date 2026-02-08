@@ -280,7 +280,7 @@ export function EstimationDetail({
           {/* ══════════════════════════════════════ */}
           {/* FULL-WIDTH: AI analysis (expandable)  */}
           {/* ══════════════════════════════════════ */}
-          <div ref={aiSectionRef} className="mt-32 border-t pt-4 max-w-none">
+          <div ref={aiSectionRef} className="mt-4 border-t pt-4 max-w-none">
             <button
               onClick={() => setShowAiAnalysis(!showAiAnalysis)}
               className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors group w-full"
