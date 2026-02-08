@@ -17,6 +17,31 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { getInterestStyle, INTEREST_LEVELS, type InterestLevel } from "./interest-config";
 
+/** Parse markdown links [text](url) into clickable React elements */
+function renderMarkdownLinks(text: string): React.ReactNode {
+  const parts = text.split(/(\[[^\]]+\]\([^)]+\))/g);
+  return parts.map((part, i) => {
+    const match = part.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
+    if (match) {
+      return (
+        <a
+          key={i}
+          href={match[2]}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-primary hover:underline"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {match[1]}
+        </a>
+      );
+    }
+    return <span key={i}>{part}</span>;
+  });
+}
+
+
+
 /* ── Fiabilité options ── */
 const FIABILITE_OPTIONS = [
   { value: 0, label: "0 — Faux" },
@@ -328,7 +353,7 @@ export function AnalysisPanel({
 
       {/* Limitations - discret */}
       {ai.limitations && (
-        <p className="text-xs text-muted-foreground italic">{ai.limitations}</p>
+        <p className="text-xs text-muted-foreground italic">{renderMarkdownLinks(ai.limitations)}</p>
       )}
 
       {/* ── Bouton sauvegarder ── */}
@@ -415,7 +440,7 @@ function EditableField({
       className={`${className || ""} cursor-pointer hover:bg-muted/50 rounded px-1 -mx-1 transition-colors`}
       title="Cliquer pour modifier"
     >
-      {value}
+      {renderMarkdownLinks(value)}
     </p>
   );
 }
@@ -454,7 +479,7 @@ function EditableDetailContent({
           className="text-sm text-muted-foreground leading-relaxed cursor-pointer hover:bg-muted/50 rounded px-1 -mx-1 transition-colors"
           title="Cliquer pour modifier"
         >
-          {value || <span className="italic opacity-50">+ {placeholder}</span>}
+          {value ? renderMarkdownLinks(value) : <span className="italic opacity-50">+ {placeholder}</span>}
         </p>
       )}
     </div>
