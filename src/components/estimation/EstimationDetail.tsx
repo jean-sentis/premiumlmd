@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { AnalysisPanel } from "./detail/AnalysisPanel";
 import { ResponsePanel } from "./detail/ResponsePanel";
+import { EstimationStatusBar } from "./EstimationStatusBar";
 
 interface EstimationRequest {
   id: string;
@@ -167,24 +168,28 @@ export function EstimationDetail({
 
   return (
     <div className="flex flex-col h-full overflow-y-auto">
-      {/* ── Header ── */}
-      <div className="p-4 border-b flex items-center gap-3 sticky top-0 bg-background z-10">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={onBack}
-          className="h-8 w-8 md:hidden"
-        >
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
-        <div className="flex-1 min-w-0">
-          <h2 className="font-semibold text-sm truncate">{current.nom}</h2>
-          <p className="text-xs text-muted-foreground">
-            {format(new Date(current.created_at), "dd MMMM yyyy à HH:mm", {
-              locale: fr,
-            })}
-          </p>
+      {/* ── Header with status bar ── */}
+      <div className="p-3 border-b sticky top-0 bg-background z-10 space-y-2">
+        <div className="flex items-center gap-3">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onBack}
+            className="h-8 w-8 md:hidden"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <div className="flex-1 min-w-0">
+            <h2 className="font-semibold text-sm truncate">{current.nom}</h2>
+            <p className="text-xs text-muted-foreground">
+              {format(new Date(current.created_at), "dd MMMM yyyy à HH:mm", {
+                locale: fr,
+              })}
+            </p>
+          </div>
         </div>
+        {/* Quick status actions */}
+        <EstimationStatusBar estimation={current} onUpdate={onUpdate} />
       </div>
 
       <div className="p-4 md:p-6 space-y-6">
