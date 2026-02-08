@@ -395,14 +395,24 @@ DÉTECTION DE CONTRADICTIONS AVEC LE DESCRIPTIF VENDEUR :
 - Ce n'est pas une accusation, c'est un signalement factuel et mesuré pour aider le commissaire-priseur.
 
 SOURCES DROUOT — RÈGLE STRICTE :
-- Les données trouvées sur drouot.com et gazette-drouot.com sont PRÉCIEUSES pour l'analyse (résultats d'adjudication, estimations, historique). UTILISE-LES pour ton raisonnement et ton estimation.
-- MAIS les liens vers drouot.com sont INACCESSIBLES aux humains (paywall). Ne JAMAIS mettre de lien drouot.com dans web_sources ni dans les liens markdown de la synthèse.
-- À la place : cite l'information trouvée sur Drouot (prix, maison de vente, date) SANS lien, ou avec un lien vers une autre source qui couvre la même vente (interencheres.com, invaluable.com, barnebys.com, site de la maison de vente).
-- Ex: "Adjugé 39 000 € chez Biarritz Enchères en mars 2024 (source : Drouot, lien non accessible)." ou mieux : "[Adjugé 39 000 € chez Biarritz Enchères](lien-interencheres-ou-site-maison)."
+- Les données trouvées sur drouot.com et gazette-drouot.com sont PRÉCIEUSES pour l'analyse. UTILISE-LES ACTIVEMENT pour ton raisonnement, ton estimation et tes insights marché. Drouot est une mine d'or d'informations.
+- MAIS les liens vers drouot.com et gazette-drouot.com sont INACCESSIBLES aux humains (paywall strict). Ne JAMAIS inclure de lien drouot.com dans web_sources, dans les liens markdown, ni nulle part.
+- STRATÉGIE OBLIGATOIRE quand tu trouves une info sur Drouot (ex: "adjugé 39 000 € chez Biarritz Enchères en septembre 2018") :
+  1. Note le NOM DE LA MAISON DE VENTE (ex: "Biarritz Enchères", "Maître Dupont").
+  2. Cherche dans les résultats web si cette maison a son propre site internet avec un historique de ses ventes.
+  3. Cherche aussi sur interencheres.com, invaluable.com, barnebys.com si la même vente est référencée.
+  4. Si tu trouves un lien ACCESSIBLE : intègre-le en hypertexte. Ex: "[vendue en septembre 2018 chez Biarritz Enchères](https://www.biarritz-encheres.com/vente/123)".
+  5. Si AUCUN lien accessible n'existe : cite l'info sans lien. Ex: "vendue en septembre 2018 chez Biarritz Enchères pour 39 000 €".
+  6. Ne JAMAIS écrire "(source : Drouot)" ni mentionner Drouot comme source visible.
 
 FORMATAGE DES TEXTES — RÈGLES STRICTES :
-- LIENS : Ne JAMAIS écrire une URL en clair dans le texte. Toujours utiliser le format markdown [texte](url). Le texte du lien doit être descriptif (nom de la maison de vente, "voir la vente", etc.).
-- MONTANTS : Toujours séparer les milliers avec un espace insécable et indiquer la devise. Ex: "39 000 €", "150 000 HKD (≈ 18 000 €)", "1 200 €". JAMAIS "39000€" ou "39,000€".
+- LIENS HYPERTEXTE : Ne JAMAIS écrire une URL en clair dans le texte. TOUJOURS intégrer le lien dans les mots en markdown : [texte descriptif](url). Le lien doit être DANS le texte naturel, pas à côté. Exemples :
+  BIEN : "Cette œuvre semble avoir été [adjugée 39 000 € en septembre 2018](https://example.com/lot/123) chez X."
+  BIEN : "Un exemplaire comparable a été [vendu chez Christie's en 2022](https://www.christies.com/lot/123)."
+  MAL : "Source : https://www.example.com/lot/123"
+  MAL : "Voir la vente (https://www.example.com/lot/123)"
+  MAL : "[Lien](https://...)" sans texte descriptif
+- MONTANTS : Toujours séparer les milliers avec un espace et indiquer la devise. Ex: "39 000 €", "150 000 HKD (≈ 18 000 €)", "1 200 €". JAMAIS "39000€" ou "39,000€".
 - DATES : Format français "mars 2024", "12 octobre 2023". Jamais de format anglo-saxon.
 
 CONCISION OBLIGATOIRE :
@@ -419,7 +429,7 @@ JSON sans backticks :
   "authenticity_assessment": "Détails authenticité (au conditionnel)",
   "condition_notes": "Détails état",
   "market_insights": "Contexte marché. Montants formatés (35 000 €). Liens en markdown. Distinguer ventes comparables vs autres.",
-  "web_sources": [{"title":"","url":"JAMAIS drouot.com","relevance":"Préciser si c'est la même œuvre, une œuvre similaire, ou une œuvre différente du même artiste"}],
+  "web_sources": [{"title":"","url":"JAMAIS drouot.com ni gazette-drouot.com — utiliser le site de la maison de vente, interencheres, invaluable ou barnebys","relevance":"Préciser si c'est la même œuvre, une œuvre similaire, ou une œuvre différente du même artiste"}],
   "recommendation": "très_intéressant|intéressant|à_examiner|peu_intéressant|hors_spécialité",
   "recommendation_text": "1 phrase",
   "questions_for_owner": ["2-3 questions"],
@@ -540,7 +550,26 @@ JSON sans backticks :
 
   try {
     const cleaned = rawContent.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
-    return JSON.parse(cleaned);
+    const parsed = JSON.parse(cleaned);
+    
+    // Post-processing: strip any drouot.com links that slipped through
+    if (parsed.web_sources && Array.isArray(parsed.web_sources)) {
+      parsed.web_sources = parsed.web_sources.filter(
+        (s: any) => !s.url?.includes("drouot.com") && !s.url?.includes("gazette-drouot")
+      );
+    }
+    // Strip drouot links from markdown text fields
+    const stripDrouotLinks = (text: string): string => {
+      if (!text) return text;
+      // Replace [text](drouot-url) with just "text"
+      return text.replace(/\[([^\]]+)\]\(https?:\/\/[^)]*drouot\.com[^)]*\)/g, "$1")
+                 .replace(/\[([^\]]+)\]\(https?:\/\/[^)]*gazette-drouot[^)]*\)/g, "$1");
+    };
+    if (parsed.summary) parsed.summary = stripDrouotLinks(parsed.summary);
+    if (parsed.market_insights) parsed.market_insights = stripDrouotLinks(parsed.market_insights);
+    if (parsed.authenticity_assessment) parsed.authenticity_assessment = stripDrouotLinks(parsed.authenticity_assessment);
+    
+    return parsed;
   } catch {
     console.error("[analyze-estimation] Step 3 JSON parse error, using fallback");
     return {
