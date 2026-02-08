@@ -353,15 +353,22 @@ CORRESPONDANCES VISUELLES — RÈGLE LA PLUS CRITIQUE :
 - Le champ "alternative_identifications" est OBLIGATOIRE dès qu'il y a plus d'une piste. Liste-y chaque identification alternative avec sa source et ton avis.
 
 COMPARAISON VISUELLE DÉTAILLÉE — RÈGLE ANTI-ERREUR CRITIQUE :
-- Quand tu compares les photos du vendeur à une correspondance visuelle ou à une référence de vente, tu ne peux PAS te contenter de vérifier le sujet général (ex: "c'est un buste de Louis XIV" → match). Tu DOIS comparer les DÉTAILS VISUELS SPÉCIFIQUES :
-  1. SOCLE / BASE : forme (plat, circulaire, rectangulaire, mouluré, décoré, rocheux, lisse), matériau, ornementation.
+- Les images des correspondances visuelles te sont fournies ci-dessous. Tu DOIS les examiner ATTENTIVEMENT et les comparer pixel par pixel avec les photos du vendeur.
+- Pour CHAQUE correspondance visuelle, tu DOIS remplir le champ "visual_comparisons" avec un verdict structuré. C'est OBLIGATOIRE.
+- Points de comparaison OBLIGATOIRES pour chaque correspondance :
+  1. SOCLE / BASE : forme (plat, circulaire, rectangulaire, mouluré, décoré, rocheux, lisse), matériau, ornementation. Un socle plat vs un socle bosselé = œuvre DIFFÉRENTE.
   2. POSE / COMPOSITION : orientation du visage, position des bras, drapés, accessoires.
   3. PATINE / FINITION : couleur, brillance, dorure, oxydation.
   4. DÉTAILS DÉCORATIFS : motifs sculptés, armoiries, cartouches, inscriptions.
   5. PROPORTIONS : silhouette générale, rapport tête/corps, largeur/hauteur.
-- Si un seul de ces éléments diffère nettement (ex: socle plat vs socle rocheux/bosselé, drapé différent, accessoire absent), alors ce N'EST PAS la même œuvre. C'est au mieux une version différente, un modèle proche, ou un autre tirage.
-- FORMULATION OBLIGATOIRE quand un détail diverge : "La correspondance avec [référence X] présente un socle [rocheux/décoré] tandis que l'objet soumis a un socle [plat/lisse], ce qui suggère qu'il s'agit d'un modèle/tirage différent."
-- Ne JAMAIS citer une référence comme étant "la même œuvre" si les détails visuels divergent. Au mieux : "modèle similaire" ou "même sujet dans un traitement différent".
+- Verdicts possibles dans "visual_comparisons" :
+  • "identique" = même œuvre exactement (même socle, même pose, même patine, dimensions compatibles)
+  • "même_modèle" = même sujet et composition mais détails mineurs différents (tirage différent, patine différente)
+  • "similaire" = même type d'objet mais des différences notables (socle différent, pose différente)
+  • "différent" = objet clairement distinct malgré un sujet voisin
+- Si un seul détail majeur diffère nettement (socle plat vs rocheux, drapé différent, accessoire absent), le verdict NE PEUT PAS être "identique".
+- Ne JAMAIS citer une référence comme étant "la même œuvre" dans le summary/estimation si le verdict visual_comparisons est "similaire" ou "différent". Au mieux : "modèle similaire" ou "même sujet dans un traitement différent".
+- L'estimation de prix DOIT être cohérente avec les verdicts : si AUCUNE correspondance n'est "identique", l'estimation est plus incertaine et la fourchette doit être plus large.
 
 DIMENSIONS DU VENDEUR — RÈGLE ANTI-ABSURDITÉ CRITIQUE :
 - Quand le propriétaire/vendeur fournit des DIMENSIONS (hauteur, largeur, profondeur, diamètre), ces mesures sont des DONNÉES FACTUELLES que tu dois traiter avec le plus grand respect.
@@ -480,11 +487,16 @@ JSON sans backticks :
 {
   "identified_object": "1 ligne au conditionnel. Si plusieurs pistes, la piste principale.",
   "alternative_identifications": ["Piste 2 : Charles VII d'après Galeries Nicolas Bourriaud — écartée car les dimensions ne correspondent pas", "Piste 3 : Grand Condé d'après Proantic — possible mais les sources web sont moins convaincantes"],
-  "summary": "2-4 phrases au conditionnel. DOIT mentionner les pistes alternatives si elles existent. Liens en markdown [texte](url). Montants avec séparateur de milliers + devise. Si vente confirmée : mentionner avec prix + lien markdown. Si contradiction : 'Sauf erreur, ...'",
+  "visual_comparisons": [
+    {"match_index": 0, "verdict": "similaire", "details": "Même sujet (Louis XIV à cheval) mais le socle de la correspondance est rocheux et décoré alors que celui du vendeur est plat et lisse. Tirage/modèle différent."},
+    {"match_index": 1, "verdict": "différent", "details": "Sujet différent (Charles VII, armure gothique). Non comparable."},
+    {"match_index": 2, "verdict": "identique", "details": "Même composition, même socle plat, mêmes proportions. Dimensions compatibles (53,5 cm vs 49 cm). Probablement le même modèle d'édition."}
+  ],
+  "summary": "2-4 phrases au conditionnel. DOIT mentionner les pistes alternatives si elles existent. Liens en markdown [texte](url). Montants avec séparateur de milliers + devise. COHÉRENT avec les verdicts visual_comparisons : ne citer comme référence directe QUE les correspondances 'identique' ou 'même_modèle'. Si vente confirmée : mentionner avec prix + lien markdown. Si contradiction : 'Sauf erreur, ...'",
   "estimated_range": "Fourchette en € avec séparateur de milliers. Ex: 35 000 – 45 000 €",
   "authenticity_assessment": "Détails authenticité (au conditionnel)",
   "condition_notes": "Détails état",
-  "market_insights": "Contexte marché. Montants formatés (35 000 €). Liens en markdown. Distinguer ventes comparables vs autres.",
+  "market_insights": "Contexte marché. Montants formatés (35 000 €). Liens en markdown. Distinguer ventes comparables vs autres. MENTIONNER les verdicts des comparaisons visuelles.",
   "web_sources": [{"title":"","url":"JAMAIS de domaine à paywall (drouot, invaluable, artnet, artprice, mutualart, liveauctioneers) — utiliser le site de la maison de vente, interencheres ou barnebys","relevance":"Préciser si c'est la même œuvre, similaire ou différente"}],
   "recommendation": "très_intéressant|intéressant|à_examiner|peu_intéressant|hors_spécialité",
   "recommendation_text": "1 phrase",

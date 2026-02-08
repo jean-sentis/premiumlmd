@@ -80,6 +80,7 @@ interface AnalysisPanelProps {
   onReanalyze: () => void;
   estimationId: string;
   onSaveAnalysis: (updatedAi: any, decision?: string) => Promise<void>;
+  photoUrls?: string[];
 }
 
 export function AnalysisPanel({
@@ -88,6 +89,7 @@ export function AnalysisPanel({
   onReanalyze,
   estimationId,
   onSaveAnalysis,
+  photoUrls,
 }: AnalysisPanelProps) {
   const [openSection, setOpenSection] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -343,7 +345,7 @@ export function AnalysisPanel({
             />
           )}
           {openSection === "lens" && (
-            <LensContent ai={ai} />
+            <LensContent ai={ai} sellerPhotoUrl={photoUrls?.[0]} />
           )}
           {openSection === "market" && (
             <MarketContent ai={ai} marketText={marketText} onMarketTextChange={setMarketText} />
@@ -523,33 +525,66 @@ function DetailButton({
   );
 }
 
-/* ── Section Correspondances visuelles (Google Lens) ── */
-function LensContent({ ai }: { ai: any }) {
+/* ── Section Correspondances visuelles — Vue côte à côte ── */
+function LensContent({ ai, sellerPhotoUrl }: { ai: any; sellerPhotoUrl?: string }) {
   const matches = ai.lens_detection?.visualMatches || [];
+  const comparisons: Array<{ match_index: number; verdict: string; details: string }> = ai.visual_comparisons || [];
   if (matches.length === 0) return null;
 
+  const VERDICT_STYLES: Record<string, { bg: string; text: string; label: string }> = {
+    "identique": { bg: "bg-green-100", text: "text-green-800", label: "✓ Identique" },
+    "même_modèle": { bg: "bg-emerald-100", text: "text-emerald-800", label: "≈ Même modèle" },
+    "similaire": { bg: "bg-amber-100", text: "text-amber-800", label: "~ Similaire" },
+    "différent": { bg: "bg-red-100", text: "text-red-800", label: "✗ Différent" },
+  };
+
   return (
-    <div className="mt-1.5 p-3 bg-muted/30 rounded-lg border border-border/30 animate-in slide-in-from-top-1 duration-200">
-      <div className="space-y-1.5">
-        {matches.map(
-          (match: { title: string; link: string; source: string; thumbnail?: string; price?: string }, i: number) => (
-            <div key={i} className="flex items-start gap-2">
-              {match.thumbnail && (
-                <a href={match.link} target="_blank" rel="noopener noreferrer" className="shrink-0">
-                  <img
-                    src={match.thumbnail}
-                    alt={match.title}
-                    className="w-10 h-10 object-cover rounded border"
-                    onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
-                  />
-                </a>
-              )}
-              <div className="min-w-0 flex-1">
+    <div className="mt-1.5 space-y-2 animate-in slide-in-from-top-1 duration-200">
+      {matches.map(
+        (match: { title: string; link: string; source: string; thumbnail?: string; price?: string }, i: number) => {
+          const comparison = comparisons.find((c) => c.match_index === i);
+          const verdictStyle = comparison ? VERDICT_STYLES[comparison.verdict] || VERDICT_STYLES["similaire"] : null;
+
+          return (
+            <div key={i} className="p-3 bg-muted/30 rounded-lg border border-border/30">
+              {/* Side by side images */}
+              <div className="flex gap-2 mb-2">
+                {/* Seller photo */}
+                {sellerPhotoUrl && (
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[10px] text-muted-foreground mb-1 font-medium">Photo vendeur</p>
+                    <a href={sellerPhotoUrl} target="_blank" rel="noopener noreferrer">
+                      <img
+                        src={sellerPhotoUrl}
+                        alt="Photo vendeur"
+                        className="w-full aspect-square object-cover rounded border"
+                      />
+                    </a>
+                  </div>
+                )}
+                {/* Match thumbnail */}
+                {match.thumbnail && (
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[10px] text-muted-foreground mb-1 font-medium">Correspondance</p>
+                    <a href={match.link} target="_blank" rel="noopener noreferrer">
+                      <img
+                        src={match.thumbnail}
+                        alt={match.title}
+                        className="w-full aspect-square object-cover rounded border"
+                        onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                      />
+                    </a>
+                  </div>
+                )}
+              </div>
+
+              {/* Match info + verdict */}
+              <div className="space-y-1">
                 <a
                   href={match.link}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-xs font-medium text-primary hover:underline line-clamp-1"
+                  className="text-xs font-medium text-primary hover:underline line-clamp-2"
                 >
                   {match.title}
                 </a>
@@ -557,11 +592,25 @@ function LensContent({ ai }: { ai: any }) {
                   <span>{match.source}</span>
                   {match.price && <span className="font-medium text-foreground">{match.price}</span>}
                 </div>
+
+                {/* AI verdict badge + details */}
+                {comparison && verdictStyle && (
+                  <div className="mt-1.5 space-y-1">
+                    <Badge className={`${verdictStyle.bg} ${verdictStyle.text} border-0 text-[10px] px-2 py-0.5`}>
+                      {verdictStyle.label}
+                    </Badge>
+                    {comparison.details && (
+                      <p className="text-[11px] text-muted-foreground italic leading-snug">
+                        {comparison.details}
+                      </p>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
-          )
-        )}
-      </div>
+          );
+        }
+      )}
     </div>
   );
 }

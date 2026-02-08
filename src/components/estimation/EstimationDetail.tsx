@@ -290,6 +290,7 @@ export function EstimationDetail({
             onReanalyze={handleReanalyze}
             estimationId={estimation.id}
             onSaveAnalysis={handleSaveAnalysis}
+            photoUrls={current.photo_urls?.map(getPhotoUrl) || []}
           />
         </div>
 
