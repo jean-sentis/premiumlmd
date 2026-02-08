@@ -135,7 +135,7 @@ const AdminEstimations = () => {
           /* ════════════════════════════════════ */
           <div className="flex" style={{ height: "calc(100vh - var(--header-height, 180px) - 90px)" }}>
             {/* Left nav strip */}
-            <div className="w-20 md:w-24 flex-shrink-0 border-r overflow-hidden">
+            <div className="w-24 md:w-28 flex-shrink-0 border-r overflow-hidden">
               <EstimationNavStrip
                 estimations={filtered}
                 selectedId={selectedEstimation.id}
