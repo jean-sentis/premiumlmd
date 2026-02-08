@@ -258,10 +258,10 @@ async function scrapeVisualMatchUrls(
     // Paywalls enchères / art market
     "invaluable.com", "drouot.com", "artnet.com", "artnet.fr",
     "artprice.com", "mutualart.com", "barnebys.com",
-    // Social / plateformes génériques
-    "pinterest.com", "pinterest.fr", "facebook.com", "instagram.com",
+    // Social / plateformes sans contenu utile
+    "facebook.com", "instagram.com",
     "twitter.com", "x.com", "youtube.com", "tiktok.com",
-    "wikipedia.org", "wikimedia.org", "amazon.com", "amazon.fr",
+    "amazon.com", "amazon.fr",
     "ebay.com", "ebay.fr", "etsy.com",
   ];
   const isBlocked = (url: string) => BLOCKED_DOMAINS.some(d => url?.includes(d));
