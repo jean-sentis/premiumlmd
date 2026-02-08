@@ -125,7 +125,7 @@ export function AnalysisSynthesis({ ai, reanalyzing, onReanalyze }: AnalysisSynt
           {ai.identified_object && (
             <div className="p-3 bg-muted/30 rounded border border-border/30">
               <p className="font-medium text-xs text-muted-foreground mb-1">Identification</p>
-              <p>{ai.identified_object}</p>
+              <p>{renderMarkdownLinks(ai.identified_object)}</p>
             </div>
           )}
 
