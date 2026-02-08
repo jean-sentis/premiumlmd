@@ -50,6 +50,7 @@ export function EstimationDetail({
 }: EstimationDetailProps) {
   const { toast } = useToast();
   const [reanalyzing, setReanalyzing] = useState(false);
+  const [deepening, setDeepening] = useState(false);
   const [freshData, setFreshData] = useState<EstimationRequest | null>(null);
   const [showAiAnalysis, setShowAiAnalysis] = useState(false);
   const [activeTab, setActiveTab] = useState<"first" | "second">("first");
@@ -125,6 +126,33 @@ export function EstimationDetail({
       toast({ title: "Erreur", variant: "destructive" });
     } finally {
       setReanalyzing(false);
+    }
+  };
+
+  const handleDeepen = async () => {
+    setDeepening(true);
+    try {
+      const resp = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/analyze-estimation`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: JSON.stringify({ estimation_id: estimation.id, depth: "level_3" }),
+        }
+      );
+      if (!resp.ok) throw new Error("Erreur d'approfondissement");
+      toast({
+        title: "Recherche approfondie lancée",
+        description: "Analyse web en cours, veuillez patienter…",
+      });
+      setTimeout(onUpdate, 5000);
+    } catch {
+      toast({ title: "Erreur", variant: "destructive" });
+    } finally {
+      setDeepening(false);
     }
   };
 
@@ -303,6 +331,8 @@ export function EstimationDetail({
                   ai={ai}
                   reanalyzing={reanalyzing}
                   onReanalyze={handleReanalyze}
+                  onDeepen={handleDeepen}
+                  deepening={deepening}
                   estimationId={estimation.id}
                   onSaveAnalysis={handleSaveAnalysis}
                   photoUrls={current.photo_urls?.map(getPhotoUrl) || []}
