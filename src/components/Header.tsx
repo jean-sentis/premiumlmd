@@ -373,6 +373,9 @@ const Header = ({
             >
               <LiveClock />
             </button>
+            <Link to="/admin/estimations" className="text-[11px] font-medium text-muted-foreground hover:text-[hsl(var(--brand-primary))] transition-colors tracking-tight">
+              Estimations ›
+            </Link>
           </div>
 
           {/* Mobile menu button */}
