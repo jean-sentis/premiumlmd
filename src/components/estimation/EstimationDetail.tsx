@@ -197,12 +197,6 @@ export function EstimationDetail({
 
           <div className="flex-1" />
 
-          {/* Interest dropdown */}
-          <InterestDropdown
-            value={current.auctioneer_decision}
-            onChange={handleInterestChange}
-          />
-
           {/* AI anchor icon — framed, at far right */}
           <button
             onClick={scrollToAi}
@@ -220,16 +214,16 @@ export function EstimationDetail({
       {/* ═══════════════════════════════════════════════════ */}
       <div className="flex-1 overflow-y-auto">
         <div className="p-4 md:p-6">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6" style={{ minHeight: "calc(60vh + 50px)" }}>
-            {/* Column 1: Seller info (no redundant header) */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Column 1: Seller info */}
             <div className="lg:border-r lg:pr-6">
               <SellerInfoPanel estimation={current} getPhotoUrl={getPhotoUrl} />
             </div>
 
-            {/* Column 2: Browser-style tabbed opinions */}
+            {/* Column 2: Tabbed opinions with interest dropdown above */}
             <div className="lg:border-r lg:pr-6 flex flex-col">
-              {/* Browser-style tab bar */}
-              <div className="flex items-end justify-between -mb-px">
+              {/* Tab bar with interest dropdown centered between tabs */}
+              <div className="flex items-end -mb-px">
                 <button
                   onClick={() => setActiveTab("first")}
                   className={`px-5 py-2 text-xs font-semibold rounded-tl-xl border transition-colors ${
@@ -240,6 +234,15 @@ export function EstimationDetail({
                 >
                   1er Avis
                 </button>
+
+                {/* Interest dropdown centered between tabs */}
+                <div className="flex-1 flex justify-center pb-1.5">
+                  <InterestDropdown
+                    value={current.auctioneer_decision}
+                    onChange={handleInterestChange}
+                  />
+                </div>
+
                 <button
                   onClick={() => setActiveTab("second")}
                   className={`px-5 py-2 text-xs font-semibold rounded-tr-xl border transition-colors ${
