@@ -52,6 +52,7 @@ export function EstimationDetail({
   const [reanalyzing, setReanalyzing] = useState(false);
   const [freshData, setFreshData] = useState<EstimationRequest | null>(null);
   const [showAiAnalysis, setShowAiAnalysis] = useState(false);
+  const [activeTab, setActiveTab] = useState<"first" | "second">("first");
   const aiSectionRef = useRef<HTMLDivElement>(null);
 
   // Re-fetch fresh data on mount, and poll every 5s while analysis is pending
@@ -203,43 +204,67 @@ export function EstimationDetail({
         <EstimationStatusBar estimation={current} onUpdate={onUpdate} />
       </div>
 
-      {/* ══════════════════════════════════════════════════════════ */}
-      {/* LAYOUT: Client | Votre avis | ▼Intérêt | 2ème avis | Répondre */}
-      {/* ══════════════════════════════════════════════════════════ */}
+      {/* ═══════════════════════════════════════════════════ */}
+      {/* 3-COLUMN: Client | Avis (tabs + intérêt) | Répondre */}
+      {/* ═══════════════════════════════════════════════════ */}
       <div className="flex-1 overflow-y-auto">
         <div className="p-4 md:p-6">
-          <div className="flex flex-col lg:flex-row gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Column 1: Seller info */}
-            <div className="lg:w-[22%] lg:min-w-[200px] lg:border-r lg:pr-4">
+            <div className="lg:border-r lg:pr-6">
               <SellerInfoPanel estimation={current} getPhotoUrl={getPhotoUrl} />
             </div>
 
-            {/* Column 2: Votre avis */}
-            <div className="lg:w-[22%] lg:min-w-[180px] lg:border-r lg:pr-4">
-              <NotesPanel
-                estimationId={estimation.id}
-                initialNotes={estimation.auctioneer_notes || ""}
-              />
-            </div>
-
-            {/* Interest dropdown — centered between the two opinion panels */}
-            <div className="lg:w-[8%] flex lg:flex-col items-center justify-start pt-1">
+            {/* Column 2: Interest dropdown + Tabbed opinions */}
+            <div className="lg:border-r lg:pr-6 space-y-3">
+              {/* Interest selector — inline above tabs */}
               <InterestDropdown
                 value={current.auctioneer_decision}
                 onChange={handleInterestChange}
               />
+
+              {/* Tab bar */}
+              <div className="flex border-b">
+                <button
+                  onClick={() => setActiveTab("first")}
+                  className={`flex-1 text-xs font-medium uppercase tracking-wider py-2 border-b-2 transition-colors ${
+                    activeTab === "first"
+                      ? "border-foreground text-foreground"
+                      : "border-transparent text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  1er Avis
+                </button>
+                <button
+                  onClick={() => setActiveTab("second")}
+                  className={`flex-1 text-xs font-medium uppercase tracking-wider py-2 border-b-2 transition-colors ${
+                    activeTab === "second"
+                      ? "border-foreground text-foreground"
+                      : "border-transparent text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  2ème Avis
+                </button>
+              </div>
+
+              {/* Tab content */}
+              <div className="flex-1">
+                {activeTab === "first" ? (
+                  <NotesPanel
+                    estimationId={estimation.id}
+                    initialNotes={estimation.auctioneer_notes || ""}
+                  />
+                ) : (
+                  <SecondOpinionPanel
+                    estimationId={estimation.id}
+                    initialOpinion={(current as any).second_opinion || ""}
+                  />
+                )}
+              </div>
             </div>
 
-            {/* Column 3: 2ème avis */}
-            <div className="lg:w-[22%] lg:min-w-[180px] lg:border-r lg:pr-4">
-              <SecondOpinionPanel
-                estimationId={estimation.id}
-                initialOpinion={(current as any).second_opinion || ""}
-              />
-            </div>
-
-            {/* Column 4: Response panel */}
-            <div className="lg:w-[26%] lg:min-w-[200px]">
+            {/* Column 3: Response panel */}
+            <div>
               <ResponsePanel estimation={current} onUpdate={onUpdate} />
             </div>
           </div>
