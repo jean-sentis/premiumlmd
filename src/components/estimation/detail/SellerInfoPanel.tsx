@@ -56,19 +56,27 @@ export function SellerInfoPanel({ estimation, getPhotoUrl }: SellerInfoPanelProp
 
       {/* Photos */}
       {estimation.photo_urls?.length > 0 && (
-        <div className="grid grid-cols-2 gap-2">
+        <div className={`grid gap-2 ${
+          estimation.photo_urls.length === 1 
+            ? "grid-cols-1" 
+            : "grid-cols-2"
+        }`}>
           {estimation.photo_urls.map((url, i) => (
             <a
               key={i}
               href={getPhotoUrl(url)}
               target="_blank"
               rel="noopener noreferrer"
-              className="rounded-lg overflow-hidden border hover:opacity-90 transition-opacity bg-muted/20"
+              className={`rounded-lg overflow-hidden border hover:opacity-90 transition-opacity bg-muted/20 ${
+                estimation.photo_urls.length === 1 ? "" : ""
+              }`}
             >
               <img
                 src={getPhotoUrl(url)}
                 alt={`Photo ${i + 1}`}
-                className="w-full object-contain max-h-48"
+                className={`w-full object-contain ${
+                  estimation.photo_urls.length === 1 ? "max-h-72" : "max-h-56"
+                }`}
               />
             </a>
           ))}
