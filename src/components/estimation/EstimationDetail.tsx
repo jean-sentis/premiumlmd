@@ -231,19 +231,19 @@ export function EstimationDetail({
 
           {/* Photos */}
           {current.photo_urls?.length > 0 && (
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
               {current.photo_urls.map((url, i) => (
                 <a
                   key={i}
                   href={getPhotoUrl(url)}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="aspect-square rounded-lg overflow-hidden border hover:opacity-90 transition-opacity"
+                  className="rounded-lg overflow-hidden border hover:opacity-90 transition-opacity bg-muted/20"
                 >
                   <img
                     src={getPhotoUrl(url)}
                     alt={`Photo ${i + 1}`}
-                    className="w-full h-full object-cover"
+                    className="w-full object-contain max-h-64"
                   />
                 </a>
               ))}
