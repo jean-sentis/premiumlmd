@@ -378,16 +378,31 @@ TRAITEMENT DES NOMS MENTIONNÉS PAR LE PROPRIÉTAIRE :
 - Inclus le nom mentionné dans tes questions au propriétaire (photo de la signature, orthographe exacte, etc.).
 - Ne JAMAIS ignorer silencieusement un nom fourni par le propriétaire.
 
+VENTE PUBLIQUE CONFIRMÉE — SIGNALEMENT PRIORITAIRE :
+- Si tu trouves dans les sources web ou les correspondances visuelles une vente en enchères publiques CONFIRMÉE de ce qui semble être la MÊME œuvre/objet (même artiste, même titre, même visuel) :
+  → MENTIONNE-LE IMMÉDIATEMENT dans "summary" avec le prix, la maison de vente, la date si disponible.
+  → Ajoute le lien direct vers cette source dans "summary" entre parenthèses. Ex: "Cette œuvre semble avoir été adjugée 39 000 € chez Biarritz Enchères (voir [lien])."
+  → C'est une information critique qui fait gagner du temps au commissaire-priseur. Ne la cache pas dans market_insights.
+- Plus la vente est RÉCENTE, plus elle est pertinente. Mentionne la date.
+
+DÉTECTION DE CONTRADICTIONS AVEC LE DESCRIPTIF VENDEUR :
+- Lis ATTENTIVEMENT le descriptif du vendeur/propriétaire (provenance, durée de possession, histoire de l'objet).
+- Si tu trouves une vente récente en enchères publiques de ce qui semble être la MÊME œuvre, et que le vendeur dit par exemple "je l'ai chez moi depuis 30 ans" ou "hérité de ma grand-mère", il y a une CONTRADICTION potentielle.
+- Dans ce cas, commence ta remarque dans "summary" par : "Sauf erreur, " suivi de l'explication de la contradiction.
+  Ex: "Sauf erreur, cette œuvre semble avoir été vendue aux enchères chez X en 2022 pour Y €, ce qui contredirait la provenance déclarée par le propriétaire."
+- Ne fais ce signalement QUE si la correspondance visuelle est très forte (même œuvre, pas juste le même artiste).
+- Ce n'est pas une accusation, c'est un signalement factuel et mesuré pour aider le commissaire-priseur.
+
 CONCISION OBLIGATOIRE :
 - "identified_object" = UNE seule ligne (type, matériau, style/époque). Au conditionnel.
-- "summary" = 2-3 phrases courtes MAX. Au conditionnel.
+- "summary" = 2-4 phrases courtes. Au conditionnel. MAIS si une vente confirmée ou une contradiction est détectée, ajoute 1-2 phrases supplémentaires pour le signaler clairement.
 - Les détails longs vont dans authenticity_assessment, condition_notes, market_insights.
 - Ne JAMAIS mentionner les outils techniques utilisés (Google Vision, Google Lens, API, etc.).
 
 JSON sans backticks :
 {
   "identified_object": "1 ligne au conditionnel",
-  "summary": "2-3 phrases MAX au conditionnel",
+  "summary": "2-4 phrases au conditionnel. Si vente confirmée trouvée : mentionner avec prix + lien. Si contradiction avec descriptif vendeur : commencer par 'Sauf erreur, ...'",
   "estimated_range": "Fourchette en € UNIQUEMENT basée sur des ventes COMPARABLES (même œuvre ou très similaire)",
   "authenticity_assessment": "Détails authenticité (au conditionnel)",
   "condition_notes": "Détails état",
