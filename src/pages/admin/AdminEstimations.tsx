@@ -98,7 +98,7 @@ const AdminEstimations = () => {
       </Helmet>
       <Header />
 
-      <main className="min-h-screen bg-background pt-20">
+      <main className="min-h-screen bg-background" style={{ paddingTop: "var(--header-height, 180px)" }}>
         {loading ? (
           <div className="flex items-center justify-center py-24">
             <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
