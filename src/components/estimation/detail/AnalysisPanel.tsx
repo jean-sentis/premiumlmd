@@ -345,7 +345,7 @@ export function AnalysisPanel({
             />
           )}
           {openSection === "lens" && (
-            <LensContent ai={ai} sellerPhotoUrl={photoUrls?.[0]} />
+            <LensContent ai={ai} sellerPhotoUrls={photoUrls} />
           )}
           {openSection === "market" && (
             <MarketContent ai={ai} marketText={marketText} onMarketTextChange={setMarketText} />
@@ -534,8 +534,8 @@ function DetailButton({
   );
 }
 
-/* ── Section Correspondances visuelles — Vue côte à côte ── */
-function LensContent({ ai, sellerPhotoUrl }: { ai: any; sellerPhotoUrl?: string }) {
+/* ── Section Correspondances visuelles — Objet original + grille numérotée ── */
+function LensContent({ ai, sellerPhotoUrls }: { ai: any; sellerPhotoUrls?: string[] }) {
   const matches = ai.lens_detection?.visualMatches || [];
   const comparisons: Array<{ match_index: number; verdict: string; details: string }> = ai.visual_comparisons || [];
   if (matches.length === 0) return null;
@@ -547,79 +547,97 @@ function LensContent({ ai, sellerPhotoUrl }: { ai: any; sellerPhotoUrl?: string 
     "différent": { bg: "bg-red-100", text: "text-red-800", label: "✗ Différent" },
   };
 
+  // Show at most 2 seller photos
+  const visibleSellerPhotos = (sellerPhotoUrls || []).slice(0, 2);
+
   return (
-    <div className="mt-1.5 space-y-2 animate-in slide-in-from-top-1 duration-200">
-      {matches.map(
-        (match: { title: string; link: string; source: string; thumbnail?: string; price?: string }, i: number) => {
-          const comparison = comparisons.find((c) => c.match_index === i);
-          const verdictStyle = comparison ? VERDICT_STYLES[comparison.verdict] || VERDICT_STYLES["similaire"] : null;
+    <div className="mt-1.5 space-y-4 animate-in slide-in-from-top-1 duration-200">
+      {/* Original object photos */}
+      {visibleSellerPhotos.length > 0 && (
+        <div className="space-y-1.5">
+          <p className="text-sm font-medium text-muted-foreground">Objet à expertiser</p>
+          <div className={`grid gap-2 ${visibleSellerPhotos.length === 1 ? "grid-cols-1" : "grid-cols-2"}`}>
+            {visibleSellerPhotos.map((url, i) => (
+              <a key={i} href={url} target="_blank" rel="noopener noreferrer">
+                <img
+                  src={url}
+                  alt={`Photo vendeur ${i + 1}`}
+                  className="w-full max-h-48 object-contain rounded-lg border bg-muted/20"
+                />
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
 
-          return (
-            <div key={i} className="p-3 bg-muted/30 rounded-lg border border-border/30">
-              {/* Side by side images — NEVER crop, show full image */}
-              <div className="flex gap-2 mb-2">
-                {/* Seller photo */}
-                {sellerPhotoUrl && (
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[10px] text-muted-foreground mb-1 font-medium">Photo vendeur</p>
-                    <a href={sellerPhotoUrl} target="_blank" rel="noopener noreferrer">
-                      <img
-                        src={sellerPhotoUrl}
-                        alt="Photo vendeur"
-                        className="w-full max-h-48 object-contain rounded border bg-muted/20"
-                      />
-                    </a>
-                  </div>
-                )}
-                {/* Match thumbnail */}
-                {match.thumbnail && (
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[10px] text-muted-foreground mb-1 font-medium">Correspondance</p>
-                    <a href={match.link} target="_blank" rel="noopener noreferrer">
-                      <img
-                        src={match.thumbnail}
-                        alt={match.title}
-                        className="w-full max-h-48 object-contain rounded border bg-muted/20"
-                        onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
-                      />
-                    </a>
-                  </div>
-                )}
-              </div>
+      {/* Matches grid — numbered thumbnails with hover tooltip */}
+      <div className="space-y-1.5">
+        <p className="text-sm font-medium text-muted-foreground">
+          Correspondances trouvées ({matches.length})
+        </p>
+        <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-2">
+          {matches.map(
+            (match: { title: string; link: string; source: string; thumbnail?: string; price?: string }, i: number) => {
+              const comparison = comparisons.find((c) => c.match_index === i);
+              const verdictStyle = comparison ? VERDICT_STYLES[comparison.verdict] || VERDICT_STYLES["similaire"] : null;
+              const tooltipText = [
+                match.title,
+                match.source ? `— ${match.source}` : "",
+                match.price ? `Prix : ${match.price}` : "",
+                comparison?.details || "",
+              ].filter(Boolean).join("\n");
 
-              {/* Match info + verdict */}
-              <div className="space-y-1">
+              return (
                 <a
+                  key={i}
                   href={match.link}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-xs font-medium text-primary hover:underline line-clamp-2"
+                  className="relative group rounded-lg border overflow-hidden bg-muted/20 hover:ring-2 hover:ring-primary/40 transition-all"
+                  title={tooltipText}
                 >
-                  {match.title}
-                </a>
-                <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
-                  <span>{match.source}</span>
-                  {match.price && <span className="font-medium text-foreground">{match.price}</span>}
-                </div>
+                  {/* Number badge */}
+                  <span className="absolute top-1 left-1 z-10 bg-foreground/80 text-background text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full">
+                    {i + 1}
+                  </span>
 
-                {/* AI verdict badge + details */}
-                {comparison && verdictStyle && (
-                  <div className="mt-1.5 space-y-1">
-                    <Badge className={`${verdictStyle.bg} ${verdictStyle.text} border-0 text-[10px] px-2 py-0.5`}>
+                  {/* Verdict badge */}
+                  {verdictStyle && (
+                    <span className={`absolute top-1 right-1 z-10 ${verdictStyle.bg} ${verdictStyle.text} text-[9px] font-semibold px-1.5 py-0.5 rounded-full`}>
                       {verdictStyle.label}
-                    </Badge>
-                    {comparison.details && (
-                      <p className="text-[11px] text-muted-foreground italic leading-snug">
-                        {comparison.details}
-                      </p>
+                    </span>
+                  )}
+
+                  {/* Thumbnail */}
+                  {match.thumbnail ? (
+                    <img
+                      src={match.thumbnail}
+                      alt={match.title}
+                      className="w-full aspect-square object-contain"
+                      onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                    />
+                  ) : (
+                    <div className="w-full aspect-square flex items-center justify-center text-muted-foreground/30">
+                      <Image className="w-6 h-6" />
+                    </div>
+                  )}
+
+                  {/* Hover overlay with source text */}
+                  <div className="absolute inset-0 bg-foreground/80 text-background opacity-0 group-hover:opacity-100 transition-opacity p-2 flex flex-col justify-end">
+                    <p className="text-[10px] leading-tight line-clamp-3 font-medium">
+                      {match.title}
+                    </p>
+                    {match.price && (
+                      <p className="text-[10px] font-bold mt-0.5">{match.price}</p>
                     )}
+                    <p className="text-[9px] opacity-70 mt-0.5 truncate">{match.source}</p>
                   </div>
-                )}
-              </div>
-            </div>
-          );
-        }
-      )}
+                </a>
+              );
+            }
+          )}
+        </div>
+      </div>
     </div>
   );
 }
