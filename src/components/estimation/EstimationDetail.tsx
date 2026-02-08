@@ -2,12 +2,13 @@ import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, User, Mail, Phone, Tag, Euro, ExternalLink, ChevronDown, Sparkles } from "lucide-react";
+import { ArrowLeft, Sparkles, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { AnalysisPanel } from "./detail/AnalysisPanel";
 import { ResponsePanel } from "./detail/ResponsePanel";
+import { SellerInfoPanel } from "./detail/SellerInfoPanel";
+import { NotesPanel } from "./detail/NotesPanel";
 import { EstimationStatusBar } from "./EstimationStatusBar";
 
 interface EstimationRequest {
@@ -39,19 +40,12 @@ interface EstimationDetailProps {
   onUpdate: () => void;
 }
 
-function formatDescription(desc: string) {
-  const parts = desc.split("---");
-  return parts[0]?.trim() || desc;
-}
-
 export function EstimationDetail({
   estimation,
   onBack,
   onUpdate,
 }: EstimationDetailProps) {
   const { toast } = useToast();
-  const [notes, setNotes] = useState(estimation.auctioneer_notes || "");
-  const [savingNotes, setSavingNotes] = useState(false);
   const [reanalyzing, setReanalyzing] = useState(false);
   const [freshData, setFreshData] = useState<EstimationRequest | null>(null);
   const [showAiAnalysis, setShowAiAnalysis] = useState(false);
@@ -72,7 +66,6 @@ export function EstimationDetail({
       if (cancelled) return;
 
       if (error || !data) {
-        console.warn("[EstimationDetail] Re-fetch failed, using prop data. Retry:", retryCount);
         retryCount++;
         if (retryCount < MAX_RETRIES) {
           const delay = Math.min(5000 * Math.pow(1.2, Math.min(retryCount, 10)), 15000);
@@ -130,24 +123,6 @@ export function EstimationDetail({
     }
   };
 
-  const handleSaveNotes = async () => {
-    setSavingNotes(true);
-    try {
-      const { error } = await supabase
-        .from("estimation_requests")
-        .update({
-          auctioneer_notes: notes || null,
-        } as any)
-        .eq("id", estimation.id);
-      if (error) throw error;
-      toast({ title: "Notes enregistrées ✓" });
-    } catch {
-      toast({ title: "Erreur", variant: "destructive" });
-    } finally {
-      setSavingNotes(false);
-    }
-  };
-
   const handleSaveAnalysis = async (updatedAi: any, decision?: string) => {
     try {
       const updateData: any = { ai_analysis: updatedAi };
@@ -188,169 +163,67 @@ export function EstimationDetail({
             </p>
           </div>
         </div>
-        {/* Quick status actions */}
         <EstimationStatusBar estimation={current} onUpdate={onUpdate} />
       </div>
 
-      <div className="p-4 md:p-6 space-y-6">
-        {/* ══════════════════════════════════════ */}
-        {/* SECTION 1 — Informations du vendeur   */}
-        {/* ══════════════════════════════════════ */}
-        <div className="space-y-3">
-          <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-            Informations du vendeur
-          </h3>
-
-          {/* Contact details */}
-          <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
-            <span className="flex items-center gap-1">
-              <User className="w-3 h-3" />
-              {current.nom}
-            </span>
-            <span className="flex items-center gap-1">
-              <Mail className="w-3 h-3" />
-              {current.email}
-            </span>
-            {current.telephone && (
-              <span className="flex items-center gap-1">
-                <Phone className="w-3 h-3" />
-                {current.telephone}
-              </span>
-            )}
-            {current.object_category && (
-              <span className="flex items-center gap-1">
-                <Tag className="w-3 h-3" />
-                {current.object_category}
-              </span>
-            )}
-            {current.estimated_value && (
-              <span className="flex items-center gap-1">
-                <Euro className="w-3 h-3" />
-                {current.estimated_value}
-              </span>
-            )}
-          </div>
-
-          {/* Photos — FULL, never cropped */}
-          {current.photo_urls?.length > 0 && (
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-              {current.photo_urls.map((url, i) => (
-                <a
-                  key={i}
-                  href={getPhotoUrl(url)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="rounded-lg overflow-hidden border hover:opacity-90 transition-opacity bg-muted/20"
-                >
-                  <img
-                    src={getPhotoUrl(url)}
-                    alt={`Photo ${i + 1}`}
-                    className="w-full object-contain max-h-64"
-                  />
-                </a>
-              ))}
+      {/* ══════════════════════════════════════════ */}
+      {/* 3-COLUMN LAYOUT: Client | Notes | Réponse */}
+      {/* ══════════════════════════════════════════ */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="p-4 md:p-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Column 1: Seller info */}
+            <div className="lg:border-r lg:pr-6">
+              <SellerInfoPanel estimation={current} getPhotoUrl={getPhotoUrl} />
             </div>
-          )}
 
-          {/* Description + lien lot */}
-          <div className="space-y-2">
-            <div className="space-y-1">
-              <p className="text-xs font-medium text-muted-foreground">
-                Description
-              </p>
-              <p className="text-sm bg-muted/30 p-3 rounded-lg border border-border/30">
-                {formatDescription(current.description)}
-              </p>
-            </div>
-            {current.related_lot_id && (
-              <a
-                href={`/lot/${current.related_lot_id}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline"
-              >
-                <ExternalLink className="w-3 h-3" />
-                Voir le lot référencé
-              </a>
-            )}
-          </div>
-        </div>
-
-        {/* Separator */}
-        <div className="border-t" />
-
-        {/* ══════════════════════════════════════ */}
-        {/* SECTION 2 — Notes privées du CP       */}
-        {/* Le CP se fait son avis AVANT l'IA     */}
-        {/* ══════════════════════════════════════ */}
-        <div className="space-y-2">
-          <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-            Votre avis
-          </h3>
-          <Textarea
-            placeholder="Vos observations, estimation, remarques (non visibles par le vendeur)…"
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            rows={3}
-            className="text-sm"
-          />
-          {notes !== (estimation.auctioneer_notes || "") && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleSaveNotes}
-              disabled={savingNotes}
-              className="text-xs"
-            >
-              Enregistrer
-            </Button>
-          )}
-        </div>
-
-        {/* Separator */}
-        <div className="border-t" />
-
-        {/* ══════════════════════════════════════ */}
-        {/* SECTION 3 — Réponse au vendeur        */}
-        {/* ══════════════════════════════════════ */}
-        <ResponsePanel estimation={current} onUpdate={onUpdate} />
-
-        {/* Separator */}
-        <div className="border-t" />
-
-        {/* ══════════════════════════════════════ */}
-        {/* SECTION 4 — Aide à la décision (IA)   */}
-        {/* Optionnel, réduit par défaut           */}
-        {/* ══════════════════════════════════════ */}
-        <div className="space-y-2">
-          <button
-            onClick={() => setShowAiAnalysis(!showAiAnalysis)}
-            className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors group w-full"
-          >
-            <Sparkles className="w-3.5 h-3.5 opacity-50 group-hover:opacity-100" />
-            <span>Aide à la décision</span>
-            {ai && (
-              <span className="text-[10px] font-normal normal-case opacity-50">
-                — analyse disponible
-              </span>
-            )}
-            <ChevronDown
-              className={`w-3.5 h-3.5 ml-auto transition-transform ${showAiAnalysis ? "rotate-180" : ""}`}
-            />
-          </button>
-
-          {showAiAnalysis && (
-            <div className="animate-in slide-in-from-top-2 duration-200">
-              <AnalysisPanel
-                ai={ai}
-                reanalyzing={reanalyzing}
-                onReanalyze={handleReanalyze}
+            {/* Column 2: Auctioneer notes */}
+            <div className="lg:border-r lg:pr-6">
+              <NotesPanel
                 estimationId={estimation.id}
-                onSaveAnalysis={handleSaveAnalysis}
-                photoUrls={current.photo_urls?.map(getPhotoUrl) || []}
+                initialNotes={estimation.auctioneer_notes || ""}
               />
             </div>
-          )}
+
+            {/* Column 3: Response panel */}
+            <div>
+              <ResponsePanel estimation={current} onUpdate={onUpdate} />
+            </div>
+          </div>
+
+          {/* ══════════════════════════════════════ */}
+          {/* FULL-WIDTH: AI analysis (expandable)  */}
+          {/* ══════════════════════════════════════ */}
+          <div className="mt-6 border-t pt-4">
+            <button
+              onClick={() => setShowAiAnalysis(!showAiAnalysis)}
+              className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors group w-full"
+            >
+              <Sparkles className="w-3.5 h-3.5 opacity-50 group-hover:opacity-100" />
+              <span>Aide à la décision</span>
+              {ai && (
+                <span className="text-[10px] font-normal normal-case opacity-50">
+                  — analyse disponible
+                </span>
+              )}
+              <ChevronDown
+                className={`w-3.5 h-3.5 ml-auto transition-transform ${showAiAnalysis ? "rotate-180" : ""}`}
+              />
+            </button>
+
+            {showAiAnalysis && (
+              <div className="animate-in slide-in-from-top-2 duration-200 mt-3">
+                <AnalysisPanel
+                  ai={ai}
+                  reanalyzing={reanalyzing}
+                  onReanalyze={handleReanalyze}
+                  estimationId={estimation.id}
+                  onSaveAnalysis={handleSaveAnalysis}
+                  photoUrls={current.photo_urls?.map(getPhotoUrl) || []}
+                />
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

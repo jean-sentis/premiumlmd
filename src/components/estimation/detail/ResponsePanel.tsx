@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Phone, Mail, UserPlus, Loader2, CheckCircle2 } from "lucide-react";
+import { Phone, Mail, UserPlus, Loader2, CheckCircle2, PhoneOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,6 +13,8 @@ interface ResponsePanelProps {
     nom: string;
     email: string;
     telephone: string | null;
+    description: string;
+    photo_urls: string[];
     auctioneer_decision: string | null;
     response_message: string | null;
     response_mode?: string | null;
@@ -34,6 +36,7 @@ export function ResponsePanel({ estimation, onUpdate }: ResponsePanelProps) {
   const [saving, setSaving] = useState(false);
 
   const aiQuestions = estimation.ai_analysis?.questions_for_owner || [];
+  const hasPhone = !!estimation.telephone;
 
   // Color style based on interest level when responded
   const isResponded = estimation.status === "responded" || estimation.status === "in_review";
@@ -66,6 +69,14 @@ export function ResponsePanel({ estimation, onUpdate }: ResponsePanelProps) {
     if (!interest || !delegateName.trim()) return;
     setSaving(true);
     try {
+      // Build a summary of the estimation for the delegate email
+      const summary = [
+        `Demande de : ${estimation.nom} (${estimation.email})`,
+        estimation.telephone ? `Tél : ${estimation.telephone}` : null,
+        `Description : ${estimation.description?.substring(0, 300)}`,
+        estimation.photo_urls?.length ? `${estimation.photo_urls.length} photo(s) jointe(s)` : null,
+      ].filter(Boolean).join("\n");
+
       const { error } = await supabase
         .from("estimation_requests")
         .update({
@@ -76,6 +87,14 @@ export function ResponsePanel({ estimation, onUpdate }: ResponsePanelProps) {
         } as any)
         .eq("id", estimation.id);
       if (error) throw error;
+
+      // Open mailto with pre-filled content for the delegate
+      const subject = encodeURIComponent(`Demande d'estimation à examiner — ${estimation.nom}`);
+      const body = encodeURIComponent(
+        `Bonjour,\n\nJe vous transfère cette demande d'estimation pour avis.\n\n${summary}\n\nMerci de me faire part de votre analyse.\n\nCordialement`
+      );
+      window.open(`mailto:?subject=${subject}&body=${body}`, "_blank");
+
       toast({ title: `Confié à ${delegateName.trim()} ✓` });
       onUpdate();
     } catch {
@@ -114,12 +133,14 @@ export function ResponsePanel({ estimation, onUpdate }: ResponsePanelProps) {
   // Build dynamic container classes based on interest color
   const containerClasses = isResponded && interestStyle
     ? `space-y-4 border-2 rounded-lg p-4 ${interestStyle.border} ${interestStyle.bg}`
-    : "space-y-4 border rounded-lg p-4";
+    : "space-y-4";
 
   return (
     <div className={containerClasses}>
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold">Répondre à {estimation.nom}</h3>
+        <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+          Répondre
+        </h3>
         {isResponded && interestStyle && (
           <span className={`text-xs px-2.5 py-1 rounded-full flex items-center gap-1 ${interestStyle.bg} ${interestStyle.text} ${interestStyle.border} border`}>
             <CheckCircle2 className="w-3 h-3" />
@@ -136,40 +157,50 @@ export function ResponsePanel({ estimation, onUpdate }: ResponsePanelProps) {
         <Button
           variant={mode === "phone" ? "default" : "outline"}
           size="sm"
-          onClick={() => setMode("phone")}
-          className="gap-2"
+          onClick={() => hasPhone && setMode("phone")}
+          disabled={!hasPhone}
+          className={`gap-1.5 text-xs ${!hasPhone ? "opacity-50 cursor-not-allowed" : ""}`}
+          title={hasPhone ? `Appeler ${estimation.telephone}` : "Pas de numéro fourni"}
         >
-          <Phone className="w-4 h-4" />
+          {hasPhone ? (
+            <Phone className="w-3.5 h-3.5" />
+          ) : (
+            <PhoneOff className="w-3.5 h-3.5" />
+          )}
           Appeler
         </Button>
         <Button
           variant={mode === "email" ? "default" : "outline"}
           size="sm"
           onClick={() => setMode("email")}
-          className="gap-2"
+          className="gap-1.5 text-xs"
         >
-          <Mail className="w-4 h-4" />
+          <Mail className="w-3.5 h-3.5" />
           Email
         </Button>
         <Button
           variant={mode === "delegate" ? "default" : "outline"}
           size="sm"
           onClick={() => setMode("delegate")}
-          className="gap-2"
+          className="gap-1.5 text-xs"
         >
-          <UserPlus className="w-4 h-4" />
+          <UserPlus className="w-3.5 h-3.5" />
           Déléguer
         </Button>
       </div>
 
       {/* ── Phone mode ── */}
-      {mode === "phone" && (
+      {mode === "phone" && hasPhone && (
         <div className="space-y-3">
-          <p className="text-xs text-muted-foreground">
-            {estimation.telephone
-              ? `Numéro : ${estimation.telephone}`
-              : `Pas de numéro fourni — contacter par email : ${estimation.email}`}
-          </p>
+          <div className="flex items-center gap-2 bg-muted/40 rounded-lg p-3 border">
+            <Phone className="w-4 h-4 text-primary" />
+            <a
+              href={`tel:${estimation.telephone}`}
+              className="text-sm font-semibold text-primary hover:underline"
+            >
+              {estimation.telephone}
+            </a>
+          </div>
           <InterestSelector value={interest} onChange={setInterest} />
           <Button
             size="sm"
@@ -187,9 +218,12 @@ export function ResponsePanel({ estimation, onUpdate }: ResponsePanelProps) {
       {/* ── Delegate mode ── */}
       {mode === "delegate" && (
         <div className="space-y-3">
+          <p className="text-xs text-muted-foreground">
+            Un email avec le résumé de la demande sera ouvert pour envoi.
+          </p>
           <InterestSelector value={interest} onChange={setInterest} />
           <Input
-            placeholder="Nom du collaborateur…"
+            placeholder="Nom du collaborateur / expert…"
             value={delegateName}
             onChange={(e) => setDelegateName(e.target.value)}
           />
