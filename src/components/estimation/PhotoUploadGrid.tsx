@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useRef, useState, useCallback } from "react";
 import { Upload, X, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -18,9 +18,9 @@ interface PhotoUploadGridProps {
 export function PhotoUploadGrid({ photos, onPhotosChange, maxPhotos = 6 }: PhotoUploadGridProps) {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
+  const processFiles = useCallback((files: File[]) => {
     if (photos.length + files.length > maxPhotos) {
       toast({
         title: "Limite atteinte",
@@ -44,10 +44,46 @@ export function PhotoUploadGrid({ photos, onPhotosChange, maxPhotos = 6 }: Photo
         preview: URL.createObjectURL(file),
       }));
 
-    onPhotosChange([...photos, ...newPhotos]);
+    if (newPhotos.length > 0) {
+      onPhotosChange([...photos, ...newPhotos]);
+    }
+  }, [photos, maxPhotos, toast, onPhotosChange]);
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    processFiles(Array.from(e.target.files || []));
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
+
+  const handleDragEnter = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  }, []);
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    // Only set false if we're leaving the drop zone itself
+    if (e.currentTarget === e.target) {
+      setIsDragging(false);
+    }
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    const files = Array.from(e.dataTransfer.files);
+    if (files.length > 0) {
+      processFiles(files);
+    }
+  }, [processFiles]);
 
   const removePhoto = (preview: string) => {
     URL.revokeObjectURL(preview);
@@ -57,8 +93,16 @@ export function PhotoUploadGrid({ photos, onPhotosChange, maxPhotos = 6 }: Photo
   return (
     <div className="space-y-3">
       <div
-        className="border-2 border-dashed rounded-lg p-5 text-center cursor-pointer hover:border-brand-primary/50 transition-colors"
+        className={`border-2 border-dashed rounded-lg p-5 text-center cursor-pointer transition-colors ${
+          isDragging
+            ? "border-brand-primary bg-brand-primary/5"
+            : "hover:border-brand-primary/50"
+        }`}
         onClick={() => fileInputRef.current?.click()}
+        onDragEnter={handleDragEnter}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
       >
         <input
           ref={fileInputRef}
@@ -68,8 +112,10 @@ export function PhotoUploadGrid({ photos, onPhotosChange, maxPhotos = 6 }: Photo
           onChange={handleFileChange}
           className="hidden"
         />
-        <Upload className="w-7 h-7 mx-auto mb-2 text-muted-foreground" />
-        <p className="text-sm text-muted-foreground">Cliquez ou glissez vos photos ici</p>
+        <Upload className={`w-7 h-7 mx-auto mb-2 transition-colors ${isDragging ? "text-brand-primary" : "text-muted-foreground"}`} />
+        <p className={`text-sm transition-colors ${isDragging ? "text-brand-primary font-medium" : "text-muted-foreground"}`}>
+          {isDragging ? "Déposez vos photos ici" : "Cliquez ou glissez vos photos ici"}
+        </p>
         <p className="text-xs text-muted-foreground mt-1">JPEG, PNG • Max 15 Mo • {maxPhotos} photos max</p>
       </div>
 
