@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { User, Mail, Phone, Tag, Euro, ExternalLink } from "lucide-react";
+import { User, Mail, Phone, Euro, ExternalLink } from "lucide-react";
 import ImageViewer from "@/components/ImageViewer";
 
 interface SellerInfoPanelProps {
@@ -48,12 +48,6 @@ export function SellerInfoPanel({ estimation, getPhotoUrl }: SellerInfoPanelProp
           <span className="flex items-center gap-1">
             <Phone className="w-3 h-3" />
             {estimation.telephone}
-          </span>
-        )}
-        {estimation.object_category && (
-          <span className="flex items-center gap-1">
-            <Tag className="w-3 h-3" />
-            {estimation.object_category}
           </span>
         )}
         {estimation.estimated_value && (
