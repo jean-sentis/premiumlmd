@@ -172,36 +172,47 @@ export function EstimationDetail({
 
   return (
     <div className="flex flex-col h-full overflow-y-auto">
-      {/* ── Header with status bar ── */}
-      <div className="p-3 border-b sticky top-0 bg-background z-10 space-y-2">
-        <div className="flex items-center gap-3">
+      {/* ── Header: single line with all meta ── */}
+      <div className="px-3 py-2 border-b sticky top-0 bg-background z-10">
+        <div className="flex items-center gap-2 flex-wrap">
           <Button
             variant="ghost"
             size="icon"
             onClick={onBack}
-            className="h-8 w-8 md:hidden"
+            className="h-7 w-7 md:hidden shrink-0"
           >
             <ArrowLeft className="h-4 w-4" />
           </Button>
-          <div className="flex-1 min-w-0">
-            <h2 className="font-semibold text-sm truncate">{current.nom}</h2>
-            <p className="text-xs text-muted-foreground">
-              {format(new Date(current.created_at), "dd MMMM yyyy à HH:mm", {
-                locale: fr,
-              })}
-            </p>
-          </div>
-          {/* AI anchor icon — framed, at right */}
+
+          {/* Seller name + date */}
+          <h2 className="font-semibold text-sm truncate">{current.nom}</h2>
+          <span className="text-xs text-muted-foreground whitespace-nowrap">
+            {format(new Date(current.created_at), "dd MMM yyyy · HH:mm", {
+              locale: fr,
+            })}
+          </span>
+
+          {/* Status buttons inline */}
+          <EstimationStatusBar estimation={current} onUpdate={onUpdate} />
+
+          <div className="flex-1" />
+
+          {/* Interest dropdown */}
+          <InterestDropdown
+            value={current.auctioneer_decision}
+            onChange={handleInterestChange}
+          />
+
+          {/* AI anchor icon — framed, at far right */}
           <button
             onClick={scrollToAi}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border-2 border-primary/30 text-primary hover:bg-primary/5 transition-colors text-xs font-medium"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border-2 border-primary/30 text-primary hover:bg-primary/5 transition-colors text-xs font-medium shrink-0"
             title="Aide à la décision IA"
           >
             <Sparkles className="w-4 h-4" />
             <span className="hidden sm:inline">IA</span>
           </button>
         </div>
-        <EstimationStatusBar estimation={current} onUpdate={onUpdate} />
       </div>
 
       {/* ═══════════════════════════════════════════════════ */}
@@ -209,46 +220,40 @@ export function EstimationDetail({
       {/* ═══════════════════════════════════════════════════ */}
       <div className="flex-1 overflow-y-auto">
         <div className="p-4 md:p-6">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Column 1: Seller info */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6" style={{ minHeight: "calc(60vh + 100px)" }}>
+            {/* Column 1: Seller info (no redundant header) */}
             <div className="lg:border-r lg:pr-6">
               <SellerInfoPanel estimation={current} getPhotoUrl={getPhotoUrl} />
             </div>
 
-            {/* Column 2: Interest dropdown + Tabbed opinions */}
-            <div className="lg:border-r lg:pr-6 space-y-3">
-              {/* Interest selector — inline above tabs */}
-              <InterestDropdown
-                value={current.auctioneer_decision}
-                onChange={handleInterestChange}
-              />
-
-              {/* Tab bar */}
-              <div className="flex border-b">
+            {/* Column 2: Browser-style tabbed opinions */}
+            <div className="lg:border-r lg:pr-6 flex flex-col">
+              {/* Browser-style tab bar */}
+              <div className="flex items-end gap-px -mb-px">
                 <button
                   onClick={() => setActiveTab("first")}
-                  className={`flex-1 text-xs font-medium uppercase tracking-wider py-2 border-b-2 transition-colors ${
+                  className={`px-4 py-2 text-xs font-medium rounded-t-lg border border-b-0 transition-colors ${
                     activeTab === "first"
-                      ? "border-foreground text-foreground"
-                      : "border-transparent text-muted-foreground hover:text-foreground"
+                      ? "bg-background text-foreground border-border"
+                      : "bg-muted/50 text-muted-foreground border-transparent hover:bg-muted hover:text-foreground"
                   }`}
                 >
                   1er Avis
                 </button>
                 <button
                   onClick={() => setActiveTab("second")}
-                  className={`flex-1 text-xs font-medium uppercase tracking-wider py-2 border-b-2 transition-colors ${
+                  className={`px-4 py-2 text-xs font-medium rounded-t-lg border border-b-0 transition-colors ${
                     activeTab === "second"
-                      ? "border-foreground text-foreground"
-                      : "border-transparent text-muted-foreground hover:text-foreground"
+                      ? "bg-background text-foreground border-border"
+                      : "bg-muted/50 text-muted-foreground border-transparent hover:bg-muted hover:text-foreground"
                   }`}
                 >
                   2ème Avis
                 </button>
               </div>
 
-              {/* Tab content */}
-              <div className="flex-1">
+              {/* Tab content area */}
+              <div className="flex-1 border rounded-b-lg rounded-tr-lg p-3 bg-background">
                 {activeTab === "first" ? (
                   <NotesPanel
                     estimationId={estimation.id}
@@ -263,7 +268,7 @@ export function EstimationDetail({
               </div>
             </div>
 
-            {/* Column 3: Response panel */}
+            {/* Column 3: Actions panel */}
             <div>
               <ResponsePanel estimation={current} onUpdate={onUpdate} />
             </div>

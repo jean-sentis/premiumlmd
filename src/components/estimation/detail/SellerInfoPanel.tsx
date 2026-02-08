@@ -22,9 +22,7 @@ function formatDescription(desc: string) {
 export function SellerInfoPanel({ estimation, getPhotoUrl }: SellerInfoPanelProps) {
   return (
     <div className="space-y-3 h-full overflow-y-auto pr-1">
-      <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-        Demande du client
-      </h3>
+      {/* No redundant header — already shown in the menu bar */}
 
       {/* Contact details */}
       <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
