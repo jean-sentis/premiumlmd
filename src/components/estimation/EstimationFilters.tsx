@@ -114,13 +114,13 @@ export function EstimationFilters({
       </div>
 
       {/* Search — at the end */}
-      <div className="relative flex-shrink-0 w-56 ml-auto">
-        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+      <div className="relative flex-shrink-0 w-36 ml-auto">
+        <Search className="absolute left-2 top-2 h-3.5 w-3.5 text-muted-foreground" />
         <Input
           placeholder="Rechercher…"
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
-          className="pl-8 h-9"
+          className="pl-7 h-8 text-xs"
         />
       </div>
     </div>
