@@ -82,8 +82,12 @@ export function EstimationDetail({
 
       retryCount = 0;
       setFreshData(data as any);
-      if (!data.ai_analysis) {
-        timer = setTimeout(fetchFresh, 5000);
+      // If new AI data arrived, stop the reanalyzing spinner
+      if (data.ai_analysis && reanalyzing) {
+        setReanalyzing(false);
+      }
+      if (!data.ai_analysis || reanalyzing) {
+        timer = setTimeout(fetchFresh, 3000);
       }
     };
     fetchFresh();
@@ -116,15 +120,14 @@ export function EstimationDetail({
           body: JSON.stringify({ estimation_id: estimation.id, force: true }),
         }
       );
-      if (!resp.ok) throw new Error("Erreur d'analyse");
-      toast({
-        title: "Ré-analyse lancée",
-        description: "Rafraîchissez dans quelques secondes",
-      });
-      setTimeout(onUpdate, 3000);
+      if (!resp.ok) {
+        throw new Error("Erreur d'analyse");
+      }
+      // Don't setReanalyzing(false) here — polling will detect the new data
+      // and the component will re-render with the result, hiding the progress
+      onUpdate();
     } catch {
       toast({ title: "Erreur", variant: "destructive" });
-    } finally {
       setReanalyzing(false);
     }
   };

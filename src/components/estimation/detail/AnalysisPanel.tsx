@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { getInterestStyle, INTEREST_LEVELS, type InterestLevel } from "./interest-config";
+import { AnalysisProgressStepper } from "./AnalysisProgressStepper";
 
 /** Parse markdown links [text](url) into clickable React elements */
 function renderMarkdownLinks(text: string): React.ReactNode {
@@ -278,12 +279,15 @@ export function AnalysisPanel({
 
       {/* ── Synthèse (contenu Première impression) — cadre connecté à l'onglet ── */}
       <div className="p-4 bg-background rounded-b-lg rounded-tr-lg border-2 border-border -mt-4 space-y-2">
-        {analysisPending ? (
+        {reanalyzing && (
+          <AnalysisProgressStepper />
+        )}
+        {analysisPending && !reanalyzing ? (
           <div className="flex items-center gap-2 text-sm text-muted-foreground py-2">
             <Loader2 className="w-4 h-4 animate-spin" />
             Analyse en attente…
           </div>
-        ) : (
+        ) : !analysisPending && !reanalyzing ? (
           <>
             <EditableField
               value={identifiedObject}
@@ -318,7 +322,7 @@ export function AnalysisPanel({
               />
             </div>
           </>
-        )}
+        ) : null}
       </div>
 
       {/* ── 5 onglets Chrome + cadre de contenu partagé ── */}
