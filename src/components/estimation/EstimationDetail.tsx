@@ -52,7 +52,7 @@ export function EstimationDetail({
   const [reanalyzing, setReanalyzing] = useState(false);
   const [deepening, setDeepening] = useState(false);
   const [freshData, setFreshData] = useState<EstimationRequest | null>(null);
-  const [showAiAnalysis, setShowAiAnalysis] = useState(false);
+  const [showAiAnalysis, setShowAiAnalysis] = useState(true);
   const [activeTab, setActiveTab] = useState<"first" | "second">("first");
   const aiSectionRef = useRef<HTMLDivElement>(null);
 
