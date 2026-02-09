@@ -163,35 +163,25 @@ export function AnalysisPanel({
     }
   }, [ai, recommendation, fiabilite, identifiedObject, summary, estimatedRange, authText, conditionText, marketText, onSaveAnalysis]);
 
-  if (!ai) {
-    return (
-      <div className="border rounded-lg p-6 text-center text-sm text-muted-foreground">
-        <Loader2 className="w-5 h-5 animate-spin mx-auto mb-2" />
-        Analyse en cours…
-      </div>
-    );
-  }
-
   const interestStyle = getInterestStyle(recommendation);
 
-  const lensCount = ai.lens_detection?.visualMatches?.length || 0;
-  const webCount = (ai.web_sources?.length || 0);
-  const scrapedCount = ai.scraped_results_count || 0;
+  const lensCount = ai?.lens_detection?.visualMatches?.length || 0;
+  const webCount = (ai?.web_sources?.length || 0);
+  const scrapedCount = ai?.scraped_results_count || 0;
   const sourceCount = lensCount + webCount + scrapedCount;
-  const analysisDepth = ai.analysis_depth || 3; // legacy analyses default to 3
-  const canDeepen = ai.can_deepen === true;
+  const analysisDepth = ai?.analysis_depth || 3;
+  const canDeepen = ai?.can_deepen === true;
 
-
-
-
-  // Tab definitions
+  // Tab definitions — always available, even before AI analysis
   const tabs = [
     { key: "identity", label: "IDENTITÉ / BIOGRAPHIE", hasContent: !!authText },
     { key: "lens", label: "CORRESPONDANCES VISUELLES", hasContent: lensCount > 0 },
     { key: "market", label: "RÉSULTATS MARCHÉ", hasContent: !!marketText || webCount > 0 },
     { key: "condition", label: "ÉTAT", hasContent: !!conditionText },
-    { key: "questions", label: "QUESTIONS", hasContent: (ai.questions_for_owner?.length || 0) > 0 },
+    { key: "questions", label: "QUESTIONS", hasContent: (ai?.questions_for_owner?.length || 0) > 0 },
   ];
+
+  const analysisPending = !ai;
 
   return (
     <div className="space-y-4">
@@ -284,38 +274,47 @@ export function AnalysisPanel({
 
       {/* ── Synthèse (contenu Première impression) — cadre connecté à l'onglet ── */}
       <div className="p-4 bg-background rounded-b-lg rounded-tr-lg border-2 border-border -mt-4 space-y-2">
-        <EditableField
-          value={identifiedObject}
-          onChange={setIdentifiedObject}
-          editing={editingField === "identified_object"}
-          onEdit={() => setEditingField("identified_object")}
-          onClose={() => setEditingField(null)}
-          className="text-sm font-medium"
-          placeholder="Identification de l'objet…"
-        />
-        <EditableField
-          value={summary}
-          onChange={setSummary}
-          editing={editingField === "summary"}
-          onEdit={() => setEditingField("summary")}
-          onClose={() => setEditingField(null)}
-          className="text-sm text-muted-foreground leading-relaxed"
-          placeholder="Synthèse…"
-          multiline
-        />
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground">Estimation :</span>
-          <EditableField
-            value={estimatedRange}
-            onChange={setEstimatedRange}
-            editing={editingField === "estimated_range"}
-            onEdit={() => setEditingField("estimated_range")}
-            onClose={() => setEditingField(null)}
-            className="text-sm font-semibold"
-            placeholder="Fourchette €…"
-            inline
-          />
-        </div>
+        {analysisPending ? (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground py-2">
+            <Loader2 className="w-4 h-4 animate-spin" />
+            Analyse en attente…
+          </div>
+        ) : (
+          <>
+            <EditableField
+              value={identifiedObject}
+              onChange={setIdentifiedObject}
+              editing={editingField === "identified_object"}
+              onEdit={() => setEditingField("identified_object")}
+              onClose={() => setEditingField(null)}
+              className="text-sm font-medium"
+              placeholder="Identification de l'objet…"
+            />
+            <EditableField
+              value={summary}
+              onChange={setSummary}
+              editing={editingField === "summary"}
+              onEdit={() => setEditingField("summary")}
+              onClose={() => setEditingField(null)}
+              className="text-sm text-muted-foreground leading-relaxed"
+              placeholder="Synthèse…"
+              multiline
+            />
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">Estimation :</span>
+              <EditableField
+                value={estimatedRange}
+                onChange={setEstimatedRange}
+                editing={editingField === "estimated_range"}
+                onEdit={() => setEditingField("estimated_range")}
+                onClose={() => setEditingField(null)}
+                className="text-sm font-semibold"
+                placeholder="Fourchette €…"
+                inline
+              />
+            </div>
+          </>
+        )}
       </div>
 
       {/* ── 5 onglets Chrome + cadre de contenu partagé ── */}
