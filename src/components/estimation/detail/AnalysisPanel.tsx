@@ -259,16 +259,16 @@ export function AnalysisPanel({
           </div>
         </div>
 
-        {/* Ré-analyser */}
+        {/* Lancer / Ré-analyser */}
         <Button
-          variant="ghost"
+          variant={analysisPending ? "default" : "ghost"}
           size="sm"
           onClick={onReanalyze}
           disabled={reanalyzing}
-          className="h-7 text-xs text-muted-foreground shrink-0 mb-0.5"
+          className={`h-7 text-xs shrink-0 mb-0.5 ${analysisPending ? "gap-1.5" : "text-muted-foreground"}`}
         >
           {reanalyzing ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3 mr-1" />}
-          Ré-analyser
+          {analysisPending ? "Lancer l'analyse" : "Ré-analyser"}
         </Button>
       </div>
 
@@ -375,7 +375,7 @@ export function AnalysisPanel({
             )}
             {activeTab === "questions" && (
               <>
-                {ai.questions_for_owner?.length > 0 ? (
+                {ai?.questions_for_owner?.length > 0 ? (
                   <ul className="space-y-1.5 text-sm text-muted-foreground">
                     {ai.questions_for_owner.map((q: string, i: number) => (
                       <li key={i} className="flex items-start gap-2">
@@ -394,7 +394,7 @@ export function AnalysisPanel({
       </div>
 
       {/* Limitations */}
-      {ai.limitations && (
+      {ai?.limitations && (
         <p className="text-xs text-muted-foreground italic">{renderMarkdownLinks(ai.limitations)}</p>
       )}
 
