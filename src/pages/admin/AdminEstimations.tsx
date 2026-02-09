@@ -176,6 +176,7 @@ const AdminEstimations = () => {
                     key={est.id}
                     estimation={est}
                     onClick={() => setSelectedEstimation(est)}
+                    onArchived={fetchEstimations}
                   />
                 ))}
               </div>

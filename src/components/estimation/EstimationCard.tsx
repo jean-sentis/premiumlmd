@@ -1,7 +1,20 @@
+import { useState } from "react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { Mail, MailOpen, Clock, AlertTriangle, Phone, UserPlus } from "lucide-react";
+import { Mail, MailOpen, Clock, AlertTriangle, Phone, UserPlus, Trash2, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 import { getInterestStyle, getOverdueInfo } from "./detail/interest-config";
 
 export interface EstimationRequest {
@@ -41,9 +54,14 @@ function getPhotoUrl(path: string) {
 interface EstimationCardProps {
   estimation: EstimationRequest;
   onClick: () => void;
+  onArchived?: () => void;
 }
 
-export function EstimationCard({ estimation, onClick }: EstimationCardProps) {
+export function EstimationCard({ estimation, onClick, onArchived }: EstimationCardProps) {
+  const { toast } = useToast();
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [archiving, setArchiving] = useState(false);
+
   const isResponded = estimation.status === "responded";
   const overdue = getOverdueInfo(estimation.created_at, estimation.status);
   const interestStyle = isResponded && estimation.auctioneer_decision
@@ -52,14 +70,42 @@ export function EstimationCard({ estimation, onClick }: EstimationCardProps) {
   const responseMode = (estimation as any).response_mode;
   const delegateTo = (estimation as any).delegate_to;
 
+  const handleArchive = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setArchiving(true);
+    try {
+      const { error } = await supabase
+        .from("estimation_requests")
+        .update({ status: "archived" } as any)
+        .eq("id", estimation.id);
+      if (error) throw error;
+      toast({ title: "Demande supprimée ✓" });
+      setShowDeleteConfirm(false);
+      onArchived?.();
+    } catch {
+      toast({ title: "Erreur", variant: "destructive" });
+    } finally {
+      setArchiving(false);
+    }
+  };
+
   return (
+    <>
     <div
       onClick={onClick}
-      className={`group rounded-xl border cursor-pointer transition-all hover:shadow-md hover:border-border
+      className={`group relative rounded-xl border cursor-pointer transition-all hover:shadow-md hover:border-border
         ${interestStyle ? interestStyle.border : "border-border/50"}
         ${!isResponded ? "bg-brand-gold/5 border-l-4 border-l-blue-400" : "bg-card"}
       `}
     >
+      {/* Trash button — visible on hover */}
+      <button
+        onClick={(e) => { e.stopPropagation(); setShowDeleteConfirm(true); }}
+        className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-md bg-card/80 backdrop-blur-sm border border-border/50 hover:bg-destructive/10 hover:text-destructive"
+        title="Supprimer"
+      >
+        <Trash2 className="w-3.5 h-3.5" />
+      </button>
       {/* Photo */}
       <div className="aspect-[4/3] overflow-hidden rounded-t-xl bg-muted">
         {estimation.photo_urls?.length > 0 ? (
@@ -147,5 +193,29 @@ export function EstimationCard({ estimation, onClick }: EstimationCardProps) {
         </div>
       </div>
     </div>
+
+    {/* Confirmation dialog */}
+    <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+      <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Supprimer cette demande ?</AlertDialogTitle>
+          <AlertDialogDescription>
+            La demande de {estimation.nom} sera archivée et ne sera plus visible dans la liste.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Annuler</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={handleArchive}
+            disabled={archiving}
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+          >
+            {archiving ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" /> : null}
+            Supprimer
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+    </>
   );
 }
