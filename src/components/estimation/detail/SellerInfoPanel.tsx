@@ -80,7 +80,7 @@ export function SellerInfoPanel({ estimation, getPhotoUrl }: SellerInfoPanelProp
       {/* Description */}
       <div className="space-y-1">
         <p className="text-sm font-medium text-muted-foreground">Description</p>
-        <p className="text-base bg-muted/30 p-3 rounded-lg border border-border/30 leading-relaxed">
+        <p className="text-sm bg-muted/30 p-3 rounded-lg border border-border/30 leading-relaxed">
           {formatDescription(estimation.description)}
         </p>
       </div>

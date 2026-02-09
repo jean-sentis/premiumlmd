@@ -41,7 +41,7 @@ export function SecondOpinionPanel({ estimationId, initialOpinion }: SecondOpini
         placeholder="Avis complémentaire, expertise externe, remarques d'un collaborateur…"
         value={opinion}
         onChange={(e) => setOpinion(e.target.value)}
-        className="text-base flex-1 min-h-[120px] resize-none"
+        className="text-sm flex-1 min-h-[120px] resize-none"
       />
       {isDirty && (
         <Button
