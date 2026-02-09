@@ -195,24 +195,24 @@ export function AnalysisPanel({
 
   return (
     <div className="space-y-4">
-      {/* ── Ligne 1 : Onglet "Première impression" + mentions intérêt/fiabilité ── */}
-      <div className="flex items-center gap-3">
-        {/* Onglet Première impression — style Chrome */}
-        <div
-          className="flex items-center gap-1.5 px-4 py-2 rounded-t-lg border-t-2 border-l border-r bg-background text-sm font-semibold uppercase tracking-wide"
-          style={{ borderTopColor: "#22c55e" }}
+      {/* ── Ligne unique : Onglet Chrome "Première impression" + mentions intérêt/fiabilité au centre ── */}
+      <div className="flex items-end gap-0">
+        {/* Onglet Chrome — Première impression */}
+        <button
+          className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold uppercase tracking-wide bg-background border border-border border-b-0 rounded-t-lg relative z-10"
+          style={{ borderTopColor: "#22c55e", borderTopWidth: "3px" }}
         >
-          <Check className="w-4 h-4 text-green-600 shrink-0" />
+          <Check className="w-3.5 h-3.5 text-green-600 shrink-0" />
           Première impression
-        </div>
+        </button>
 
-        {/* Mentions intérêt + fiabilité — plus petites, pas des onglets */}
-        <div className="flex items-center gap-2 ml-auto">
+        {/* Mentions intérêt + fiabilité — au centre, même taille que les onglets */}
+        <div className="flex-1 flex items-center justify-center gap-3 pb-2">
           {/* Intérêt */}
           <div className="relative">
             <button
               onClick={() => { setShowRecommendationPicker(!showRecommendationPicker); setShowFiabilitePicker(false); }}
-              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[11px] font-medium transition-colors ${
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-semibold transition-colors ${
                 interestStyle
                   ? `${interestStyle.bg} ${interestStyle.text} ${interestStyle.border}`
                   : "bg-muted/40 border-border/60 text-muted-foreground"
@@ -223,7 +223,7 @@ export function AnalysisPanel({
               <Pencil className="w-2.5 h-2.5 opacity-40 shrink-0" />
             </button>
             {showRecommendationPicker && (
-              <div className="absolute top-full right-0 mt-1 z-20 bg-background border rounded-lg shadow-lg p-1.5 min-w-[160px]">
+              <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 z-20 bg-background border rounded-lg shadow-lg p-1.5 min-w-[160px]">
                 {Object.entries(INTEREST_LEVELS).map(([key, config]) => (
                   <button
                     key={key}
@@ -244,7 +244,7 @@ export function AnalysisPanel({
           <div className="relative">
             <button
               onClick={() => { setShowFiabilitePicker(!showFiabilitePicker); setShowRecommendationPicker(false); }}
-              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[11px] font-medium transition-colors ${
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-semibold transition-colors ${
                 FIABILITE_STYLES[fiabilite] || "bg-muted/40 border-border/60 text-muted-foreground"
               }`}
             >
@@ -252,7 +252,7 @@ export function AnalysisPanel({
               <Pencil className="w-2.5 h-2.5 opacity-40 shrink-0" />
             </button>
             {showFiabilitePicker && (
-              <div className="absolute top-full right-0 mt-1 z-20 bg-background border rounded-lg shadow-lg p-1.5 min-w-[120px]">
+              <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 z-20 bg-background border rounded-lg shadow-lg p-1.5 min-w-[120px]">
                 {FIABILITE_OPTIONS.map((opt) => (
                   <button
                     key={opt.value}
@@ -267,23 +267,23 @@ export function AnalysisPanel({
               </div>
             )}
           </div>
-
-          {/* Ré-analyser */}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onReanalyze}
-            disabled={reanalyzing}
-            className="h-7 text-xs text-muted-foreground shrink-0"
-          >
-            {reanalyzing ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3 mr-1" />}
-            Ré-analyser
-          </Button>
         </div>
+
+        {/* Ré-analyser */}
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onReanalyze}
+          disabled={reanalyzing}
+          className="h-7 text-xs text-muted-foreground shrink-0 mb-0.5"
+        >
+          {reanalyzing ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3 mr-1" />}
+          Ré-analyser
+        </Button>
       </div>
 
-      {/* ── Synthèse (contenu Première impression) — cadre bien visible ── */}
-      <div className="p-4 bg-background rounded-lg border-2 border-border space-y-2">
+      {/* ── Synthèse (contenu Première impression) — cadre connecté à l'onglet ── */}
+      <div className="p-4 bg-background rounded-b-lg rounded-tr-lg border-2 border-border -mt-4 space-y-2">
         <EditableField
           value={identifiedObject}
           onChange={setIdentifiedObject}
@@ -320,25 +320,27 @@ export function AnalysisPanel({
 
       {/* ── 5 onglets Chrome + cadre de contenu partagé ── */}
       <div>
-        {/* Onglets style Chrome */}
-        <div className="flex items-end gap-0.5 -mb-px">
+        {/* Onglets style Chrome — bordures noires visibles, liseret vert sur 2 côtés si contenu */}
+        <div className="flex items-end gap-0 -mb-px">
           {tabs.map((tab) => {
             const isActive = activeTab === tab.key;
-            const borderColor = tab.hasContent ? "#22c55e" : "#d1d5db";
             return (
               <button
                 key={tab.key}
                 onClick={() => setActiveTab(isActive ? null : tab.key)}
-                className={`relative flex items-center justify-center gap-1 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide transition-all rounded-t-lg ${
+                className={`relative flex items-center justify-center gap-1 px-3 py-2 text-xs font-semibold uppercase tracking-wide transition-all rounded-t-lg border ${
                   isActive
-                    ? "bg-background text-foreground z-10 border-l border-r border-t-2"
-                    : "bg-muted/30 text-muted-foreground hover:bg-muted/50 border border-transparent"
+                    ? "bg-background text-foreground z-10 border-border border-b-background"
+                    : "bg-muted/30 text-muted-foreground hover:bg-muted/50 border-border/60"
                 }`}
-                style={{
-                  borderTopColor: isActive ? borderColor : "transparent",
-                  borderLeftColor: isActive ? "hsl(var(--border))" : "transparent",
-                  borderRightColor: isActive ? "hsl(var(--border))" : "transparent",
-                }}
+                style={tab.hasContent ? {
+                  borderTopColor: "#22c55e",
+                  borderTopWidth: "3px",
+                  borderLeftColor: isActive ? "#22c55e" : undefined,
+                  borderLeftWidth: isActive ? "3px" : undefined,
+                  borderRightColor: isActive ? "#22c55e" : undefined,
+                  borderRightWidth: isActive ? "3px" : undefined,
+                } : {}}
               >
                 {tab.hasContent && (
                   <Check className="w-3.5 h-3.5 text-green-600 shrink-0" />

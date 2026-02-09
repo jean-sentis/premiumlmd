@@ -311,17 +311,17 @@ export function EstimationDetail({
           <div ref={aiSectionRef} className="mt-4 border-t pt-4 max-w-none">
             <button
               onClick={() => setShowAiAnalysis(!showAiAnalysis)}
-              className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors group w-full"
+              className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors group w-full"
             >
-              <Sparkles className="w-3.5 h-3.5 opacity-50 group-hover:opacity-100" />
+              <Sparkles className="w-4 h-4 opacity-60 group-hover:opacity-100" />
               <span>Aide à la décision</span>
               {ai && (
-                <span className="text-[10px] font-normal normal-case opacity-50">
+                <span className="text-sm font-semibold uppercase tracking-wider opacity-60">
                   — analyse disponible
                 </span>
               )}
               <ChevronDown
-                className={`w-3.5 h-3.5 ml-auto transition-transform ${showAiAnalysis ? "rotate-180" : ""}`}
+                className={`w-4 h-4 ml-auto transition-transform ${showAiAnalysis ? "rotate-180" : ""}`}
               />
             </button>
 
