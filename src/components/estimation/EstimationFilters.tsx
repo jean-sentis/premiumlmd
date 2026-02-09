@@ -39,17 +39,6 @@ export function EstimationFilters({
 }: EstimationFiltersProps) {
   return (
     <div className="flex items-center gap-3 flex-wrap">
-      {/* Search */}
-      <div className="relative flex-shrink-0 w-64">
-        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder="Rechercher…"
-          value={searchQuery}
-          onChange={(e) => onSearchChange(e.target.value)}
-          className="pl-8 h-9"
-        />
-      </div>
-
       {/* Status filters */}
       <div className="flex items-center gap-1.5 flex-wrap">
         <FilterBadge
@@ -124,10 +113,16 @@ export function EstimationFilters({
         </FilterBadge>
       </div>
 
-      {/* Refresh */}
-      <Button variant="ghost" size="icon" onClick={onRefresh} className="h-8 w-8 ml-auto">
-        <RefreshCw className="h-4 w-4" />
-      </Button>
+      {/* Search — at the end */}
+      <div className="relative flex-shrink-0 w-56 ml-auto">
+        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder="Rechercher…"
+          value={searchQuery}
+          onChange={(e) => onSearchChange(e.target.value)}
+          className="pl-8 h-9"
+        />
+      </div>
     </div>
   );
 }
