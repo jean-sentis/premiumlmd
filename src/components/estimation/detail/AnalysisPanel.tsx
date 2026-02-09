@@ -322,7 +322,7 @@ export function AnalysisPanel({
       {/* ── 5 onglets Chrome + cadre de contenu partagé ── */}
       <div>
         {/* Onglets style Chrome — espacement, bordures noires visibles, liseret vert sur 3 côtés si contenu */}
-        <div className="flex items-end gap-1 -mb-px">
+        <div className="flex items-end gap-2 -mb-px">
           {tabs.map((tab) => {
             const isActive = activeTab === tab.key;
             return (

@@ -41,7 +41,7 @@ export function NotesPanel({ estimationId, initialNotes }: NotesPanelProps) {
         placeholder="Vos observations, estimation, remarques (non visibles par le vendeur)…"
         value={notes}
         onChange={(e) => setNotes(e.target.value)}
-        className="text-base flex-1 min-h-[120px] resize-none"
+        className="text-sm flex-1 min-h-[120px] resize-none"
       />
       {isDirty && (
         <Button
