@@ -221,7 +221,7 @@ export function EstimationDetail({
           </span>
 
           {/* Status buttons inline */}
-          <EstimationStatusBar estimation={current} onUpdate={onUpdate} />
+          <EstimationStatusBar estimation={current} onUpdate={onUpdate} onBack={onBack} />
 
           <div className="flex-1" />
 

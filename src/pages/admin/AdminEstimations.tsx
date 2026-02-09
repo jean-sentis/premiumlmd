@@ -57,7 +57,7 @@ const AdminEstimations = () => {
 
       switch (activeFilter) {
         case "all":
-          return true;
+          return e.status !== "archived";
         case "unread":
           return e.status === "new";
         case "pending":
