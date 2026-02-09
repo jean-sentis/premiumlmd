@@ -15,26 +15,54 @@ import { Textarea } from "@/components/ui/textarea";
 import { getInterestStyle, INTEREST_LEVELS, type InterestLevel } from "./interest-config";
 
 
-/** Parse markdown links [text](url) into clickable React elements */
+/** Parse markdown links [text](url) AND raw URLs into clickable React elements */
 function renderMarkdownLinks(text: string): React.ReactNode {
-  const parts = text.split(/(\[[^\]]+\]\([^)]+\))/g);
-  return parts.map((part, i) => {
-    const match = part.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
-    if (match) {
+  // First split on markdown links, then on raw URLs
+  const mdPattern = /(\[[^\]]+\]\([^)]+\))/g;
+  const urlPattern = /(https?:\/\/[^\s<>\])"]+)/g;
+
+  const parts = text.split(mdPattern);
+  return parts.flatMap((part, i) => {
+    // Check if this part is a markdown link
+    const mdMatch = part.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
+    if (mdMatch) {
       return (
         <a
-          key={i}
-          href={match[2]}
+          key={`md-${i}`}
+          href={mdMatch[2]}
           target="_blank"
           rel="noopener noreferrer"
           className="text-primary hover:underline"
           onClick={(e) => e.stopPropagation()}
         >
-          {match[1]}
+          {mdMatch[1]}
         </a>
       );
     }
-    return <span key={i}>{part}</span>;
+    // Otherwise, split on raw URLs
+    const subParts = part.split(urlPattern);
+    return subParts.map((sub, j) => {
+      if (urlPattern.test(sub)) {
+        // Reset lastIndex since we reuse the regex
+        urlPattern.lastIndex = 0;
+        let label: string;
+        try { label = new URL(sub).hostname; } catch { label = sub; }
+        return (
+          <a
+            key={`url-${i}-${j}`}
+            href={sub}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary hover:underline"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {label}
+          </a>
+        );
+      }
+      urlPattern.lastIndex = 0;
+      return <span key={`txt-${i}-${j}`}>{sub}</span>;
+    });
   });
 }
 
@@ -714,7 +742,7 @@ function MarketContent({
           className="text-sm text-muted-foreground leading-relaxed cursor-pointer hover:bg-muted/50 rounded px-1 -mx-1 transition-colors"
           title="Cliquer pour modifier"
         >
-          {marketText || <span className="italic opacity-50">+ Contexte marché…</span>}
+          {marketText ? renderMarkdownLinks(marketText) : <span className="italic opacity-50">+ Contexte marché…</span>}
         </p>
       )}
 
