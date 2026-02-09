@@ -105,10 +105,8 @@ const AdminEstimations = () => {
         {/* PERSISTENT FILTER BAR               */}
         {/* ════════════════════════════════════ */}
         <div className="sticky top-0 z-20 bg-background/95 backdrop-blur-sm border-b">
-          <div className="max-w-[1600px] mx-auto px-4 py-3 flex items-center gap-3 flex-wrap">
-            <Inbox className="w-5 h-5 text-brand-gold shrink-0" />
-            <h1 className="text-lg font-semibold whitespace-nowrap">Demandes d'estimation</h1>
-            <span className="text-xs text-muted-foreground">({estimations.length})</span>
+          <div className="max-w-[1600px] mx-auto px-4 py-3">
+            <h1 className="text-lg font-semibold text-center mb-3">Demandes d'estimation</h1>
             <EstimationFilters
               searchQuery={searchQuery}
               onSearchChange={setSearchQuery}
