@@ -163,7 +163,7 @@ const AdminEstimations = () => {
           /* ════════════════════════════════════ */
           /* LIST VIEW                            */
           /* ════════════════════════════════════ */
-          <div className="max-w-[1600px] mx-auto px-4 py-6">
+          <div className="max-w-[1600px] mx-auto px-4 py-6 pb-24">
             {filtered.length === 0 ? (
               <div className="text-center py-16 text-muted-foreground">
                 <Inbox className="w-12 h-12 mx-auto mb-3 opacity-20" />
