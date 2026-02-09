@@ -135,20 +135,8 @@ export function SellSimilarDialog({
         throw new Error("Erreur lors de l'envoi de la demande");
       }
 
-      // 4. Trigger AI analysis in background
-      if (inserted?.id) {
-        fetch(
-          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/analyze-estimation`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-            },
-            body: JSON.stringify({ estimation_id: inserted.id }),
-          }
-        ).catch((err) => console.error("AI analysis trigger error:", err));
-      }
+      // AI analysis is no longer triggered automatically — the auctioneer
+      // can launch it from the detail panel when ready.
 
       toast({
         title: "Demande envoyée ✓",
