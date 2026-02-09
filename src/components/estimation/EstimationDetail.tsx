@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Sparkles, ChevronDown } from "lucide-react";
+import { ArrowLeft, Sparkles, ChevronDown, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { AnalysisPanel } from "./detail/AnalysisPanel";
@@ -318,9 +318,10 @@ export function EstimationDetail({
             >
               <Sparkles className="w-4 h-4 opacity-60 group-hover:opacity-100" />
               <span>Aide à la décision</span>
-              {ai && (
-                <span className="text-sm font-semibold uppercase tracking-wider opacity-60">
-                  — analyse disponible
+              {reanalyzing && (
+                <span className="text-sm font-semibold uppercase tracking-wider opacity-60 flex items-center gap-1.5">
+                  — analyse en cours
+                  <Loader2 className="w-3 h-3 animate-spin" />
                 </span>
               )}
               <ChevronDown

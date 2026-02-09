@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { getInterestStyle, INTEREST_LEVELS, type InterestLevel } from "./interest-config";
-import { AnalysisProgressStepper } from "./AnalysisProgressStepper";
+
 
 /** Parse markdown links [text](url) into clickable React elements */
 function renderMarkdownLinks(text: string): React.ReactNode {
@@ -95,6 +95,17 @@ export function AnalysisPanel({
 }: AnalysisPanelProps) {
   const [activeTab, setActiveTab] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [elapsed, setElapsed] = useState(0);
+
+  // Track elapsed time during reanalysis for progressive tab coloring
+  useEffect(() => {
+    if (!reanalyzing) { setElapsed(0); return; }
+    const start = Date.now();
+    const interval = setInterval(() => {
+      setElapsed(Math.floor((Date.now() - start) / 1000));
+    }, 500);
+    return () => clearInterval(interval);
+  }, [reanalyzing]);
 
   // Editable state — initialized from AI data
   const initialScore = getInitialFiabilite(ai);
@@ -175,13 +186,14 @@ export function AnalysisPanel({
 
   const questionsCount = ai?.questions_for_owner?.length || 0;
 
-  // Tab definitions — always available, even before AI analysis
+  // Tab definitions with cumulative time thresholds for progressive coloring
+  const TAB_THRESHOLDS = [5, 13, 25, 45, 85]; // cumulative seconds per phase
   const tabs = [
-    { key: "identity", label: "IDENTITÉ / BIOGRAPHIE", hasContent: !!authText, count: null },
-    { key: "lens", label: "CORRESPONDANCES", hasContent: lensCount > 0, count: lensCount || null },
-    { key: "market", label: "RÉSULTATS MARCHÉ", hasContent: !!marketText || webCount > 0, count: (webCount + scrapedCount) || null },
-    { key: "condition", label: "ÉTAT", hasContent: !!conditionText, count: null },
-    { key: "questions", label: "QUESTIONS", hasContent: questionsCount > 0, count: questionsCount || null },
+    { key: "identity", label: "IDENTITÉ / BIOGRAPHIE", hasContent: !!authText, count: null, threshold: TAB_THRESHOLDS[0] },
+    { key: "lens", label: "CORRESPONDANCES", hasContent: lensCount > 0, count: lensCount || null, threshold: TAB_THRESHOLDS[1] },
+    { key: "market", label: "RÉSULTATS MARCHÉ", hasContent: !!marketText || webCount > 0, count: (webCount + scrapedCount) || null, threshold: TAB_THRESHOLDS[2] },
+    { key: "condition", label: "ÉTAT", hasContent: !!conditionText, count: null, threshold: TAB_THRESHOLDS[3] },
+    { key: "questions", label: "QUESTIONS", hasContent: questionsCount > 0, count: questionsCount || null, threshold: TAB_THRESHOLDS[4] },
   ];
 
   const analysisPending = !ai;
@@ -279,15 +291,19 @@ export function AnalysisPanel({
 
       {/* ── Synthèse (contenu Première impression) — cadre connecté à l'onglet ── */}
       <div className="p-4 bg-background rounded-b-lg rounded-tr-lg border-2 border-border -mt-4 space-y-2">
-        {reanalyzing && (
-          <AnalysisProgressStepper />
+        {reanalyzing && !analysisPending && (
+          <div className="flex items-center gap-2 text-xs text-muted-foreground py-1">
+            <Loader2 className="w-3.5 h-3.5 animate-spin text-primary" />
+            Analyse en cours…
+          </div>
         )}
-        {analysisPending && !reanalyzing ? (
+        {analysisPending && !reanalyzing && (
           <div className="flex items-center gap-2 text-sm text-muted-foreground py-2">
             <Loader2 className="w-4 h-4 animate-spin" />
             Analyse en attente…
           </div>
-        ) : !analysisPending && !reanalyzing ? (
+        )}
+        {!analysisPending && !reanalyzing && (
           <>
             <EditableField
               value={identifiedObject}
@@ -322,7 +338,7 @@ export function AnalysisPanel({
               />
             </div>
           </>
-        ) : null}
+        )}
       </div>
 
       {/* ── 5 onglets Chrome + cadre de contenu partagé ── */}
@@ -331,31 +347,41 @@ export function AnalysisPanel({
         <div className="flex items-end gap-3 -mb-px">
           {tabs.map((tab) => {
             const isActive = activeTab === tab.key;
+            // During reanalyzing: progressive green based on elapsed time
+            const isGreen = reanalyzing ? elapsed >= tab.threshold : tab.hasContent;
+            const tabIdx = tabs.indexOf(tab);
+            const prevThreshold = tabIdx > 0 ? tabs[tabIdx - 1].threshold : 0;
             return (
               <button
                 key={tab.key}
                 onClick={() => setActiveTab(isActive ? null : tab.key)}
-                className={`relative flex items-center justify-center gap-1.5 px-5 py-2 text-xs font-semibold uppercase tracking-wide transition-all rounded-t-lg border min-w-[140px] ${
+                className={`relative flex items-center justify-center gap-1.5 px-5 py-2 text-xs font-semibold uppercase tracking-wide rounded-t-lg border min-w-[140px] ${
                   isActive
                     ? "bg-background text-foreground z-10 border-border border-b-background"
                     : "bg-muted/30 text-muted-foreground hover:bg-muted/50 border-border/60"
                 }`}
-                style={tab.hasContent ? {
-                  borderTopColor: "#22c55e",
-                  borderTopWidth: "3px",
-                  borderLeftColor: isActive ? "#22c55e" : undefined,
-                  borderLeftWidth: isActive ? "3px" : undefined,
-                  borderRightColor: isActive ? "#22c55e" : undefined,
-                  borderRightWidth: isActive ? "3px" : undefined,
-                } : {}}
+                style={{
+                  ...(isGreen ? {
+                    borderTopColor: "#22c55e",
+                    borderTopWidth: "3px",
+                    borderLeftColor: isActive ? "#22c55e" : undefined,
+                    borderLeftWidth: isActive ? "3px" : undefined,
+                    borderRightColor: isActive ? "#22c55e" : undefined,
+                    borderRightWidth: isActive ? "3px" : undefined,
+                  } : {}),
+                  transition: "border-color 0.6s ease, border-width 0.3s ease",
+                }}
               >
-                {tab.hasContent && (
+                {isGreen && (
                   <Check className="w-3.5 h-3.5 text-green-600 shrink-0" />
+                )}
+                {reanalyzing && !isGreen && elapsed >= prevThreshold && (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin text-primary shrink-0" />
                 )}
                 <span className="truncate">{tab.label}</span>
                 {tab.count !== null && tab.count > 0 && (
                   <span className={`ml-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-bold leading-none ${
-                    tab.hasContent ? "bg-green-100 text-green-700" : "bg-muted text-muted-foreground"
+                    isGreen ? "bg-green-100 text-green-700" : "bg-muted text-muted-foreground"
                   }`}>
                     {tab.count}
                   </span>
