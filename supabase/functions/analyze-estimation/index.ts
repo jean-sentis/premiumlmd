@@ -329,6 +329,7 @@ async function scrapeVisualMatchUrls(
 
 // ══════════════════════════════════════════════════════════════════
 // STEP 2c (fallback): Search the web using SerpAPI Google Search
+// Enhanced: extracts rich snippets, prices, dates from results
 // ══════════════════════════════════════════════════════════════════
 async function searchWebReferences(
   searchTerms: string[],
@@ -350,7 +351,7 @@ async function searchWebReferences(
         api_key: serpApiKey,
         hl: "fr",
         gl: "fr",
-        num: "5",
+        num: "8",
         safe: "off",
       });
 
@@ -365,11 +366,47 @@ async function searchWebReferences(
       }
 
       const data = await response.json();
-      return (data.organic_results || []).map((item: any) => ({
-        title: item.title || "",
-        url: item.link || "",
-        description: item.snippet || "",
-      }));
+      const results: Array<{ title: string; url: string; description: string }> = [];
+
+      for (const item of (data.organic_results || [])) {
+        // Build enriched description from all available SerpAPI fields
+        let description = item.snippet || "";
+
+        // Rich snippet table data (often contains price, date, dimensions)
+        if (item.rich_snippet?.top?.extensions) {
+          description += ` | ${item.rich_snippet.top.extensions.join(" | ")}`;
+        }
+        if (item.rich_snippet?.bottom?.extensions) {
+          description += ` | ${item.rich_snippet.bottom.extensions.join(" | ")}`;
+        }
+        // Detected extensions (price, rating, etc.)
+        if (item.rich_snippet?.top?.detected_extensions) {
+          const ext = item.rich_snippet.top.detected_extensions;
+          if (ext.price) description += ` | Prix: ${ext.price}`;
+          if (ext.currency) description += ` ${ext.currency}`;
+        }
+
+        // Snippet highlighted words (useful for matching)
+        if (item.snippet_highlighted_words?.length > 0) {
+          const keywords = item.snippet_highlighted_words.filter((w: string) => w.length > 3);
+          if (keywords.length > 0) {
+            description += ` [Mots-clés: ${keywords.join(", ")}]`;
+          }
+        }
+
+        // About this result / sitelinks
+        if (item.about_this_result?.source?.description) {
+          description += ` | Source: ${item.about_this_result.source.description}`;
+        }
+
+        results.push({
+          title: item.title || "",
+          url: item.link || "",
+          description: description.trim(),
+        });
+      }
+
+      return results;
     } catch (err) {
       console.error(`[analyze-estimation] Search error for "${query}":`, err);
       return [];
@@ -389,7 +426,153 @@ async function searchWebReferences(
   });
 
   console.log(`[analyze-estimation] Step 2: Found ${unique.length} unique web results`);
-  return unique.slice(0, 10);
+  return unique.slice(0, 12);
+}
+
+// ══════════════════════════════════════════════════════════════════
+// STEP 2d: Extract auction data from paywall sites via Google snippets
+// Invaluable, Artnet, Drouot — can't be scraped but Google indexes them
+// ══════════════════════════════════════════════════════════════════
+const PAYWALL_AUCTION_DOMAINS = [
+  "invaluable.com", "artnet.com", "artnet.fr",
+  "drouot.com", "gazette-drouot.com",
+  "artprice.com", "mutualart.com",
+  "liveauctioneers.com", "barnebys.com",
+];
+
+async function extractPaywallInsights(
+  visualMatches: Array<{ title: string; link: string; source: string; thumbnail?: string; price?: string }>,
+  searchTerms: string[],
+  serpApiKey: string,
+): Promise<Array<{ title: string; url: string; description: string; source_type: string }>> {
+  const isPaywall = (url: string) => PAYWALL_AUCTION_DOMAINS.some(d => url?.includes(d));
+
+  // 1. Collect data already provided by Google Lens for paywall matches
+  const paywallMatches = visualMatches.filter(m => m.link && isPaywall(m.link));
+  const directInsights: Array<{ title: string; url: string; description: string; source_type: string }> = [];
+
+  for (const match of paywallMatches) {
+    const parts: string[] = [];
+    parts.push(`Titre: ${match.title}`);
+    parts.push(`Source: ${match.source}`);
+    if (match.price) parts.push(`Prix affiché: ${match.price}`);
+    parts.push(`[Données issues de l'index Google — le site original est derrière un paywall]`);
+
+    directInsights.push({
+      title: match.title,
+      url: match.link,
+      description: parts.join(" | "),
+      source_type: "paywall_lens_match",
+    });
+  }
+
+  console.log(`[analyze-estimation] Step 2d: ${paywallMatches.length} paywall visual matches with direct data`);
+
+  // 2. Targeted Google searches on paywall domains for richer snippets
+  // Build search queries from the best search terms + paywall domains
+  const targetDomains = ["invaluable.com", "artnet.com", "drouot.com", "liveauctioneers.com"];
+  const bestTerms = searchTerms.slice(0, 2);
+
+  if (bestTerms.length === 0) {
+    console.log("[analyze-estimation] Step 2d: No search terms for targeted paywall search");
+    return directInsights;
+  }
+
+  // Create targeted queries: "artist name" + site:domain for price-rich domains
+  const siteQueries: string[] = [];
+  for (const term of bestTerms) {
+    // One broad query across all paywall sites
+    const domainFilter = targetDomains.map(d => `site:${d}`).join(" OR ");
+    siteQueries.push(`${term} (${domainFilter})`);
+  }
+  // Also add a general auction query without site filter for broader coverage
+  if (bestTerms.length > 0) {
+    siteQueries.push(`"${bestTerms[0]}" adjugé OR "sold at auction" OR "vendu" prix`);
+  }
+
+  console.log(`[analyze-estimation] Step 2d: Running ${siteQueries.length} targeted paywall searches...`);
+
+  const searchPromises = siteQueries.map(async (query) => {
+    try {
+      const params = new URLSearchParams({
+        engine: "google",
+        q: query,
+        api_key: serpApiKey,
+        hl: "fr",
+        gl: "fr",
+        num: "6",
+        safe: "off",
+      });
+
+      const response = await fetch(`https://serpapi.com/search?${params.toString()}`);
+      if (!response.ok) {
+        console.error(`[analyze-estimation] Paywall search failed for "${query}": ${response.status}`);
+        return [];
+      }
+
+      const data = await response.json();
+      const results: Array<{ title: string; url: string; description: string; source_type: string }> = [];
+
+      for (const item of (data.organic_results || [])) {
+        let description = item.snippet || "";
+
+        // Extract rich snippet data (prices, dates, auction house names)
+        if (item.rich_snippet?.top?.extensions) {
+          description += ` | ${item.rich_snippet.top.extensions.join(" | ")}`;
+        }
+        if (item.rich_snippet?.bottom?.extensions) {
+          description += ` | ${item.rich_snippet.bottom.extensions.join(" | ")}`;
+        }
+        if (item.rich_snippet?.top?.detected_extensions?.price) {
+          description += ` | Prix détecté: ${item.rich_snippet.top.detected_extensions.price}`;
+        }
+        if (item.date) {
+          description += ` | Date: ${item.date}`;
+        }
+
+        // Mark paywall sources specially so the AI knows the data comes from Google's index
+        const isFromPaywall = isPaywall(item.link || "");
+        const sourceType = isFromPaywall ? "paywall_google_snippet" : "google_snippet";
+
+        if (isFromPaywall) {
+          description += ` [Snippet Google indexé depuis ${new URL(item.link).hostname} — paywall]`;
+        }
+
+        results.push({
+          title: item.title || "",
+          url: item.link || "",
+          description: description.trim(),
+          source_type: sourceType,
+        });
+      }
+
+      return results;
+    } catch (err) {
+      console.error(`[analyze-estimation] Paywall search error:`, err);
+      return [];
+    }
+  });
+
+  const searchResults = await Promise.all(searchPromises);
+  const allPaywallResults = [...directInsights];
+  for (const batch of searchResults) {
+    allPaywallResults.push(...batch);
+  }
+
+  // Dedupe by URL
+  const seen = new Set<string>();
+  const unique = allPaywallResults.filter((r) => {
+    if (seen.has(r.url)) return false;
+    seen.add(r.url);
+    return true;
+  });
+
+  console.log(`[analyze-estimation] Step 2d complete: ${unique.length} paywall insights extracted`);
+  for (const r of unique.slice(0, 5)) {
+    console.log(`  → [${r.source_type}] "${r.title}" — ${r.description.substring(0, 100)}`);
+  }
+
+  return unique.slice(0, 15);
 }
 
 // ══════════════════════════════════════════════════════════════════
@@ -532,9 +715,13 @@ VENTE PUBLIQUE CONFIRMÉE — SIGNALEMENT PRIORITAIRE :
 DÉTECTION DE CONTRADICTIONS AVEC LE DESCRIPTIF VENDEUR :
 - Commence par "Sauf erreur, " si tu trouves une contradiction.
 
-SITES À PAYWALL — RÈGLE STRICTE :
-- Domaines bloqués : drouot.com, gazette-drouot.com, invaluable.com, artnet.com, artprice.com, mutualart.com, liveauctioneers.com
-- UTILISE leurs données pour ton raisonnement mais ne JAMAIS inclure de lien vers ces domaines.
+SITES À PAYWALL — RÈGLE ENRICHIE :
+- Domaines bloqués au scraping direct : drouot.com, gazette-drouot.com, invaluable.com, artnet.com, artprice.com, mutualart.com, liveauctioneers.com
+- MAIS : tu recevras des SNIPPETS GOOGLE indexés depuis ces sites. Ces snippets contiennent souvent des prix d'adjudication, dates de ventes, et noms de maisons de vente FIABLES (car indexés par Google depuis les pages originales).
+- UTILISE PLEINEMENT ces snippets paywall pour ton raisonnement et ton estimation. Ils sont une source de prix très précieuse.
+- En revanche, ne JAMAIS inclure de LIEN CLIQUABLE vers ces domaines dans ta réponse (les utilisateurs ne pourraient pas y accéder).
+- Quand tu cites un prix issu d'un snippet paywall, mentionne la source SANS lien : "Adjugé 2 500 € chez Christie's (Invaluable, mars 2024)" et NON "[Adjugé 2 500 €](https://invaluable.com/...)".
+- HIÉRARCHIE des snippets paywall : Invaluable et Drouot sont les plus fiables (résultats d'enchères réels), suivis d'Artnet (peut inclure des estimations galerie).
 
 FORMATAGE DES TEXTES — RÈGLES ULTRA-STRICTES :
 - LIENS : TOUJOURS en markdown [texte descriptif](url). JAMAIS d'URL brute.
@@ -684,17 +871,37 @@ JSON sans backticks :
     }
   }
 
-  // Web/scraped results
+  // Web/scraped results — separate paywall snippets from full-content scrapes
   if (webResults.length > 0) {
-    const headerText = analysisDepth >= 3
-      ? "CONTENU EXTRAIT DES PAGES SOURCES (sites des correspondances visuelles)"
-      : "RÉSULTATS DE RECHERCHE WEB (à croiser avec l'analyse visuelle)";
-    let webContext = `\n\n${headerText} :\n`;
-    for (const r of webResults) {
-      webContext += `\n--- Source : ${r.title} (${r.url}) ---\n`;
-      if (r.description) webContext += `${r.description}\n`;
+    const paywallResults = webResults.filter(r => 
+      r.description?.includes("[Snippet Google indexé") || r.description?.includes("[Données issues de l'index Google")
+    );
+    const scrapedResults = webResults.filter(r => 
+      !r.description?.includes("[Snippet Google indexé") && !r.description?.includes("[Données issues de l'index Google")
+    );
+
+    if (scrapedResults.length > 0) {
+      const headerText = analysisDepth >= 3
+        ? "CONTENU EXTRAIT DES PAGES SOURCES (scraping complet des sites accessibles)"
+        : "RÉSULTATS DE RECHERCHE WEB (à croiser avec l'analyse visuelle)";
+      let webContext = `\n\n${headerText} :\n`;
+      for (const r of scrapedResults) {
+        webContext += `\n--- Source : ${r.title} (${r.url}) ---\n`;
+        if (r.description) webContext += `${r.description}\n`;
+      }
+      userContent.push({ type: "text", text: webContext });
     }
-    userContent.push({ type: "text", text: webContext });
+
+    if (paywallResults.length > 0) {
+      let paywallContext = `\n\n📊 DONNÉES DE MARCHÉ EXTRAITES DES SITES D'ENCHÈRES (snippets Google indexés depuis les paywalls) :\n`;
+      paywallContext += `⚠️ Ces données proviennent de l'index Google. Les prix et dates sont généralement fiables car indexés depuis Invaluable, Drouot, Artnet, etc.\n`;
+      paywallContext += `⚠️ NE PAS inclure de liens cliquables vers ces sites dans ta réponse.\n\n`;
+      for (const r of paywallResults) {
+        paywallContext += `--- ${r.title} ---\n`;
+        if (r.description) paywallContext += `${r.description}\n\n`;
+      }
+      userContent.push({ type: "text", text: paywallContext });
+    }
   } else if (!lensResults || lensResults.visualMatches.length === 0) {
     userContent.push({
       type: "text",
@@ -1016,23 +1223,50 @@ serve(async (req) => {
       }
     }
 
-    // ── Level 3: Scrape visual match URLs with Firecrawl (primary), fallback to SerpAPI Search ──
+    // ── Level 3: Scrape visual match URLs with Firecrawl + extract paywall snippets ──
     if (effectiveDepth >= 3) {
       const firecrawlApiKey = Deno.env.get("FIRECRAWL_API_KEY");
 
-      // Primary strategy: scrape the URLs from Google Lens visual matches
+      // Strategy A: Scrape non-paywall URLs from Google Lens visual matches via Firecrawl
       if (firecrawlApiKey && lensResults && lensResults.visualMatches.length > 0) {
         console.log("[analyze-estimation] Level 3: Using Firecrawl to scrape visual match URLs");
         webResults = await scrapeVisualMatchUrls(lensResults.visualMatches, firecrawlApiKey);
       }
 
-      // Fallback: if Firecrawl is not configured or returned nothing, use SerpAPI Google Search
+      // Strategy B: Extract data from paywall sites (Invaluable, Artnet, Drouot) via Google snippets
+      if (serpApiKey && lensResults && lensResults.visualMatches.length > 0) {
+        console.log("[analyze-estimation] Level 3: Extracting paywall insights via Google snippets");
+        const paywallInsights = await extractPaywallInsights(
+          lensResults.visualMatches,
+          searchTerms,
+          serpApiKey,
+        );
+        // Add paywall insights to web results (they contain source_type but the base type is compatible)
+        for (const insight of paywallInsights) {
+          webResults.push({
+            title: insight.title,
+            url: insight.url,
+            description: insight.description,
+          });
+        }
+        console.log(`[analyze-estimation] Level 3: Added ${paywallInsights.length} paywall insights`);
+      }
+
+      // Strategy C (fallback): if nothing found yet, use broad SerpAPI Google Search
       if (webResults.length === 0 && serpApiKey && searchTerms.length > 0) {
         console.log("[analyze-estimation] Level 3 fallback: Using SerpAPI Google Search");
         webResults = await searchWebReferences(searchTerms, serpApiKey);
       }
 
-      console.log(`[analyze-estimation] Level 3 complete: ${webResults.length} enriched results`);
+      // Dedupe web results by URL
+      const seenUrls = new Set<string>();
+      webResults = webResults.filter(r => {
+        if (seenUrls.has(r.url)) return false;
+        seenUrls.add(r.url);
+        return true;
+      });
+
+      console.log(`[analyze-estimation] Level 3 complete: ${webResults.length} total enriched results`);
     }
 
     // ═══════════════════════════════════════════════
@@ -1066,6 +1300,9 @@ serve(async (req) => {
     // can_deepen: true if analysis stopped before Level 3
     analysis.can_deepen = effectiveDepth < 3;
     analysis.scraped_results_count = webResults.length;
+    analysis.paywall_insights_count = webResults.filter(r => 
+      r.description?.includes("[Snippet Google indexé") || r.description?.includes("[Données issues de l'index Google")
+    ).length;
     // Save to database
     const { error: updateError } = await supabase
       .from("estimation_requests")
