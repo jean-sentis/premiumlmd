@@ -195,31 +195,35 @@ export function AnalysisPanel({
 
   return (
     <div className="space-y-4">
-      {/* ── Ligne 1 : 3 badges info (même style que les 5 onglets) + Ré-analyser ── */}
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex gap-1.5 flex-1 min-w-0">
-          {/* Première impression — toujours fait */}
-          <div className="flex-1 min-w-0 flex items-center justify-center gap-1.5 px-2 py-2 rounded-lg bg-muted/40 border border-border/60 text-[11px] font-semibold uppercase tracking-wide text-foreground">
-            <Check className="w-3.5 h-3.5 text-green-600 shrink-0" />
-            <span className="truncate">Première impression</span>
-          </div>
+      {/* ── Ligne 1 : Onglet "Première impression" + mentions intérêt/fiabilité ── */}
+      <div className="flex items-center gap-3">
+        {/* Onglet Première impression — style Chrome */}
+        <div
+          className="flex items-center gap-1.5 px-4 py-2 rounded-t-lg border-t-2 border-l border-r bg-background text-sm font-semibold uppercase tracking-wide"
+          style={{ borderTopColor: "#22c55e" }}
+        >
+          <Check className="w-4 h-4 text-green-600 shrink-0" />
+          Première impression
+        </div>
 
-          {/* Niveau d'intérêt — clickable */}
-          <div className="relative flex-1 min-w-0">
+        {/* Mentions intérêt + fiabilité — plus petites, pas des onglets */}
+        <div className="flex items-center gap-2 ml-auto">
+          {/* Intérêt */}
+          <div className="relative">
             <button
               onClick={() => { setShowRecommendationPicker(!showRecommendationPicker); setShowFiabilitePicker(false); }}
-              className={`w-full flex items-center justify-center gap-1.5 px-2 py-2 rounded-lg border text-[11px] font-semibold uppercase tracking-wide transition-colors ${
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[11px] font-medium transition-colors ${
                 interestStyle
                   ? `${interestStyle.bg} ${interestStyle.text} ${interestStyle.border}`
-                  : "bg-muted/40 border-border/60 text-foreground"
+                  : "bg-muted/40 border-border/60 text-muted-foreground"
               }`}
             >
               {interestStyle && <span className={`inline-block w-2 h-2 rounded-full ${interestStyle.dot} shrink-0`} />}
-              <span className="truncate">{interestStyle?.label || "Niveau d'intérêt"}</span>
+              <span>{interestStyle?.label || "Intérêt"}</span>
               <Pencil className="w-2.5 h-2.5 opacity-40 shrink-0" />
             </button>
             {showRecommendationPicker && (
-              <div className="absolute top-full left-0 mt-1 z-20 bg-background border rounded-lg shadow-lg p-1.5 min-w-[160px]">
+              <div className="absolute top-full right-0 mt-1 z-20 bg-background border rounded-lg shadow-lg p-1.5 min-w-[160px]">
                 {Object.entries(INTEREST_LEVELS).map(([key, config]) => (
                   <button
                     key={key}
@@ -236,21 +240,19 @@ export function AnalysisPanel({
             )}
           </div>
 
-          {/* Niveau de fiabilité — clickable */}
-          <div className="relative flex-1 min-w-0">
+          {/* Fiabilité */}
+          <div className="relative">
             <button
               onClick={() => { setShowFiabilitePicker(!showFiabilitePicker); setShowRecommendationPicker(false); }}
-              className={`w-full flex items-center justify-center gap-1.5 px-2 py-2 rounded-lg border text-[11px] font-semibold uppercase tracking-wide transition-colors ${
-                FIABILITE_STYLES[fiabilite] || "bg-muted/40 border-border/60 text-foreground"
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[11px] font-medium transition-colors ${
+                FIABILITE_STYLES[fiabilite] || "bg-muted/40 border-border/60 text-muted-foreground"
               }`}
             >
-              <span className="truncate">
-                {fiabilite === 0 ? "Erreur" : `Fiabilité ${fiabilite}/5`}
-              </span>
+              <span>{fiabilite === 0 ? "Erreur" : `Fiabilité ${fiabilite}/5`}</span>
               <Pencil className="w-2.5 h-2.5 opacity-40 shrink-0" />
             </button>
             {showFiabilitePicker && (
-              <div className="absolute top-full left-0 mt-1 z-20 bg-background border rounded-lg shadow-lg p-1.5 min-w-[120px]">
+              <div className="absolute top-full right-0 mt-1 z-20 bg-background border rounded-lg shadow-lg p-1.5 min-w-[120px]">
                 {FIABILITE_OPTIONS.map((opt) => (
                   <button
                     key={opt.value}
@@ -265,22 +267,23 @@ export function AnalysisPanel({
               </div>
             )}
           </div>
-        </div>
 
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={onReanalyze}
-          disabled={reanalyzing}
-          className="h-7 text-xs text-muted-foreground shrink-0"
-        >
-          {reanalyzing ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3 mr-1" />}
-          Ré-analyser
-        </Button>
+          {/* Ré-analyser */}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onReanalyze}
+            disabled={reanalyzing}
+            className="h-7 text-xs text-muted-foreground shrink-0"
+          >
+            {reanalyzing ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3 mr-1" />}
+            Ré-analyser
+          </Button>
+        </div>
       </div>
 
-      {/* ── Synthèse éditable (contenu Première impression) ── */}
-      <div className="p-4 bg-muted/30 rounded-lg border border-border/30 space-y-2">
+      {/* ── Synthèse (contenu Première impression) — cadre bien visible ── */}
+      <div className="p-4 bg-background rounded-lg border-2 border-border space-y-2">
         <EditableField
           value={identifiedObject}
           onChange={setIdentifiedObject}
@@ -315,26 +318,30 @@ export function AnalysisPanel({
         </div>
       </div>
 
-      {/* ── 5 onglets-tabs + cadre de contenu partagé ── */}
+      {/* ── 5 onglets Chrome + cadre de contenu partagé ── */}
       <div>
-        {/* Onglets */}
-        <div className="flex">
+        {/* Onglets style Chrome */}
+        <div className="flex items-end gap-0.5 -mb-px">
           {tabs.map((tab) => {
             const isActive = activeTab === tab.key;
+            const borderColor = tab.hasContent ? "#22c55e" : "#d1d5db";
             return (
               <button
                 key={tab.key}
                 onClick={() => setActiveTab(isActive ? null : tab.key)}
-                className={`flex-1 min-w-0 flex items-center justify-center gap-1.5 px-1.5 py-2 text-[10px] font-semibold uppercase tracking-wide transition-colors border-t border-l border-r first:rounded-tl-lg last:rounded-tr-lg ${
+                className={`relative flex items-center justify-center gap-1 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide transition-all rounded-t-lg ${
                   isActive
-                    ? "bg-background border-border text-foreground -mb-px z-10"
-                    : tab.hasContent
-                    ? "bg-muted/40 border-border/40 text-foreground hover:bg-muted/60"
-                    : "bg-muted/20 border-border/20 text-muted-foreground/50 hover:bg-muted/30"
+                    ? "bg-background text-foreground z-10 border-l border-r border-t-2"
+                    : "bg-muted/30 text-muted-foreground hover:bg-muted/50 border border-transparent"
                 }`}
+                style={{
+                  borderTopColor: isActive ? borderColor : "transparent",
+                  borderLeftColor: isActive ? "hsl(var(--border))" : "transparent",
+                  borderRightColor: isActive ? "hsl(var(--border))" : "transparent",
+                }}
               >
                 {tab.hasContent && (
-                  <Check className="w-3 h-3 text-green-600 shrink-0" />
+                  <Check className="w-3.5 h-3.5 text-green-600 shrink-0" />
                 )}
                 <span className="truncate">{tab.label}</span>
               </button>
@@ -344,7 +351,7 @@ export function AnalysisPanel({
 
         {/* Cadre de contenu */}
         {activeTab && (
-          <div className="border border-border rounded-b-lg p-3 bg-background">
+          <div className="border-2 border-border rounded-b-lg p-4 bg-background">
             {activeTab === "identity" && (
               <EditableDetailContent
                 value={authText}
