@@ -106,7 +106,7 @@ const AdminEstimations = () => {
         {/* ════════════════════════════════════ */}
         <div className="sticky top-0 z-20 bg-background/95 backdrop-blur-sm border-b">
           <div className="max-w-[1600px] mx-auto px-4 py-3">
-            <div className="flex items-center gap-3 mb-3">
+            <div className="flex items-center justify-center gap-2 mb-3">
               <Inbox className="w-5 h-5 text-brand-gold" />
               <h1 className="text-lg font-semibold">Demandes d'estimation</h1>
               <span className="text-xs text-muted-foreground">({estimations.length})</span>
