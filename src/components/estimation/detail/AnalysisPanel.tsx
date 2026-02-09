@@ -172,13 +172,15 @@ export function AnalysisPanel({
   const analysisDepth = ai?.analysis_depth || 3;
   const canDeepen = ai?.can_deepen === true;
 
+  const questionsCount = ai?.questions_for_owner?.length || 0;
+
   // Tab definitions — always available, even before AI analysis
   const tabs = [
-    { key: "identity", label: "IDENTITÉ / BIOGRAPHIE", hasContent: !!authText },
-    { key: "lens", label: "CORRESPONDANCES VISUELLES", hasContent: lensCount > 0 },
-    { key: "market", label: "RÉSULTATS MARCHÉ", hasContent: !!marketText || webCount > 0 },
-    { key: "condition", label: "ÉTAT", hasContent: !!conditionText },
-    { key: "questions", label: "QUESTIONS", hasContent: (ai?.questions_for_owner?.length || 0) > 0 },
+    { key: "identity", label: "IDENTITÉ / BIOGRAPHIE", hasContent: !!authText, count: null },
+    { key: "lens", label: "CORRESPONDANCES", hasContent: lensCount > 0, count: lensCount || null },
+    { key: "market", label: "RÉSULTATS MARCHÉ", hasContent: !!marketText || webCount > 0, count: (webCount + scrapedCount) || null },
+    { key: "condition", label: "ÉTAT", hasContent: !!conditionText, count: null },
+    { key: "questions", label: "QUESTIONS", hasContent: questionsCount > 0, count: questionsCount || null },
   ];
 
   const analysisPending = !ai;
@@ -319,15 +321,15 @@ export function AnalysisPanel({
 
       {/* ── 5 onglets Chrome + cadre de contenu partagé ── */}
       <div>
-        {/* Onglets style Chrome — bordures noires visibles, liseret vert sur 2 côtés si contenu */}
-        <div className="flex items-end gap-0 -mb-px">
+        {/* Onglets style Chrome — espacement, bordures noires visibles, liseret vert sur 3 côtés si contenu */}
+        <div className="flex items-end gap-1 -mb-px">
           {tabs.map((tab) => {
             const isActive = activeTab === tab.key;
             return (
               <button
                 key={tab.key}
                 onClick={() => setActiveTab(isActive ? null : tab.key)}
-                className={`relative flex items-center justify-center gap-1 px-3 py-2 text-xs font-semibold uppercase tracking-wide transition-all rounded-t-lg border ${
+                className={`relative flex items-center justify-center gap-1.5 px-4 py-2 text-xs font-semibold uppercase tracking-wide transition-all rounded-t-lg border ${
                   isActive
                     ? "bg-background text-foreground z-10 border-border border-b-background"
                     : "bg-muted/30 text-muted-foreground hover:bg-muted/50 border-border/60"
@@ -345,6 +347,13 @@ export function AnalysisPanel({
                   <Check className="w-3.5 h-3.5 text-green-600 shrink-0" />
                 )}
                 <span className="truncate">{tab.label}</span>
+                {tab.count !== null && tab.count > 0 && (
+                  <span className={`ml-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-bold leading-none ${
+                    tab.hasContent ? "bg-green-100 text-green-700" : "bg-muted text-muted-foreground"
+                  }`}>
+                    {tab.count}
+                  </span>
+                )}
               </button>
             );
           })}
