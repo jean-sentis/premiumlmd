@@ -232,33 +232,35 @@ export function AnalysisPanel({
             )}
           </div>
 
-          {/* Fiabilité */}
-          <div className="relative">
-            <button
-              onClick={() => { setShowFiabilitePicker(!showFiabilitePicker); setShowRecommendationPicker(false); }}
-              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-semibold transition-colors ${
-                FIABILITE_STYLES[fiabilite] || "bg-muted/40 border-border/60 text-muted-foreground"
-              }`}
-            >
-              <span>{fiabilite === 0 ? "Erreur" : `Fiabilité ${fiabilite}/5`}</span>
-              <Pencil className="w-2.5 h-2.5 opacity-40 shrink-0" />
-            </button>
-            {showFiabilitePicker && (
-              <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 z-20 bg-background border rounded-lg shadow-lg p-1.5 min-w-[120px]">
-                {FIABILITE_OPTIONS.map((opt) => (
-                  <button
-                    key={opt.value}
-                    onClick={() => { setFiabilite(opt.value); setShowFiabilitePicker(false); }}
-                    className={`w-full text-left px-2.5 py-1.5 rounded text-xs transition-colors ${
-                      fiabilite === opt.value ? "bg-muted font-medium" : "hover:bg-muted/50"
-                    }`}
-                  >
-                    {opt.label}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+          {/* Fiabilité — hidden until analysis has run */}
+          {!analysisPending && (
+            <div className="relative">
+              <button
+                onClick={() => { setShowFiabilitePicker(!showFiabilitePicker); setShowRecommendationPicker(false); }}
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-semibold transition-colors ${
+                  FIABILITE_STYLES[fiabilite] || "bg-muted/40 border-border/60 text-muted-foreground"
+                }`}
+              >
+                <span>{fiabilite === 0 ? "Erreur" : `Fiabilité ${fiabilite}/5`}</span>
+                <Pencil className="w-2.5 h-2.5 opacity-40 shrink-0" />
+              </button>
+              {showFiabilitePicker && (
+                <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 z-20 bg-background border rounded-lg shadow-lg p-1.5 min-w-[120px]">
+                  {FIABILITE_OPTIONS.map((opt) => (
+                    <button
+                      key={opt.value}
+                      onClick={() => { setFiabilite(opt.value); setShowFiabilitePicker(false); }}
+                      className={`w-full text-left px-2.5 py-1.5 rounded text-xs transition-colors ${
+                        fiabilite === opt.value ? "bg-muted font-medium" : "hover:bg-muted/50"
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Lancer / Ré-analyser */}
@@ -322,14 +324,14 @@ export function AnalysisPanel({
       {/* ── 5 onglets Chrome + cadre de contenu partagé ── */}
       <div>
         {/* Onglets style Chrome — espacement, bordures noires visibles, liseret vert sur 3 côtés si contenu */}
-        <div className="flex items-end gap-2 -mb-px">
+        <div className="flex items-end gap-3 -mb-px">
           {tabs.map((tab) => {
             const isActive = activeTab === tab.key;
             return (
               <button
                 key={tab.key}
                 onClick={() => setActiveTab(isActive ? null : tab.key)}
-                className={`relative flex items-center justify-center gap-1.5 px-4 py-2 text-xs font-semibold uppercase tracking-wide transition-all rounded-t-lg border ${
+                className={`relative flex items-center justify-center gap-1.5 px-5 py-2 text-xs font-semibold uppercase tracking-wide transition-all rounded-t-lg border min-w-[140px] ${
                   isActive
                     ? "bg-background text-foreground z-10 border-border border-b-background"
                     : "bg-muted/30 text-muted-foreground hover:bg-muted/50 border-border/60"
