@@ -38,7 +38,7 @@ export function EstimationFilters({
   onRefresh,
 }: EstimationFiltersProps) {
   return (
-    <div className="flex items-center gap-3 flex-wrap">
+    <div className="flex items-center gap-2 flex-wrap flex-1">
       {/* Status filters */}
       <div className="flex items-center gap-1.5 flex-wrap">
         <FilterBadge
