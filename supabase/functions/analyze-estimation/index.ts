@@ -420,7 +420,14 @@ RÈGLES IMPÉRATIVES :
 - Ignore le titre d'un éventuel "lot similaire" mentionné par le propriétaire.
 - Jamais de certitude sur un artiste sauf signature lisible ou sources convergentes.
 - PRUDENCE OBLIGATOIRE : Ne JAMAIS écrire "il s'agit de", toujours utiliser des formulations conditionnelles.
-- FIABILITÉ : Note ta confiance de 1 à 4 (0 et 5 réservés au commissaire-priseur).
+- FIABILITÉ : Note ta confiance de 1 à 4 (0 et 5 réservés au commissaire-priseur). SOIS SÉVÈRE. Règles strictes :
+  • 1/4 = Aucune source fiable, identification très incertaine, pas de vente comparable trouvée.
+  • 2/4 = Identification probable mais non confirmée par des ventes comparables, OU prix de référence incomplets/ambigus.
+  • 3/4 = Identification confirmée par au moins une source fiable ET au moins un prix d'adjudication comparable vérifié.
+  • 4/4 = Identification certaine avec PLUSIEURS ventes confirmées de la MÊME œuvre/du MÊME modèle, prix convergents, état comparable.
+- SI tu n'as qu'une seule référence de prix → MAX 3/4.
+- SI l'état de l'objet diffère significativement de la référence → baisse d'1 point.
+- SI tu as lu un prix approximativement ou sans certitude sur les chiffres → MAX 2/4.
 
 CORRESPONDANCES VISUELLES — RÈGLE LA PLUS CRITIQUE :
 - Les correspondances visuelles (recherche d'image inversée) identifient souvent CORRECTEMENT l'objet. Google Lens est TRÈS PERFORMANT pour reconnaître des œuvres, des artistes, des modèles connus. NE SOUS-ESTIME JAMAIS ses résultats.
@@ -474,6 +481,34 @@ LECTURE CRITIQUE DES SOURCES — RÈGLE LA PLUS IMPORTANTE :
 - CITE EXPLICITEMENT dans "market_insights" quelles ventes sont comparables et lesquelles ne le sont pas.
 - En cas de doute sur la comparabilité, PRENDS LA FOURCHETTE BASSE.
 
+LECTURE DES PRIX — RÈGLE ANTI-ERREUR ABSOLUE :
+- Tu DOIS lire CHAQUE prix dans les sources CARACTÈRE PAR CARACTÈRE. C'est la donnée la plus critique de l'analyse.
+- ERREURS FRÉQUENTES À ÉVITER :
+  • Confondre 120 et 1 200 ou 12 000 (attention aux séparateurs de milliers qui varient : "1,200", "1 200", "1.200").
+  • Confondre 320 et 120 (lire trop vite).
+  • Ignorer la devise (HKD ≠ EUR).
+  • Confondre estimation et prix d'adjudication.
+- MÉTHODE OBLIGATOIRE pour chaque prix :
+  1. Relis le passage EXACT de la source contenant le prix.
+  2. Note le montant EXACT tel qu'écrit dans la source.
+  3. Identifie s'il s'agit d'une estimation, d'un prix de départ, ou d'une adjudication.
+  4. Convertis en euros si nécessaire.
+  5. CITE le prix exact de la source dans "market_insights" avec le contexte : "Adjugé 320 € chez Rouillac" et non "environ 100-200 €".
+- Si un prix te semble incohérent avec l'objet, SIGNALE-LE plutôt que de l'ignorer ou le "corriger" mentalement.
+
+COMPARAISON DE L'ÉTAT — RÈGLE CRITIQUE POUR L'ESTIMATION :
+- L'ÉTAT de l'objet soumis et celui des références sont DÉTERMINANTS pour la valeur.
+- Pour CHAQUE référence de vente comparable, tu DOIS :
+  1. Noter l'état de l'objet dans la référence (s'il est mentionné : "bon état", "accidents", "restauration", "manques", etc.).
+  2. Comparer avec l'état visible sur les photos du vendeur.
+  3. Ajuster l'estimation en conséquence.
+- RÈGLES D'AJUSTEMENT :
+  • Si la référence était en BON état et l'objet soumis est ABÎMÉ → l'estimation doit être SIGNIFICATIVEMENT inférieure au prix de référence (souvent -30% à -70%).
+  • Si la référence était ABÎMÉE et l'objet soumis est en BON état → l'estimation peut être supérieure au prix de référence.
+  • Si l'état est comparable → le prix de référence est directement applicable.
+- MENTIONNE EXPLICITEMENT dans "condition_notes" l'état de chaque référence utilisée ET celui de l'objet soumis.
+- NE JAMAIS utiliser un prix de référence sans préciser l'état de l'objet de référence.
+
 HIÉRARCHIE DE FIABILITÉ DES PRIX — RÈGLE CRITIQUE :
 - Les prix de vente réels (« vendu », « adjugé ») sont les données LES PLUS FIABLES.
 - HIÉRARCHIE (du plus fiable au moins fiable) :
@@ -526,10 +561,12 @@ CAS 2 — Objet usuel ou de consommation (électroménager, vélo, imprimante, m
 - SPÉCIFICATIONS TECHNIQUES : Caractéristiques qui impactent la cote (ex: "imprime en A3", "moteur 125cc", "capacité 10 kg", "résolution 4K", "année 2019").
 - Le tout en 2-4 phrases factuelles.
 
-VÉRIFICATION FINALE OBLIGATOIRE :
+VÉRIFICATION FINALE OBLIGATOIRE (5 étapes) :
 ÉTAPE A : Identifie le match_index avec le meilleur verdict.
 ÉTAPE B : Vérifie que summary et identified_object sont basés sur cette correspondance.
-ÉTAPE C : Vérifie que estimated_range utilise le prix de la meilleure correspondance.
+ÉTAPE C : RELIS CHAQUE PRIX cité dans market_insights. Compare caractère par caractère avec le texte source. Corrige toute erreur de lecture (120 vs 320, 1 200 vs 12 000, etc.).
+ÉTAPE D : Pour chaque référence de prix, vérifie que l'ÉTAT de la référence est mentionné et comparé à l'état de l'objet soumis. Ajuste l'estimation si l'état diffère.
+ÉTAPE E : Vérifie que confidence_score est cohérent : une seule source = max 3, pas de match identique = max 3, état non comparable = baisse d'1 point.
 
 JSON sans backticks :
 {
@@ -787,6 +824,46 @@ JSON sans backticks :
         }
       }
     }
+
+    // ── Post-processing: validate and cap confidence score ──
+    let confidenceScore = typeof parsed.confidence_score === "number" ? parsed.confidence_score : 2;
+
+    // Cap at 4 (5 reserved for auctioneer)
+    confidenceScore = Math.min(confidenceScore, 4);
+
+    // If no strong visual match, cap at 3
+    const hasStrongVisualMatch = parsed.visual_comparisons?.some?.((c: any) =>
+      c.verdict === "identique" || c.verdict === "même_modèle"
+    );
+    if (!hasStrongVisualMatch && confidenceScore > 3) {
+      console.log("[analyze-estimation] Confidence capped: no strong visual match → max 3");
+      confidenceScore = 3;
+    }
+
+    // If only 1 web source with a price, cap at 3
+    const sourcesWithPrices = (parsed.web_sources || []).filter((s: any) =>
+      s.relevance?.match?.(/adjugé|vendu|sold|prix|price/i)
+    );
+    if (sourcesWithPrices.length <= 1 && confidenceScore > 3) {
+      console.log("[analyze-estimation] Confidence capped: ≤1 price source → max 3");
+      confidenceScore = 3;
+    }
+
+    // If analysis depth is only level 1 (vision only), cap at 2
+    if (analysisDepth <= 1 && confidenceScore > 2) {
+      console.log("[analyze-estimation] Confidence capped: level 1 only → max 2");
+      confidenceScore = 2;
+    }
+
+    // If analysis depth is level 2 (no web scraping), cap at 3
+    if (analysisDepth === 2 && confidenceScore > 3) {
+      console.log("[analyze-estimation] Confidence capped: level 2 (no web) → max 3");
+      confidenceScore = 3;
+    }
+
+    parsed.confidence_score = confidenceScore;
+    console.log(`[analyze-estimation] Final confidence_score: ${confidenceScore}`);
+    
     
     return parsed;
   } catch {
