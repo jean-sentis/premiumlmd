@@ -55,6 +55,7 @@ const Footer = () => {
               <li><Link to="/vendre/guide" className="text-muted-foreground hover:text-foreground transition-colors">Guide du vendeur</Link></li>
               <li><Link to="/vendre/estimation-en-ligne" className="text-muted-foreground hover:text-foreground transition-colors">Estimation et expertise</Link></li>
               <li><Link to="/vendre/inventaire-domicile" className="text-muted-foreground hover:text-foreground transition-colors">Inventaire à domicile</Link></li>
+              <li><Link to="/admin/estimations" className="text-muted-foreground hover:text-foreground transition-colors">Analyse estimations</Link></li>
             </ul>
           </div>
 
