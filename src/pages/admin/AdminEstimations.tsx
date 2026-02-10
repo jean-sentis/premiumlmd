@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
+import Footer from "@/components/Footer";
 import Header from "@/components/Header";
 import { EstimationCard, type EstimationRequest } from "@/components/estimation/EstimationCard";
 import { EstimationFilters, type FilterType } from "@/components/estimation/EstimationFilters";
@@ -180,6 +181,7 @@ const AdminEstimations = () => {
           </div>
         )}
       </main>
+      <Footer />
     </>
   );
 };
