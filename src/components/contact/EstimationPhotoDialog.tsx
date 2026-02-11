@@ -134,7 +134,7 @@ export function EstimationPhotoDialog({ open, onOpenChange }: EstimationPhotoDia
         <DialogHeader>
           <DialogTitle className="text-xl">Demande d'estimation</DialogTitle>
           <DialogDescription>
-            Notre IA vérifie la qualité de vos photos pour garantir une estimation optimale.
+            Envoyez-nous vos photos pour une estimation par nos experts sous 48h.
           </DialogDescription>
         </DialogHeader>
 
