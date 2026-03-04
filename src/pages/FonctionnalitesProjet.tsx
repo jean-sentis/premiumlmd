@@ -4,6 +4,8 @@ import Footer from "@/components/Footer";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useState } from "react";
+import { Download } from "lucide-react";
+import { exportFonctionnalitesHTML } from "@/lib/export-fonctionnalites";
 
 type Scope = "generic" | "specific";
 
@@ -248,13 +250,22 @@ export default function FonctionnalitesProjet() {
       <main className="min-h-screen bg-background pt-24 pb-16">
         <div className="max-w-6xl mx-auto px-4">
           {/* Header */}
-          <div className="mb-10">
-            <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-3">
-              Fonctionnalités du projet
-            </h1>
-            <p className="text-muted-foreground text-lg">
-              {sections.length} sections · {totalFeatures} fonctionnalités · 19 tables · 17 Edge Functions
-            </p>
+          <div className="mb-10 flex items-start justify-between gap-4">
+            <div>
+              <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-3">
+                Fonctionnalités du projet
+              </h1>
+              <p className="text-muted-foreground text-lg">
+                {sections.length} sections · {totalFeatures} fonctionnalités · 19 tables · 17 Edge Functions
+              </p>
+            </div>
+            <button
+              onClick={() => exportFonctionnalitesHTML(sections, totalFeatures, scopeFilter)}
+              className="shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-lg bg-foreground text-background text-sm font-medium hover:opacity-90 transition-opacity print:hidden"
+            >
+              <Download className="w-4 h-4" />
+              Exporter HTML
+            </button>
           </div>
 
           {/* Stats badges */}
