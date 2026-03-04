@@ -49,6 +49,7 @@ const sections: Section[] = [
       { name: "Planning flottant", description: "FloatingPlanningButton + InlinePlanningSlot intégré", scope: "generic" },
       { name: "ScrollToTop", description: "Retour haut de page à chaque navigation", scope: "generic" },
       { name: "DemoRdvOverlay", description: "Overlay blocage démo avec lien Cal.eu pour RDV", scope: "specific", specificDetail: "Lien de prise de RDV Cal.eu spécifique à l'étude pour les démonstrations commerciales." },
+      { name: "Icônes réseaux sociaux", description: "Liens vers Instagram, Facebook, Pinterest, YouTube, LinkedIn et X dans le header et le footer", tags: ["Marketing"], scope: "specific", specificDetail: "Comptes réseaux sociaux de 12 pages & associés. 6 plateformes : Instagram, Facebook, Pinterest, YouTube, LinkedIn, X (Twitter)." },
     ],
   },
   {
@@ -250,22 +251,13 @@ export default function FonctionnalitesProjet() {
       <main className="min-h-screen bg-background pt-24 pb-16">
         <div className="max-w-6xl mx-auto px-4">
           {/* Header */}
-          <div className="mb-10 flex items-start justify-between gap-4">
-            <div>
-              <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-3">
-                Fonctionnalités du projet
-              </h1>
-              <p className="text-muted-foreground text-lg">
-                {sections.length} sections · {totalFeatures} fonctionnalités · 19 tables · 17 Edge Functions
-              </p>
-            </div>
-            <button
-              onClick={() => exportFonctionnalitesHTML(sections, totalFeatures, scopeFilter)}
-              className="shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-lg bg-foreground text-background text-sm font-medium hover:opacity-90 transition-opacity print:hidden"
-            >
-              <Download className="w-4 h-4" />
-              Exporter HTML
-            </button>
+          <div className="mb-10">
+            <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-3">
+              Fonctionnalités du projet
+            </h1>
+            <p className="text-muted-foreground text-lg">
+              {sections.length} sections · {totalFeatures} fonctionnalités · 19 tables · 17 Edge Functions
+            </p>
           </div>
 
           {/* Stats badges */}
@@ -277,8 +269,8 @@ export default function FonctionnalitesProjet() {
           </div>
 
           {/* Scope filter */}
-          <div className="flex flex-wrap items-center gap-3 mb-8 p-4 rounded-lg border border-border bg-muted/30">
-            <span className="text-sm font-medium text-foreground mr-1">Filtrer :</span>
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-8 p-4 rounded-lg border border-border bg-muted/30">
+            <div className="flex flex-wrap items-center gap-3">
             <button
               onClick={() => setScopeFilter("all")}
               className={`text-sm px-3 py-1.5 rounded-full border transition-colors ${
@@ -308,6 +300,14 @@ export default function FonctionnalitesProjet() {
               }`}
             >
               ✦ Spécifique 12 pages ({specificCount})
+            </button>
+            </div>
+            <button
+              onClick={() => exportFonctionnalitesHTML(sections, totalFeatures, scopeFilter)}
+              className="shrink-0 flex items-center gap-2 px-3 py-1.5 rounded-full border border-foreground bg-foreground text-background text-sm font-medium hover:opacity-90 transition-opacity print:hidden"
+            >
+              <Download className="w-4 h-4" />
+              Exporter HTML
             </button>
           </div>
 
