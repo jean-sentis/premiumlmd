@@ -78,6 +78,7 @@ import OffresCommerciales from "./pages/OffresCommerciales";
 import AdminLots from "./pages/admin/AdminLots";
 import AdminEstimations from "./pages/admin/AdminEstimations";
 import ExportVenteCSV from "./pages/ExportVenteCSV";
+import FonctionnalitesProjet from "./pages/FonctionnalitesProjet";
 
 const queryClient = new QueryClient();
 
@@ -178,6 +179,7 @@ const App = () => (
                 
                 {/* Export */}
                 <Route path="/export/vente/:id" element={<ExportVenteCSV />} />
+                <Route path="/fonctionnalites-projet" element={<FonctionnalitesProjet />} />
                 
                 <Route path="*" element={<NotFound />} />
               </Routes>
