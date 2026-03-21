@@ -181,6 +181,7 @@ const App = () => (
                 {/* Export */}
                 <Route path="/export/vente/:id" element={<ExportVenteCSV />} />
                 <Route path="/fonctionnalites-projet" element={<FonctionnalitesProjet />} />
+                <Route path="/simulation-pricing" element={<SimulationPricing />} />
                 
                 <Route path="*" element={<NotFound />} />
               </Routes>
