@@ -112,7 +112,7 @@ const Header = ({
   const [isOpen, setIsOpen] = useState(false);
   const [hoverMenu, setHoverMenu] = useState<MenuType>(null);
   const [acheterSubmenuX, setAcheterSubmenuX] = useState(0);
-  const menuTimeout = useRef<NodeJS.Timeout | null>(null);
+  const menuTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const location = useLocation();
   const navigate = useNavigate();
   const {
