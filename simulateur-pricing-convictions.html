@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pricing par Convictions — Simulateur</title>
+<style>
+  :root {
+    --bg: #0f1117; --surface: #1a1d27; --surface2: #242836;
+    --border: #2e3345; --text: #e8eaed; --muted: #8b8fa3;
+    --gold: #c9a84c; --gold-dim: rgba(201,168,76,.15);
+    --green: #34d399; --green-dim: rgba(52,211,153,.12);
+    --blue: #60a5fa; --blue-dim: rgba(96,165,250,.12);
+    --purple: #a78bfa; --purple-dim: rgba(167,139,250,.12);
+    --orange: #fb923c; --orange-dim: rgba(251,146,60,.12);
+    --red: #f87171;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.5; }
+  .container { max-width: 1400px; margin: 0 auto; padding: 24px; }
+  
+  header { text-align: center; padding: 32px 0 24px; border-bottom: 1px solid var(--border); margin-bottom: 32px; }
+  header h1 { font-size: 1.6rem; font-weight: 700; color: var(--gold); }
+  header p { color: var(--muted); font-size: .85rem; margin-top: 6px; }
+
+  /* Tabs */
+  .tabs { display: flex; gap: 4px; margin-bottom: 24px; background: var(--surface); border-radius: 10px; padding: 4px; }
+  .tab { flex: 1; text-align: center; padding: 10px 8px; border-radius: 8px; cursor: pointer; font-size: .8rem; font-weight: 600; color: var(--muted); transition: all .2s; }
+  .tab.active { background: var(--surface2); color: var(--text); box-shadow: 0 1px 4px rgba(0,0,0,.3); }
+  .tab:hover:not(.active) { color: var(--text); }
+
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* Category card */
+  .cat-section { margin-bottom: 32px; }
+  .cat-header { display: flex; align-items: center; gap: 12px; padding: 14px 18px; border-radius: 10px 10px 0 0; }
+  .cat-header h2 { font-size: 1rem; font-weight: 700; }
+  .cat-header .cat-icon { font-size: 1.3rem; }
+  .cat-header .cat-total { margin-left: auto; font-size: .85rem; font-weight: 600; }
+
+  .cat-estimation .cat-header { background: var(--gold-dim); color: var(--gold); }
+  .cat-seo .cat-header { background: var(--green-dim); color: var(--green); }
+  .cat-fideliser .cat-header { background: var(--blue-dim); color: var(--blue); }
+  .cat-super .cat-header { background: var(--purple-dim); color: var(--purple); }
+
+  .cat-body { background: var(--surface); border: 1px solid var(--border); border-top: none; border-radius: 0 0 10px 10px; overflow: hidden; }
+
+  /* Service row */
+  .svc-row { display: grid; grid-template-columns: 2fr 1fr 100px 100px 120px; align-items: center; gap: 12px; padding: 12px 18px; border-bottom: 1px solid var(--border); }
+  .svc-row:last-child { border-bottom: none; }
+  .svc-name { font-size: .82rem; font-weight: 500; }
+  .svc-name small { display: block; color: var(--muted); font-size: .72rem; font-weight: 400; }
+  .svc-cost { font-size: .75rem; color: var(--muted); }
+  
+  input[type=number] { background: var(--surface2); border: 1px solid var(--border); color: var(--text); padding: 6px 8px; border-radius: 6px; font-size: .82rem; width: 100%; text-align: right; }
+  input[type=number]:focus { outline: none; border-color: var(--gold); }
+
+  .svc-margin { font-size: .8rem; font-weight: 600; text-align: right; }
+  .margin-good { color: var(--green); }
+  .margin-warn { color: var(--orange); }
+  .margin-bad { color: var(--red); }
+
+  /* Volume discounts */
+  .discount-section { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 20px; margin-bottom: 24px; }
+  .discount-section h3 { font-size: .9rem; color: var(--gold); margin-bottom: 14px; }
+  .discount-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+  .discount-card { background: var(--surface2); border-radius: 8px; padding: 12px; text-align: center; }
+  .discount-card label { display: block; font-size: .72rem; color: var(--muted); margin-bottom: 4px; }
+  .discount-card .value { font-size: 1.1rem; font-weight: 700; color: var(--gold); }
+
+  /* Dashboard */
+  .kpi-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px; }
+  .kpi { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
+  .kpi label { font-size: .7rem; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
+  .kpi .value { font-size: 1.4rem; font-weight: 700; margin-top: 4px; }
+
+  /* Simulation panel */
+  .sim-panel { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 20px; margin-bottom: 24px; }
+  .sim-panel h3 { font-size: .9rem; color: var(--gold); margin-bottom: 14px; }
+  .sim-row { display: grid; grid-template-columns: 2fr 120px 120px 120px; gap: 12px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); }
+  .sim-row:last-child { border-bottom: none; }
+  .sim-label { font-size: .82rem; }
+  .sim-val { font-size: .82rem; text-align: right; font-weight: 600; }
+
+  /* Profile buttons */
+  .profiles { display: flex; gap: 8px; margin-bottom: 16px; }
+  .profile-btn { padding: 8px 16px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--muted); cursor: pointer; font-size: .78rem; font-weight: 600; transition: all .2s; }
+  .profile-btn.active, .profile-btn:hover { background: var(--gold-dim); color: var(--gold); border-color: var(--gold); }
+
+  /* Export */
+  .export-bar { display: flex; gap: 8px; justify-content: flex-end; margin-bottom: 16px; }
+  .btn { padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer; font-size: .78rem; font-weight: 600; transition: all .2s; }
+  .btn-csv { background: var(--green-dim); color: var(--green); }
+  .btn-pdf { background: var(--blue-dim); color: var(--blue); }
+  .btn:hover { opacity: .8; }
+
+  /* Responsive */
+  @media (max-width: 900px) {
+    .svc-row { grid-template-columns: 1fr; gap: 6px; }
+    .sim-row { grid-template-columns: 1fr 1fr; }
+    .kpi-grid { grid-template-columns: 1fr 1fr; }
+  }
+
+  /* Print */
+  @media print {
+    body { background: #fff; color: #111; }
+    .tabs, .export-bar, .profiles, .profile-btn { display: none; }
+    .tab-content { display: block !important; page-break-inside: avoid; }
+    .cat-header { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    input[type=number] { border: none; background: none; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>💰 Pricing par Convictions</h1>
+    <p>Fixez vos prix de vente selon ce que le client peut payer, puis appliquez des remises volume</p>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('pricing')">🎯 Tarification</div>
+    <div class="tab" onclick="switchTab('discounts')">📉 Remises Volume</div>
+    <div class="tab" onclick="switchTab('simulation')">📊 Simulation Client</div>
+  </div>
+
+  <!-- TAB 1: PRICING -->
+  <div id="tab-pricing" class="tab-content active">
+
+    <!-- ESTIMATION -->
+    <div class="cat-section cat-estimation">
+      <div class="cat-header">
+        <span class="cat-icon">🔍</span>
+        <h2>Aide à l'estimation</h2>
+        <span class="cat-total" id="total-estimation"></span>
+      </div>
+      <div class="cat-body" id="cat-estimation-body"></div>
+    </div>
+
+    <!-- SEO -->
+    <div class="cat-section cat-seo">
+      <div class="cat-header">
+        <span class="cat-icon">🚀</span>
+        <h2>SEO — Visibilité catalogue</h2>
+        <span class="cat-total" id="total-seo"></span>
+      </div>
+      <div class="cat-body" id="cat-seo-body"></div>
+    </div>
+
+    <!-- FIDELISER -->
+    <div class="cat-section cat-fideliser">
+      <div class="cat-header">
+        <span class="cat-icon">💙</span>
+        <h2>Fidéliser les acheteurs</h2>
+        <span class="cat-total" id="total-fideliser"></span>
+      </div>
+      <div class="cat-body" id="cat-fideliser-body"></div>
+    </div>
+
+    <!-- SUPER ACHETEURS -->
+    <div class="cat-section cat-super">
+      <div class="cat-header">
+        <span class="cat-icon">⭐</span>
+        <h2>Fidéliser les super-acheteurs</h2>
+        <span class="cat-total" id="total-super"></span>
+      </div>
+      <div class="cat-body" id="cat-super-body"></div>
+    </div>
+  </div>
+
+  <!-- TAB 2: DISCOUNTS -->
+  <div id="tab-discounts" class="tab-content">
+    <div class="discount-section">
+      <h3>Paliers de remise par volume mensuel (toutes catégories confondues)</h3>
+      <p style="color:var(--muted);font-size:.78rem;margin-bottom:16px;">Plus le client consomme d'actions/mois, plus le prix unitaire baisse. Fixez le % de réduction par palier.</p>
+      <div class="discount-grid" id="discount-grid"></div>
+    </div>
+    <div class="discount-section">
+      <h3>🎁 Onboarding gratuit</h3>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <label style="font-size:.82rem;color:var(--muted);">Nb d'actions offertes au démarrage :</label>
+        <input type="number" id="free-actions" value="50" min="0" max="500" style="width:100px;" oninput="recalcAll()">
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 3: SIMULATION -->
+  <div id="tab-simulation" class="tab-content">
+    <div class="export-bar">
+      <button class="btn btn-csv" onclick="exportCSV()">📄 Export CSV</button>
+      <button class="btn btn-pdf" onclick="window.print()">🖨️ Export PDF</button>
+    </div>
+
+    <div class="profiles">
+      <button class="profile-btn active" onclick="setProfile('petit')">Petit site (2 ventes/mois)</button>
+      <button class="profile-btn" onclick="setProfile('moyen')">Moyen (5 ventes/mois)</button>
+      <button class="profile-btn" onclick="setProfile('gros')">Gros (12 ventes/mois)</button>
+    </div>
+
+    <div class="sim-panel">
+      <h3>Paramètres du client simulé</h3>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-bottom:16px;">
+        <div>
+          <label style="font-size:.72rem;color:var(--muted);">Ventes / mois</label>
+          <input type="number" id="sim-sales" value="2" min="1" max="50" oninput="recalcSim()">
+        </div>
+        <div>
+          <label style="font-size:.72rem;color:var(--muted);">Lots / vente</label>
+          <input type="number" id="sim-lots" value="120" min="10" max="1000" oninput="recalcSim()">
+        </div>
+        <div>
+          <label style="font-size:.72rem;color:var(--muted);">Estimations / mois</label>
+          <input type="number" id="sim-estimations" value="30" min="0" max="500" oninput="recalcSim()">
+        </div>
+        <div>
+          <label style="font-size:.72rem;color:var(--muted);">% lots avec Q&R IA</label>
+          <input type="number" id="sim-qr-pct" value="15" min="0" max="100" oninput="recalcSim()">
+        </div>
+        <div>
+          <label style="font-size:.72rem;color:var(--muted);">Nb super-acheteurs actifs</label>
+          <input type="number" id="sim-super" value="10" min="0" max="200" oninput="recalcSim()">
+        </div>
+      </div>
+    </div>
+
+    <div class="kpi-grid" id="sim-kpis"></div>
+
+    <div class="sim-panel">
+      <h3>Détail par catégorie</h3>
+      <div id="sim-detail"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── SERVICE DEFINITIONS ───
+const SERVICES = {
+  estimation: [
+    { id: 'estimation_complete', name: 'Analyse IA complète', detail: 'Vision + recherche marché + synthèse', costPerUnit: 0.08, defaultPrice: 1.50, unit: '/ estimation' },
+  ],
+  seo: [
+    { id: 'enrichissement_lot', name: 'Enrichissement lot (par lot)', detail: 'Métadonnées complètes via IA, facturé par paquet de 100', costPerUnit: 0.02, defaultPrice: 0.15, unit: '/ lot', batch: 100 },
+    { id: 'meta_title', name: 'Meta title optimisé', detail: '< 60 car., mot-clé principal', costPerUnit: 0.005, defaultPrice: 0.05, unit: '/ lot' },
+    { id: 'meta_description', name: 'Meta description', detail: '< 160 car., call-to-action', costPerUnit: 0.005, defaultPrice: 0.05, unit: '/ lot' },
+    { id: 'alt_text', name: 'Alt text images (Vision IA)', detail: 'Description accessible pour chaque image', costPerUnit: 0.01, defaultPrice: 0.08, unit: '/ image' },
+    { id: 'keywords_longue_traine', name: 'Mots-clés longue traîne', detail: '5-10 termes de recherche niche', costPerUnit: 0.005, defaultPrice: 0.05, unit: '/ lot' },
+    { id: 'jsonld', name: 'JSON-LD Schema.org', detail: 'Product/Offer structuré', costPerUnit: 0.003, defaultPrice: 0.04, unit: '/ lot' },
+    { id: 'slug_seo', name: 'Slug SEO-friendly', detail: 'URL propre générée par IA', costPerUnit: 0.002, defaultPrice: 0.03, unit: '/ lot' },
+  ],
+  fideliser: [
+    { id: 'classification', name: 'Classification familles/catégories', detail: 'Catégorisation auto par IA', costPerUnit: 0.005, defaultPrice: 0.06, unit: '/ lot' },
+    { id: 'analyse_ia', name: 'Analyse IA contextuelle', detail: 'Explication, créateur, contexte historique', costPerUnit: 0.03, defaultPrice: 0.25, unit: '/ lot' },
+    { id: 'qr_ia', name: 'Q&R IA 24/7 sur un lot', detail: 'Réponse automatique aux questions acheteurs', costPerUnit: 0.02, defaultPrice: 0.20, unit: '/ question' },
+  ],
+  super: [
+    { id: 'lia_dialogue', name: 'Dialogue Lia — profil de goûts', detail: 'Interview conversationnelle', costPerUnit: 0.05, defaultPrice: 0.50, unit: '/ session' },
+    { id: 'lia_suggestions', name: 'Suggestions personnalisées Lia', detail: 'Matching lots ↔ profil', costPerUnit: 0.03, defaultPrice: 0.30, unit: '/ batch' },
+    { id: 'validation_keyword', name: 'Validation pertinence mot-clé alerte', detail: 'Vérification IA + correction ortho', costPerUnit: 0.01, defaultPrice: 0.10, unit: '/ mot-clé' },
+    { id: 'synthese_alertes', name: 'Synthèse alertes ↔ nouveaux lots', detail: 'Cross-matching profil × catalogue', costPerUnit: 0.02, defaultPrice: 0.20, unit: '/ exécution' },
+  ]
+};
+
+const DISCOUNT_TIERS = [
+  { label: '0 – 500 actions', min: 0, max: 500, defaultDiscount: 0 },
+  { label: '501 – 2 000', min: 501, max: 2000, defaultDiscount: 10 },
+  { label: '2 001 – 5 000', min: 2001, max: 5000, defaultDiscount: 20 },
+  { label: '5 001 – 15 000', min: 5001, max: 15000, defaultDiscount: 30 },
+  { label: '15 001+', min: 15001, max: Infinity, defaultDiscount: 40 },
+];
+
+const PROFILES = {
+  petit: { sales: 2, lots: 120, estimations: 30, qrPct: 15, superBuyers: 10 },
+  moyen: { sales: 5, lots: 150, estimations: 80, qrPct: 20, superBuyers: 30 },
+  gros: { sales: 12, lots: 200, estimations: 150, qrPct: 25, superBuyers: 80 },
+};
+
+// ─── STATE ───
+let prices = {};  // id → price
+let discounts = []; // tier discount %
+
+function init() {
+  // Init prices from defaults
+  for (const cat of Object.values(SERVICES)) {
+    for (const svc of cat) {
+      prices[svc.id] = svc.defaultPrice;
+    }
+  }
+  // Init discounts
+  discounts = DISCOUNT_TIERS.map(t => t.defaultDiscount);
+
+  renderPricing();
+  renderDiscounts();
+  recalcAll();
+}
+
+function renderPricing() {
+  for (const [catKey, svcs] of Object.entries(SERVICES)) {
+    const body = document.getElementById(`cat-${catKey}-body`);
+    body.innerHTML = `
+      <div class="svc-row" style="font-size:.7rem;color:var(--muted);font-weight:600;border-bottom:1px solid var(--border);">
+        <div>Prestation</div>
+        <div>Coût réel</div>
+        <div>Prix de vente</div>
+        <div>Unité</div>
+        <div style="text-align:right">Marge</div>
+      </div>
+    ` + svcs.map(svc => `
+      <div class="svc-row">
+        <div class="svc-name">${svc.name}<small>${svc.detail}</small></div>
+        <div class="svc-cost">${svc.costPerUnit.toFixed(3)} €${svc.batch ? ` (×${svc.batch})` : ''}</div>
+        <div><input type="number" step="0.01" min="0" value="${prices[svc.id].toFixed(2)}" 
+             onchange="prices['${svc.id}']=parseFloat(this.value)||0;recalcAll()" id="price-${svc.id}"></div>
+        <div style="font-size:.75rem;color:var(--muted);">${svc.unit}</div>
+        <div class="svc-margin" id="margin-${svc.id}"></div>
+      </div>
+    `).join('');
+  }
+}
+
+function renderDiscounts() {
+  const grid = document.getElementById('discount-grid');
+  grid.innerHTML = DISCOUNT_TIERS.map((t, i) => `
+    <div class="discount-card">
+      <label>${t.label}</label>
+      <input type="number" min="0" max="80" value="${discounts[i]}" 
+             onchange="discounts[${i}]=parseInt(this.value)||0;recalcAll()" 
+             style="width:70px;text-align:center;margin:6px auto;display:block;">
+      <div style="font-size:.7rem;color:var(--muted);">% de remise</div>
+    </div>
+  `).join('');
+}
+
+function getMarginClass(pct) {
+  if (pct >= 60) return 'margin-good';
+  if (pct >= 30) return 'margin-warn';
+  return 'margin-bad';
+}
+
+function recalcAll() {
+  // Update margins
+  for (const [catKey, svcs] of Object.entries(SERVICES)) {
+    for (const svc of svcs) {
+      const price = prices[svc.id];
+      const cost = svc.costPerUnit;
+      const margin = price > 0 ? ((price - cost) / price * 100) : 0;
+      const el = document.getElementById(`margin-${svc.id}`);
+      if (el) {
+        el.textContent = `${margin.toFixed(0)}%`;
+        el.className = `svc-margin ${getMarginClass(margin)}`;
+      }
+    }
+  }
+  recalcSim();
+}
+
+function getDiscountPct(totalActions) {
+  for (let i = DISCOUNT_TIERS.length - 1; i >= 0; i--) {
+    if (totalActions >= DISCOUNT_TIERS[i].min) return discounts[i];
+  }
+  return 0;
+}
+
+function recalcSim() {
+  const sales = parseInt(document.getElementById('sim-sales').value) || 2;
+  const lotsPerSale = parseInt(document.getElementById('sim-lots').value) || 120;
+  const estimations = parseInt(document.getElementById('sim-estimations').value) || 30;
+  const qrPct = parseInt(document.getElementById('sim-qr-pct').value) || 15;
+  const superBuyers = parseInt(document.getElementById('sim-super').value) || 10;
+  const freeActions = parseInt(document.getElementById('free-actions')?.value) || 50;
+
+  const totalLots = sales * lotsPerSale;
+  const qrQuestions = Math.round(totalLots * qrPct / 100 * 2); // avg 2 questions per lot touched
+  const imagesPerLot = 2.5; // avg
+
+  // Calculate volumes per service
+  const volumes = {
+    estimation_complete: estimations,
+    enrichissement_lot: totalLots,
+    meta_title: totalLots,
+    meta_description: totalLots,
+    alt_text: Math.round(totalLots * imagesPerLot),
+    keywords_longue_traine: totalLots,
+    jsonld: totalLots,
+    slug_seo: totalLots,
+    classification: totalLots,
+    analyse_ia: Math.round(totalLots * 0.3), // 30% des lots
+    qr_ia: qrQuestions,
+    lia_dialogue: Math.round(superBuyers * 0.5), // 50% new sessions/month
+    lia_suggestions: Math.round(superBuyers * 2), // 2 batch/mois
+    validation_keyword: Math.round(superBuyers * 1.5),
+    synthese_alertes: Math.round(superBuyers * sales), // 1 per sale per super buyer
+  };
+
+  // Total actions
+  let totalActions = Object.values(volumes).reduce((a, b) => a + b, 0);
+  const billableActions = Math.max(0, totalActions - freeActions);
+  const discountPct = getDiscountPct(billableActions);
+
+  // Per-category breakdown
+  const catResults = {};
+  let grandTotalRevenue = 0;
+  let grandTotalCost = 0;
+
+  for (const [catKey, svcs] of Object.entries(SERVICES)) {
+    let catRevenue = 0, catCost = 0, catActions = 0;
+    const lines = [];
+
+    for (const svc of svcs) {
+      const vol = volumes[svc.id] || 0;
+      const rawRevenue = vol * prices[svc.id];
+      const revenue = rawRevenue * (1 - discountPct / 100);
+      const cost = vol * svc.costPerUnit;
+      catRevenue += revenue;
+      catCost += cost;
+      catActions += vol;
+      lines.push({ name: svc.name, vol, revenue, cost, unit: svc.unit });
+    }
+
+    catResults[catKey] = { revenue: catRevenue, cost: catCost, actions: catActions, lines };
+    grandTotalRevenue += catRevenue;
+    grandTotalCost += catCost;
+  }
+
+  const grandMargin = grandTotalRevenue > 0 ? (grandTotalRevenue - grandTotalCost) / grandTotalRevenue * 100 : 0;
+
+  // KPIs
+  const kpisEl = document.getElementById('sim-kpis');
+  kpisEl.innerHTML = `
+    <div class="kpi">
+      <label>Facture mensuelle client</label>
+      <div class="value" style="color:var(--gold)">${grandTotalRevenue.toFixed(0)} €</div>
+    </div>
+    <div class="kpi">
+      <label>Coût réel IA</label>
+      <div class="value" style="color:var(--muted)">${grandTotalCost.toFixed(0)} €</div>
+    </div>
+    <div class="kpi">
+      <label>Marge nette</label>
+      <div class="value" style="color:${grandMargin>=50?'var(--green)':grandMargin>=25?'var(--orange)':'var(--red)'}">${grandMargin.toFixed(0)}%</div>
+    </div>
+    <div class="kpi">
+      <label>Actions totales / mois</label>
+      <div class="value">${totalActions.toLocaleString('fr')}</div>
+    </div>
+    <div class="kpi">
+      <label>Remise appliquée</label>
+      <div class="value" style="color:var(--purple)">-${discountPct}%</div>
+    </div>
+    <div class="kpi">
+      <label>Profit mensuel</label>
+      <div class="value" style="color:var(--green)">${(grandTotalRevenue - grandTotalCost).toFixed(0)} €</div>
+    </div>
+  `;
+
+  // Detail
+  const detailEl = document.getElementById('sim-detail');
+  const catLabels = { estimation: '🔍 Estimation', seo: '🚀 SEO', fideliser: '💙 Fidélisation', super: '⭐ Super-acheteurs' };
+  const catColors = { estimation: 'var(--gold)', seo: 'var(--green)', fideliser: 'var(--blue)', super: 'var(--purple)' };
+
+  let html = '';
+  for (const [catKey, res] of Object.entries(catResults)) {
+    const catMargin = res.revenue > 0 ? (res.revenue - res.cost) / res.revenue * 100 : 0;
+    html += `
+      <div style="margin-bottom:20px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:2px solid ${catColors[catKey]};">
+          <span style="font-weight:700;color:${catColors[catKey]};font-size:.85rem;">${catLabels[catKey]}</span>
+          <span style="font-size:.82rem;color:var(--muted);">${res.revenue.toFixed(0)} € — marge ${catMargin.toFixed(0)}%</span>
+        </div>
+    `;
+    for (const line of res.lines) {
+      html += `
+        <div class="sim-row">
+          <div class="sim-label">${line.name}</div>
+          <div class="sim-val" style="color:var(--muted)">${line.vol} ${line.unit.replace('/ ','')}</div>
+          <div class="sim-val">${line.revenue.toFixed(2)} €</div>
+          <div class="sim-val" style="color:var(--muted)">(coût: ${line.cost.toFixed(2)} €)</div>
+        </div>
+      `;
+    }
+    html += '</div>';
+  }
+  detailEl.innerHTML = html;
+}
+
+function setProfile(key) {
+  const p = PROFILES[key];
+  document.getElementById('sim-sales').value = p.sales;
+  document.getElementById('sim-lots').value = p.lots;
+  document.getElementById('sim-estimations').value = p.estimations;
+  document.getElementById('sim-qr-pct').value = p.qrPct;
+  document.getElementById('sim-super').value = p.superBuyers;
+  document.querySelectorAll('.profile-btn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  recalcSim();
+}
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach((t, i) => {
+    const tabs = ['pricing', 'discounts', 'simulation'];
+    t.classList.toggle('active', tabs[i] === tab);
+  });
+  document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+  document.getElementById(`tab-${tab}`).classList.add('active');
+}
+
+function exportCSV() {
+  let csv = '\uFEFF'; // BOM
+  csv += 'PRICING PAR CONVICTIONS - EXPORT\n\n';
+
+  // Prices
+  csv += 'TARIFICATION\n';
+  csv += 'Catégorie;Prestation;Coût réel €;Prix de vente €;Marge %\n';
+  const catNames = { estimation: 'Estimation', seo: 'SEO', fideliser: 'Fidélisation', super: 'Super-acheteurs' };
+  for (const [catKey, svcs] of Object.entries(SERVICES)) {
+    for (const svc of svcs) {
+      const p = prices[svc.id];
+      const m = p > 0 ? ((p - svc.costPerUnit) / p * 100).toFixed(1) : '0';
+      csv += `${catNames[catKey]};${svc.name};${svc.costPerUnit};${p};${m}\n`;
+    }
+  }
+
+  csv += '\nREMISES VOLUME\n';
+  csv += 'Palier;Remise %\n';
+  DISCOUNT_TIERS.forEach((t, i) => {
+    csv += `${t.label};${discounts[i]}\n`;
+  });
+
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `pricing-convictions-${new Date().toISOString().slice(0,10)}.csv`;
+  a.click(); URL.revokeObjectURL(url);
+}
+
+init();
+</script>
+</body>
+</html>
