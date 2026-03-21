@@ -79,6 +79,7 @@ import AdminLots from "./pages/admin/AdminLots";
 import AdminEstimations from "./pages/admin/AdminEstimations";
 import ExportVenteCSV from "./pages/ExportVenteCSV";
 import FonctionnalitesProjet from "./pages/FonctionnalitesProjet";
+import SimulationPricing from "./pages/SimulationPricing";
 
 const queryClient = new QueryClient();
 
