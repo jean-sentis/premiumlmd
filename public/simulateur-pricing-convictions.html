@@ -185,50 +185,25 @@
     </div>
   </div>
 
-  <!-- TAB 3: SIMULATION -->
+  <!-- TAB 3: SIMULATION MULTI-HOTELS -->
   <div id="tab-simulation" class="tab-content">
     <div class="export-bar">
       <button class="btn btn-csv" onclick="exportCSV()">📄 Export CSV</button>
       <button class="btn btn-pdf" onclick="window.print()">🖨️ Export PDF</button>
     </div>
 
-    <div class="profiles">
-      <button class="profile-btn active" onclick="setProfile('petit')">Petit site (2 ventes/mois)</button>
-      <button class="profile-btn" onclick="setProfile('moyen')">Moyen (5 ventes/mois)</button>
-      <button class="profile-btn" onclick="setProfile('gros')">Gros (12 ventes/mois)</button>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+      <h3 style="font-size:1rem;color:var(--gold);">🏛️ Hôtels de ventes simulés</h3>
+      <button class="btn" style="background:var(--gold-dim);color:var(--gold);" onclick="addHotel()">+ Ajouter un hôtel</button>
     </div>
 
-    <div class="sim-panel">
-      <h3>Paramètres du client simulé</h3>
-      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-bottom:16px;">
-        <div>
-          <label style="font-size:.72rem;color:var(--muted);">Ventes / mois</label>
-          <input type="number" id="sim-sales" value="2" min="1" max="50" oninput="recalcSim()">
-        </div>
-        <div>
-          <label style="font-size:.72rem;color:var(--muted);">Lots / vente</label>
-          <input type="number" id="sim-lots" value="120" min="10" max="1000" oninput="recalcSim()">
-        </div>
-        <div>
-          <label style="font-size:.72rem;color:var(--muted);">Estimations / mois</label>
-          <input type="number" id="sim-estimations" value="30" min="0" max="500" oninput="recalcSim()">
-        </div>
-        <div>
-          <label style="font-size:.72rem;color:var(--muted);">% lots avec Q&R IA</label>
-          <input type="number" id="sim-qr-pct" value="15" min="0" max="100" oninput="recalcSim()">
-        </div>
-        <div>
-          <label style="font-size:.72rem;color:var(--muted);">Nb super-acheteurs actifs</label>
-          <input type="number" id="sim-super" value="10" min="0" max="200" oninput="recalcSim()">
-        </div>
-      </div>
-    </div>
+    <div id="hotels-container"></div>
 
-    <div class="kpi-grid" id="sim-kpis"></div>
-
-    <div class="sim-panel">
-      <h3>Détail par catégorie</h3>
-      <div id="sim-detail"></div>
+    <!-- TOTAUX -->
+    <div class="sim-panel" style="margin-top:24px;border:2px solid var(--gold);">
+      <h3 style="color:var(--gold);margin-bottom:16px;">📊 Revenus consolidés (tous hôtels)</h3>
+      <div class="kpi-grid" id="consolidated-kpis"></div>
+      <div id="consolidated-detail" style="margin-top:16px;"></div>
     </div>
   </div>
 </div>
