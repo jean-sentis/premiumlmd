@@ -421,8 +421,10 @@ function recalcSim() {
 
   const kpisEl = document.getElementById('consolidated-kpis');
   if (kpisEl) {
+    const totalHdv = hotels.reduce((s, h) => s + (h.count || 1), 0);
     kpisEl.innerHTML = ''
-      + '<div class="kpi"><label>Nb hôtels</label><div class="value">' + hotels.length + '</div></div>'
+      + '<div class="kpi"><label>Profils</label><div class="value">' + hotels.length + '</div></div>'
+      + '<div class="kpi"><label>Total HdV</label><div class="value" style="color:var(--gold)">' + totalHdv + '</div></div>'
       + '<div class="kpi"><label>Revenu mensuel total</label><div class="value" style="color:var(--gold)">' + grandRevenue.toFixed(0) + ' €</div></div>'
       + '<div class="kpi"><label>Coût IA total</label><div class="value" style="color:var(--muted)">' + grandCost.toFixed(0) + ' €</div></div>'
       + '<div class="kpi"><label>Profit mensuel</label><div class="value" style="color:var(--green)">' + grandProfit.toFixed(0) + ' €</div></div>'
