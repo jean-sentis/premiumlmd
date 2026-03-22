@@ -232,19 +232,19 @@ const SERVICES = {
   ]
 };
 
-const DISCOUNT_TIERS = [
-  { label: '0 – 500', min: 0, max: 500, defaultDiscount: 0 },
-  { label: '501 – 2 000', min: 501, max: 2000, defaultDiscount: 10 },
-  { label: '2 001 – 5 000', min: 2001, max: 5000, defaultDiscount: 20 },
-  { label: '5 001 – 15 000', min: 5001, max: 15000, defaultDiscount: 30 },
-  { label: '15 001+', min: 15001, max: Infinity, defaultDiscount: 40 },
+const DEFAULT_TIERS = [
+  { min: 0, max: 500, discount: 0 },
+  { min: 501, max: 2000, discount: 10 },
+  { min: 2001, max: 5000, discount: 20 },
+  { min: 5001, max: 15000, discount: 30 },
+  { min: 15001, max: 999999, discount: 40 },
 ];
 
 const DISCOUNT_CATEGORIES = {
-  estimation: { label: '🔍 Estimation', color: 'var(--gold)', bg: 'var(--gold-dim)' },
-  seo: { label: '🚀 SEO', color: 'var(--green)', bg: 'var(--green-dim)' },
-  fideliser: { label: '💙 Fidélisation', color: 'var(--blue)', bg: 'var(--blue-dim)' },
-  super: { label: '⭐ Super-acheteurs', color: 'var(--purple)', bg: 'var(--purple-dim)' },
+  estimation: { label: '🔍 Estimation', unit: 'estimations', color: 'var(--gold)', bg: 'var(--gold-dim)' },
+  seo: { label: '🚀 SEO (lots)', unit: 'lots', color: 'var(--green)', bg: 'var(--green-dim)' },
+  fideliser: { label: '💙 Fidélisation', unit: 'actions', color: 'var(--blue)', bg: 'var(--blue-dim)' },
+  super: { label: '⭐ Super-acheteurs', unit: 'actions', color: 'var(--purple)', bg: 'var(--purple-dim)' },
 };
 
 // ─── STATE ───
@@ -260,7 +260,7 @@ function init() {
     }
   }
   for (const catKey of Object.keys(DISCOUNT_CATEGORIES)) {
-    discountsByCategory[catKey] = DISCOUNT_TIERS.map(t => t.defaultDiscount);
+    discountsByCategory[catKey] = DEFAULT_TIERS.map(t => ({ min: t.min, max: t.max, discount: t.discount }));
   }
 
   addHotel('Petit hôtel régional', 2, 80, 20);
