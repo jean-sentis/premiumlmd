@@ -185,50 +185,25 @@
     </div>
   </div>
 
-  <!-- TAB 3: SIMULATION -->
+  <!-- TAB 3: SIMULATION MULTI-HOTELS -->
   <div id="tab-simulation" class="tab-content">
     <div class="export-bar">
       <button class="btn btn-csv" onclick="exportCSV()">📄 Export CSV</button>
       <button class="btn btn-pdf" onclick="window.print()">🖨️ Export PDF</button>
     </div>
 
-    <div class="profiles">
-      <button class="profile-btn active" onclick="setProfile('petit')">Petit site (2 ventes/mois)</button>
-      <button class="profile-btn" onclick="setProfile('moyen')">Moyen (5 ventes/mois)</button>
-      <button class="profile-btn" onclick="setProfile('gros')">Gros (12 ventes/mois)</button>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+      <h3 style="font-size:1rem;color:var(--gold);">🏛️ Hôtels de ventes simulés</h3>
+      <button class="btn" style="background:var(--gold-dim);color:var(--gold);" onclick="addHotel()">+ Ajouter un hôtel</button>
     </div>
 
-    <div class="sim-panel">
-      <h3>Paramètres du client simulé</h3>
-      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-bottom:16px;">
-        <div>
-          <label style="font-size:.72rem;color:var(--muted);">Ventes / mois</label>
-          <input type="number" id="sim-sales" value="2" min="1" max="50" oninput="recalcSim()">
-        </div>
-        <div>
-          <label style="font-size:.72rem;color:var(--muted);">Lots / vente</label>
-          <input type="number" id="sim-lots" value="120" min="10" max="1000" oninput="recalcSim()">
-        </div>
-        <div>
-          <label style="font-size:.72rem;color:var(--muted);">Estimations / mois</label>
-          <input type="number" id="sim-estimations" value="30" min="0" max="500" oninput="recalcSim()">
-        </div>
-        <div>
-          <label style="font-size:.72rem;color:var(--muted);">% lots avec Q&R IA</label>
-          <input type="number" id="sim-qr-pct" value="15" min="0" max="100" oninput="recalcSim()">
-        </div>
-        <div>
-          <label style="font-size:.72rem;color:var(--muted);">Nb super-acheteurs actifs</label>
-          <input type="number" id="sim-super" value="10" min="0" max="200" oninput="recalcSim()">
-        </div>
-      </div>
-    </div>
+    <div id="hotels-container"></div>
 
-    <div class="kpi-grid" id="sim-kpis"></div>
-
-    <div class="sim-panel">
-      <h3>Détail par catégorie</h3>
-      <div id="sim-detail"></div>
+    <!-- TOTAUX -->
+    <div class="sim-panel" style="margin-top:24px;border:2px solid var(--gold);">
+      <h3 style="color:var(--gold);margin-bottom:16px;">📊 Revenus consolidés (tous hôtels)</h3>
+      <div class="kpi-grid" id="consolidated-kpis"></div>
+      <div id="consolidated-detail" style="margin-top:16px;"></div>
     </div>
   </div>
 </div>
@@ -263,66 +238,118 @@ const DISCOUNT_TIERS = [
   { label: '15 001+', min: 15001, max: Infinity, defaultDiscount: 40 },
 ];
 
-const PROFILES = {
-  petit: { sales: 2, lots: 120, estimations: 30, qrPct: 15, superBuyers: 10 },
-  moyen: { sales: 5, lots: 150, estimations: 80, qrPct: 20, superBuyers: 30 },
-  gros: { sales: 12, lots: 200, estimations: 150, qrPct: 25, superBuyers: 80 },
-};
-
 // ─── STATE ───
-let prices = {};  // id → price
-let discounts = []; // tier discount %
+let prices = {};
+let discounts = [];
+let hotels = [];
+let hotelIdCounter = 0;
 
 function init() {
-  // Init prices from defaults
   for (const cat of Object.values(SERVICES)) {
     for (const svc of cat) {
       prices[svc.id] = svc.defaultPrice;
     }
   }
-  // Init discounts
   discounts = DISCOUNT_TIERS.map(t => t.defaultDiscount);
+
+  addHotel('Petit hôtel régional', 2, 80, 20);
+  addHotel('Étude moyenne', 4, 150, 60);
+  addHotel('Grande maison parisienne', 10, 250, 120);
 
   renderPricing();
   renderDiscounts();
   recalcAll();
 }
 
+function addHotel(name, sales, lots, estimations) {
+  const id = hotelIdCounter++;
+  hotels.push({
+    id,
+    name: name || 'Hôtel ' + (id + 1),
+    sales: sales || 3,
+    lotsPerSale: lots || 120,
+    estimationsPerMonth: estimations || 40,
+  });
+  renderHotels();
+  recalcAll();
+}
+
+function removeHotel(id) {
+  hotels = hotels.filter(h => h.id !== id);
+  renderHotels();
+  recalcAll();
+}
+
+function updateHotel(id, field, value) {
+  const h = hotels.find(x => x.id === id);
+  if (!h) return;
+  if (field === 'name') h.name = value;
+  else h[field] = parseFloat(value) || 0;
+  recalcAll();
+}
+
+function renderHotels() {
+  const container = document.getElementById('hotels-container');
+  container.innerHTML = hotels.map(h => `
+    <div class="sim-panel" style="margin-bottom:16px;position:relative;">
+      <button onclick="removeHotel(${h.id})" style="position:absolute;top:12px;right:14px;background:none;border:none;color:var(--red);cursor:pointer;font-size:1.1rem;" title="Supprimer">✕</button>
+      <div style="display:grid;grid-template-columns:2fr repeat(3,1fr);gap:12px;align-items:end;">
+        <div>
+          <label style="font-size:.72rem;color:var(--muted);">Nom de l'hôtel</label>
+          <input type="text" value="${h.name}" onchange="updateHotel(${h.id},'name',this.value)"
+            style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:6px 8px;border-radius:6px;font-size:.82rem;width:100%;">
+        </div>
+        <div>
+          <label style="font-size:.72rem;color:var(--muted);">Ventes / mois</label>
+          <input type="number" value="${h.sales}" min="1" max="50" oninput="updateHotel(${h.id},'sales',this.value)">
+        </div>
+        <div>
+          <label style="font-size:.72rem;color:var(--muted);">Lots / vente</label>
+          <input type="number" value="${h.lotsPerSale}" min="10" max="2000" oninput="updateHotel(${h.id},'lotsPerSale',this.value)">
+        </div>
+        <div>
+          <label style="font-size:.72rem;color:var(--muted);">Estimations / mois</label>
+          <input type="number" value="${h.estimationsPerMonth}" min="0" max="1000" oninput="updateHotel(${h.id},'estimationsPerMonth',this.value)">
+        </div>
+      </div>
+      <div id="hotel-result-${h.id}" style="margin-top:14px;"></div>
+    </div>
+  `).join('');
+}
+
+function calcHotelRevenue(h) {
+  const totalLots = h.sales * h.lotsPerSale;
+  const estimationPrice = prices['estimation_complete'] || 0;
+  const estimationCost = SERVICES.estimation[0].costPerUnit;
+  const seoPrice = prices['seo_complet'] || 0;
+  const seoCostUnit = SERVICES.seo[0].costPerUnit;
+
+  const estRevenue = h.estimationsPerMonth * estimationPrice;
+  const estCost = h.estimationsPerMonth * estimationCost;
+  const seoRevenue = totalLots * seoPrice;
+  const seoCost = totalLots * seoCostUnit;
+
+  return {
+    name: h.name,
+    totalLots,
+    estimation: { volume: h.estimationsPerMonth, revenue: estRevenue, cost: estCost },
+    seo: { volume: totalLots, revenue: seoRevenue, cost: seoCost },
+    totalRevenue: estRevenue + seoRevenue,
+    totalCost: estCost + seoCost,
+  };
+}
+
 function renderPricing() {
   for (const [catKey, svcs] of Object.entries(SERVICES)) {
-    const body = document.getElementById(`cat-${catKey}-body`);
-    body.innerHTML = `
-      <div class="svc-row" style="font-size:.7rem;color:var(--muted);font-weight:600;border-bottom:1px solid var(--border);">
-        <div>Prestation</div>
-        <div>Coût réel</div>
-        <div>Prix de vente</div>
-        <div>Unité</div>
-        <div style="text-align:right">Marge</div>
-      </div>
-    ` + svcs.map(svc => `
-      <div class="svc-row">
-        <div class="svc-name">${svc.name}<small>${svc.detail}</small></div>
-        <div class="svc-cost">${svc.costPerUnit.toFixed(3)} €${svc.batch ? ` (×${svc.batch})` : ''}</div>
-        <div><input type="number" step="0.01" min="0" value="${prices[svc.id].toFixed(2)}" 
-             onchange="prices['${svc.id}']=parseFloat(this.value)||0;recalcAll()" id="price-${svc.id}"></div>
-        <div style="font-size:.75rem;color:var(--muted);">${svc.unit}</div>
-        <div class="svc-margin" id="margin-${svc.id}"></div>
-      </div>
-    `).join('');
+    const body = document.getElementById('cat-' + catKey + '-body');
+    body.innerHTML = '<div class="svc-row" style="font-size:.7rem;color:var(--muted);font-weight:600;border-bottom:1px solid var(--border);"><div>Prestation</div><div>Coût réel</div><div>Prix de vente</div><div>Unité</div><div style="text-align:right">Marge</div></div>'
+      + svcs.map(svc => '<div class="svc-row"><div class="svc-name">' + svc.name + '<small>' + svc.detail + '</small></div><div class="svc-cost">' + svc.costPerUnit.toFixed(3) + ' €' + (svc.batch ? ' (×' + svc.batch + ')' : '') + '</div><div><input type="number" step="0.01" min="0" value="' + prices[svc.id].toFixed(2) + '" onchange="prices[\'' + svc.id + '\']=parseFloat(this.value)||0;recalcAll()" id="price-' + svc.id + '"></div><div style="font-size:.75rem;color:var(--muted);">' + svc.unit + '</div><div class="svc-margin" id="margin-' + svc.id + '"></div></div>').join('');
   }
 }
 
 function renderDiscounts() {
   const grid = document.getElementById('discount-grid');
-  grid.innerHTML = DISCOUNT_TIERS.map((t, i) => `
-    <div class="discount-card">
-      <label>${t.label}</label>
-      <input type="number" min="0" max="80" value="${discounts[i]}" 
-             onchange="discounts[${i}]=parseInt(this.value)||0;recalcAll()" 
-             style="width:70px;text-align:center;margin:6px auto;display:block;">
-      <div style="font-size:.7rem;color:var(--muted);">% de remise</div>
-    </div>
-  `).join('');
+  grid.innerHTML = DISCOUNT_TIERS.map((t, i) => '<div class="discount-card"><label>' + t.label + '</label><input type="number" min="0" max="80" value="' + discounts[i] + '" onchange="discounts[' + i + ']=parseInt(this.value)||0;recalcAll()" style="width:70px;text-align:center;margin:6px auto;display:block;"><div style="font-size:.7rem;color:var(--muted);">% de remise</div></div>').join('');
 }
 
 function getMarginClass(pct) {
@@ -332,16 +359,15 @@ function getMarginClass(pct) {
 }
 
 function recalcAll() {
-  // Update margins
-  for (const [catKey, svcs] of Object.entries(SERVICES)) {
+  for (const svcs of Object.values(SERVICES)) {
     for (const svc of svcs) {
       const price = prices[svc.id];
       const cost = svc.costPerUnit;
       const margin = price > 0 ? ((price - cost) / price * 100) : 0;
-      const el = document.getElementById(`margin-${svc.id}`);
+      const el = document.getElementById('margin-' + svc.id);
       if (el) {
-        el.textContent = `${margin.toFixed(0)}%`;
-        el.className = `svc-margin ${getMarginClass(margin)}`;
+        el.textContent = margin.toFixed(0) + '%';
+        el.className = 'svc-margin ' + getMarginClass(margin);
       }
     }
   }
@@ -356,130 +382,52 @@ function getDiscountPct(totalActions) {
 }
 
 function recalcSim() {
-  const sales = parseInt(document.getElementById('sim-sales').value) || 2;
-  const lotsPerSale = parseInt(document.getElementById('sim-lots').value) || 120;
-  const estimations = parseInt(document.getElementById('sim-estimations').value) || 30;
-  const qrPct = parseInt(document.getElementById('sim-qr-pct').value) || 15;
-  const superBuyers = parseInt(document.getElementById('sim-super').value) || 10;
-  const freeActions = parseInt(document.getElementById('free-actions')?.value) || 50;
+  let grandRevenue = 0, grandCost = 0, grandLots = 0;
+  const results = [];
 
-  const totalLots = sales * lotsPerSale;
-  const qrQuestions = Math.round(totalLots * qrPct / 100 * 2); // avg 2 questions per lot touched
+  for (const h of hotels) {
+    const r = calcHotelRevenue(h);
+    results.push(r);
 
-  // Calculate volumes per service
-  const volumes = {
-    estimation_complete: estimations,
-    seo_complet: totalLots,
-    classification: totalLots,
-    analyse_ia: Math.round(totalLots * 0.3), // 30% des lots
-    qr_ia: qrQuestions,
-    lia_dialogue: Math.round(superBuyers * 0.5), // 50% new sessions/month
-    lia_suggestions: Math.round(superBuyers * 2), // 2 batch/mois
-    validation_keyword: Math.round(superBuyers * 1.5),
-    synthese_alertes: Math.round(superBuyers * sales), // 1 per sale per super buyer
-  };
-
-  // Total actions
-  let totalActions = Object.values(volumes).reduce((a, b) => a + b, 0);
-  const billableActions = Math.max(0, totalActions - freeActions);
-  const discountPct = getDiscountPct(billableActions);
-
-  // Per-category breakdown
-  const catResults = {};
-  let grandTotalRevenue = 0;
-  let grandTotalCost = 0;
-
-  for (const [catKey, svcs] of Object.entries(SERVICES)) {
-    let catRevenue = 0, catCost = 0, catActions = 0;
-    const lines = [];
-
-    for (const svc of svcs) {
-      const vol = volumes[svc.id] || 0;
-      const rawRevenue = vol * prices[svc.id];
-      const revenue = rawRevenue * (1 - discountPct / 100);
-      const cost = vol * svc.costPerUnit;
-      catRevenue += revenue;
-      catCost += cost;
-      catActions += vol;
-      lines.push({ name: svc.name, vol, revenue, cost, unit: svc.unit });
+    const el = document.getElementById('hotel-result-' + h.id);
+    if (el) {
+      const margin = r.totalRevenue > 0 ? ((r.totalRevenue - r.totalCost) / r.totalRevenue * 100) : 0;
+      el.innerHTML = '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;">'
+        + '<div style="background:var(--surface2);border-radius:8px;padding:10px;text-align:center;"><div style="font-size:.68rem;color:var(--muted);">Lots/mois</div><div style="font-size:1rem;font-weight:700;">' + r.totalLots.toLocaleString('fr') + '</div></div>'
+        + '<div style="background:var(--gold-dim);border-radius:8px;padding:10px;text-align:center;"><div style="font-size:.68rem;color:var(--gold);">🔍 Estimation</div><div style="font-size:1rem;font-weight:700;color:var(--gold);">' + r.estimation.revenue.toFixed(0) + ' €</div><div style="font-size:.65rem;color:var(--muted);">' + r.estimation.volume + ' analyses</div></div>'
+        + '<div style="background:var(--green-dim);border-radius:8px;padding:10px;text-align:center;"><div style="font-size:.68rem;color:var(--green);">🚀 SEO</div><div style="font-size:1rem;font-weight:700;color:var(--green);">' + r.seo.revenue.toFixed(0) + ' €</div><div style="font-size:.65rem;color:var(--muted);">' + r.seo.volume + ' lots</div></div>'
+        + '<div style="background:var(--surface2);border-radius:8px;padding:10px;text-align:center;"><div style="font-size:.68rem;color:var(--muted);">Total / mois</div><div style="font-size:1rem;font-weight:700;">' + r.totalRevenue.toFixed(0) + ' €</div><div style="font-size:.65rem;color:' + (margin>=50?'var(--green)':'var(--orange)') + ';">marge ' + margin.toFixed(0) + '%</div></div>'
+        + '</div>';
     }
 
-    catResults[catKey] = { revenue: catRevenue, cost: catCost, actions: catActions, lines };
-    grandTotalRevenue += catRevenue;
-    grandTotalCost += catCost;
+    grandRevenue += r.totalRevenue;
+    grandCost += r.totalCost;
+    grandLots += r.totalLots;
   }
 
-  const grandMargin = grandTotalRevenue > 0 ? (grandTotalRevenue - grandTotalCost) / grandTotalRevenue * 100 : 0;
+  const grandMargin = grandRevenue > 0 ? ((grandRevenue - grandCost) / grandRevenue * 100) : 0;
+  const grandProfit = grandRevenue - grandCost;
 
-  // KPIs
-  const kpisEl = document.getElementById('sim-kpis');
-  kpisEl.innerHTML = `
-    <div class="kpi">
-      <label>Facture mensuelle client</label>
-      <div class="value" style="color:var(--gold)">${grandTotalRevenue.toFixed(0)} €</div>
-    </div>
-    <div class="kpi">
-      <label>Coût réel IA</label>
-      <div class="value" style="color:var(--muted)">${grandTotalCost.toFixed(0)} €</div>
-    </div>
-    <div class="kpi">
-      <label>Marge nette</label>
-      <div class="value" style="color:${grandMargin>=50?'var(--green)':grandMargin>=25?'var(--orange)':'var(--red)'}">${grandMargin.toFixed(0)}%</div>
-    </div>
-    <div class="kpi">
-      <label>Actions totales / mois</label>
-      <div class="value">${totalActions.toLocaleString('fr')}</div>
-    </div>
-    <div class="kpi">
-      <label>Remise appliquée</label>
-      <div class="value" style="color:var(--purple)">-${discountPct}%</div>
-    </div>
-    <div class="kpi">
-      <label>Profit mensuel</label>
-      <div class="value" style="color:var(--green)">${(grandTotalRevenue - grandTotalCost).toFixed(0)} €</div>
-    </div>
-  `;
+  const kpisEl = document.getElementById('consolidated-kpis');
+  if (kpisEl) {
+    kpisEl.innerHTML = ''
+      + '<div class="kpi"><label>Nb hôtels</label><div class="value">' + hotels.length + '</div></div>'
+      + '<div class="kpi"><label>Revenu mensuel total</label><div class="value" style="color:var(--gold)">' + grandRevenue.toFixed(0) + ' €</div></div>'
+      + '<div class="kpi"><label>Coût IA total</label><div class="value" style="color:var(--muted)">' + grandCost.toFixed(0) + ' €</div></div>'
+      + '<div class="kpi"><label>Profit mensuel</label><div class="value" style="color:var(--green)">' + grandProfit.toFixed(0) + ' €</div></div>'
+      + '<div class="kpi"><label>Marge globale</label><div class="value" style="color:' + (grandMargin>=50?'var(--green)':grandMargin>=25?'var(--orange)':'var(--red)') + '">' + grandMargin.toFixed(0) + '%</div></div>'
+      + '<div class="kpi"><label>Revenu annuel projeté</label><div class="value" style="color:var(--gold)">' + (grandRevenue * 12).toLocaleString('fr', {maximumFractionDigits:0}) + ' €</div></div>';
+  }
 
-  // Detail
-  const detailEl = document.getElementById('sim-detail');
-  const catLabels = { estimation: '🔍 Estimation', seo: '🚀 SEO', fideliser: '💙 Fidélisation', super: '⭐ Super-acheteurs' };
-  const catColors = { estimation: 'var(--gold)', seo: 'var(--green)', fideliser: 'var(--blue)', super: 'var(--purple)' };
-
-  let html = '';
-  for (const [catKey, res] of Object.entries(catResults)) {
-    const catMargin = res.revenue > 0 ? (res.revenue - res.cost) / res.revenue * 100 : 0;
-    html += `
-      <div style="margin-bottom:20px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:2px solid ${catColors[catKey]};">
-          <span style="font-weight:700;color:${catColors[catKey]};font-size:.85rem;">${catLabels[catKey]}</span>
-          <span style="font-size:.82rem;color:var(--muted);">${res.revenue.toFixed(0)} € — marge ${catMargin.toFixed(0)}%</span>
-        </div>
-    `;
-    for (const line of res.lines) {
-      html += `
-        <div class="sim-row">
-          <div class="sim-label">${line.name}</div>
-          <div class="sim-val" style="color:var(--muted)">${line.vol} ${line.unit.replace('/ ','')}</div>
-          <div class="sim-val">${line.revenue.toFixed(2)} €</div>
-          <div class="sim-val" style="color:var(--muted)">(coût: ${line.cost.toFixed(2)} €)</div>
-        </div>
-      `;
+  const detailEl = document.getElementById('consolidated-detail');
+  if (detailEl && results.length > 0) {
+    let html = '<table style="width:100%;border-collapse:collapse;font-size:.82rem;"><thead><tr style="border-bottom:2px solid var(--border);color:var(--muted);font-size:.72rem;text-transform:uppercase;"><th style="text-align:left;padding:8px 4px;">Hôtel</th><th style="text-align:right;padding:8px 4px;">Lots/mois</th><th style="text-align:right;padding:8px 4px;">🔍 Estimation</th><th style="text-align:right;padding:8px 4px;">🚀 SEO</th><th style="text-align:right;padding:8px 4px;">Total</th><th style="text-align:right;padding:8px 4px;">Coût</th><th style="text-align:right;padding:8px 4px;">Profit</th></tr></thead><tbody>';
+    for (const r of results) {
+      html += '<tr style="border-bottom:1px solid var(--border);"><td style="padding:8px 4px;font-weight:600;">' + r.name + '</td><td style="text-align:right;padding:8px 4px;">' + r.totalLots.toLocaleString('fr') + '</td><td style="text-align:right;padding:8px 4px;color:var(--gold);">' + r.estimation.revenue.toFixed(0) + ' €</td><td style="text-align:right;padding:8px 4px;color:var(--green);">' + r.seo.revenue.toFixed(0) + ' €</td><td style="text-align:right;padding:8px 4px;font-weight:700;">' + r.totalRevenue.toFixed(0) + ' €</td><td style="text-align:right;padding:8px 4px;color:var(--muted);">' + r.totalCost.toFixed(0) + ' €</td><td style="text-align:right;padding:8px 4px;color:var(--green);font-weight:600;">' + (r.totalRevenue - r.totalCost).toFixed(0) + ' €</td></tr>';
     }
-    html += '</div>';
+    html += '<tr style="border-top:2px solid var(--gold);font-weight:700;"><td style="padding:8px 4px;color:var(--gold);">TOTAL</td><td style="text-align:right;padding:8px 4px;">' + grandLots.toLocaleString('fr') + '</td><td style="text-align:right;padding:8px 4px;color:var(--gold);">' + results.reduce((s,r)=>s+r.estimation.revenue,0).toFixed(0) + ' €</td><td style="text-align:right;padding:8px 4px;color:var(--green);">' + results.reduce((s,r)=>s+r.seo.revenue,0).toFixed(0) + ' €</td><td style="text-align:right;padding:8px 4px;">' + grandRevenue.toFixed(0) + ' €</td><td style="text-align:right;padding:8px 4px;color:var(--muted);">' + grandCost.toFixed(0) + ' €</td><td style="text-align:right;padding:8px 4px;color:var(--green);">' + grandProfit.toFixed(0) + ' €</td></tr></tbody></table>';
+    detailEl.innerHTML = html;
   }
-  detailEl.innerHTML = html;
-}
-
-function setProfile(key) {
-  const p = PROFILES[key];
-  document.getElementById('sim-sales').value = p.sales;
-  document.getElementById('sim-lots').value = p.lots;
-  document.getElementById('sim-estimations').value = p.estimations;
-  document.getElementById('sim-qr-pct').value = p.qrPct;
-  document.getElementById('sim-super').value = p.superBuyers;
-  document.querySelectorAll('.profile-btn').forEach(b => b.classList.remove('active'));
-  event.target.classList.add('active');
-  recalcSim();
 }
 
 function switchTab(tab) {
@@ -488,14 +436,12 @@ function switchTab(tab) {
     t.classList.toggle('active', tabs[i] === tab);
   });
   document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
-  document.getElementById(`tab-${tab}`).classList.add('active');
+  document.getElementById('tab-' + tab).classList.add('active');
 }
 
 function exportCSV() {
-  let csv = '\uFEFF'; // BOM
+  let csv = '\uFEFF';
   csv += 'PRICING PAR CONVICTIONS - EXPORT\n\n';
-
-  // Prices
   csv += 'TARIFICATION\n';
   csv += 'Catégorie;Prestation;Coût réel €;Prix de vente €;Marge %\n';
   const catNames = { estimation: 'Estimation', seo: 'SEO', fideliser: 'Fidélisation', super: 'Super-acheteurs' };
@@ -503,20 +449,23 @@ function exportCSV() {
     for (const svc of svcs) {
       const p = prices[svc.id];
       const m = p > 0 ? ((p - svc.costPerUnit) / p * 100).toFixed(1) : '0';
-      csv += `${catNames[catKey]};${svc.name};${svc.costPerUnit};${p};${m}\n`;
+      csv += catNames[catKey] + ';' + svc.name + ';' + svc.costPerUnit + ';' + p + ';' + m + '\n';
     }
   }
-
+  csv += '\nSIMULATION HÔTELS\n';
+  csv += 'Hôtel;Ventes/mois;Lots/vente;Estimations/mois;Rev. Estimation €;Rev. SEO €;Total €;Coût €;Profit €\n';
+  for (const h of hotels) {
+    const r = calcHotelRevenue(h);
+    csv += r.name + ';' + h.sales + ';' + h.lotsPerSale + ';' + h.estimationsPerMonth + ';' + r.estimation.revenue.toFixed(2) + ';' + r.seo.revenue.toFixed(2) + ';' + r.totalRevenue.toFixed(2) + ';' + r.totalCost.toFixed(2) + ';' + (r.totalRevenue-r.totalCost).toFixed(2) + '\n';
+  }
   csv += '\nREMISES VOLUME\n';
   csv += 'Palier;Remise %\n';
-  DISCOUNT_TIERS.forEach((t, i) => {
-    csv += `${t.label};${discounts[i]}\n`;
-  });
+  DISCOUNT_TIERS.forEach((t, i) => { csv += t.label + ';' + discounts[i] + '\n'; });
 
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  a.href = url; a.download = `pricing-convictions-${new Date().toISOString().slice(0,10)}.csv`;
+  a.href = url; a.download = 'pricing-hotels-' + new Date().toISOString().slice(0,10) + '.csv';
   a.click(); URL.revokeObjectURL(url);
 }
 
