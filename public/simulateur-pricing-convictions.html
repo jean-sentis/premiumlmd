@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Pricing par Convictions — Simulateur</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <style>
   :root {
     --bg: #0f1117; --surface: #1a1d27; --surface2: #242836;
@@ -117,6 +118,7 @@
   <header>
     <h1>💰 Pricing par Convictions</h1>
     <p>Fixez vos prix de vente selon ce que le client peut payer, puis appliquez des remises volume</p>
+    <div id="save-status" style="margin-top:8px;font-size:.75rem;color:var(--muted);display:none;"></div>
   </header>
 
   <div class="tabs">
@@ -468,6 +470,108 @@ function exportCSV() {
   a.href = url; a.download = 'pricing-hotels-' + new Date().toISOString().slice(0,10) + '.csv';
   a.click(); URL.revokeObjectURL(url);
 }
+
+// ─── SUPABASE PERSISTENCE ───
+let sbClient = null;
+let currentUserId = null;
+let saveTimeout = null;
+let currentConfigId = null;
+
+function showSaveStatus(msg, color) {
+  const el = document.getElementById('save-status');
+  el.style.display = 'block';
+  el.style.color = color || 'var(--muted)';
+  el.textContent = msg;
+}
+
+async function autoSave() {
+  if (!sbClient || !currentUserId) return;
+  clearTimeout(saveTimeout);
+  saveTimeout = setTimeout(async () => {
+    showSaveStatus('💾 Sauvegarde…', 'var(--gold)');
+    const data = {
+      user_id: currentUserId,
+      config_name: 'Ma configuration',
+      prices: prices,
+      discounts: discounts,
+      hotels: hotels.map(h => ({ name: h.name, sales: h.sales, lotsPerSale: h.lotsPerSale, estimationsPerMonth: h.estimationsPerMonth })),
+      updated_at: new Date().toISOString()
+    };
+    try {
+      if (currentConfigId) {
+        const { error } = await sbClient.from('pricing_configs').update(data).eq('id', currentConfigId);
+        if (error) throw error;
+      } else {
+        const { data: inserted, error } = await sbClient.from('pricing_configs').insert(data).select('id').single();
+        if (error) throw error;
+        currentConfigId = inserted.id;
+      }
+      showSaveStatus('✓ Sauvegardé', 'var(--green)');
+    } catch (e) {
+      console.error('Save error:', e);
+      showSaveStatus('✗ Erreur de sauvegarde', 'var(--red)');
+    }
+  }, 800);
+}
+
+async function loadConfig() {
+  if (!sbClient || !currentUserId) return;
+  try {
+    const { data, error } = await sbClient
+      .from('pricing_configs')
+      .select('*')
+      .eq('user_id', currentUserId)
+      .order('updated_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (error) throw error;
+    if (data) {
+      currentConfigId = data.id;
+      if (data.prices) {
+        for (const [k, v] of Object.entries(data.prices)) {
+          prices[k] = v;
+        }
+      }
+      if (Array.isArray(data.discounts) && data.discounts.length) {
+        discounts = data.discounts;
+      }
+      if (Array.isArray(data.hotels) && data.hotels.length) {
+        hotels = [];
+        hotelIdCounter = 0;
+        for (const h of data.hotels) {
+          const id = hotelIdCounter++;
+          hotels.push({ id, name: h.name, sales: h.sales, lotsPerSale: h.lotsPerSale, estimationsPerMonth: h.estimationsPerMonth });
+        }
+      }
+      renderPricing();
+      renderDiscounts();
+      renderHotels();
+      recalcAll();
+      showSaveStatus('✓ Configuration chargée', 'var(--green)');
+    }
+  } catch (e) {
+    console.error('Load error:', e);
+  }
+}
+
+// Listen for Supabase session from parent React app
+window.addEventListener('message', async (event) => {
+  if (event.data && event.data.type === 'supabase-init') {
+    const { url, key, accessToken, userId } = event.data;
+    sbClient = supabase.createClient(url, key, {
+      global: { headers: { Authorization: 'Bearer ' + accessToken } }
+    });
+    currentUserId = userId;
+    await loadConfig();
+  }
+});
+
+// Patch recalcAll to trigger autoSave
+const _origRecalcAll = recalcAll;
+recalcAll = function() {
+  _origRecalcAll();
+  autoSave();
+};
 
 init();
 </script>
