@@ -232,19 +232,19 @@ const SERVICES = {
   ]
 };
 
-const DISCOUNT_TIERS = [
-  { label: '0 – 500', min: 0, max: 500, defaultDiscount: 0 },
-  { label: '501 – 2 000', min: 501, max: 2000, defaultDiscount: 10 },
-  { label: '2 001 – 5 000', min: 2001, max: 5000, defaultDiscount: 20 },
-  { label: '5 001 – 15 000', min: 5001, max: 15000, defaultDiscount: 30 },
-  { label: '15 001+', min: 15001, max: Infinity, defaultDiscount: 40 },
+const DEFAULT_TIERS = [
+  { min: 0, max: 500, discount: 0 },
+  { min: 501, max: 2000, discount: 10 },
+  { min: 2001, max: 5000, discount: 20 },
+  { min: 5001, max: 15000, discount: 30 },
+  { min: 15001, max: 999999, discount: 40 },
 ];
 
 const DISCOUNT_CATEGORIES = {
-  estimation: { label: '🔍 Estimation', color: 'var(--gold)', bg: 'var(--gold-dim)' },
-  seo: { label: '🚀 SEO', color: 'var(--green)', bg: 'var(--green-dim)' },
-  fideliser: { label: '💙 Fidélisation', color: 'var(--blue)', bg: 'var(--blue-dim)' },
-  super: { label: '⭐ Super-acheteurs', color: 'var(--purple)', bg: 'var(--purple-dim)' },
+  estimation: { label: '🔍 Estimation', unit: 'estimations', color: 'var(--gold)', bg: 'var(--gold-dim)' },
+  seo: { label: '🚀 SEO (lots)', unit: 'lots', color: 'var(--green)', bg: 'var(--green-dim)' },
+  fideliser: { label: '💙 Fidélisation', unit: 'actions', color: 'var(--blue)', bg: 'var(--blue-dim)' },
+  super: { label: '⭐ Super-acheteurs', unit: 'actions', color: 'var(--purple)', bg: 'var(--purple-dim)' },
 };
 
 // ─── STATE ───
@@ -260,7 +260,7 @@ function init() {
     }
   }
   for (const catKey of Object.keys(DISCOUNT_CATEGORIES)) {
-    discountsByCategory[catKey] = DISCOUNT_TIERS.map(t => t.defaultDiscount);
+    discountsByCategory[catKey] = DEFAULT_TIERS.map(t => ({ min: t.min, max: t.max, discount: t.discount }));
   }
 
   addHotel('Petit hôtel régional', 2, 80, 20);
@@ -368,15 +368,52 @@ function renderPricing() {
 function renderDiscounts() {
   const container = document.getElementById('discount-categories');
   container.innerHTML = Object.entries(DISCOUNT_CATEGORIES).map(([catKey, catMeta]) => {
-    const tierInputs = DISCOUNT_TIERS.map((t, i) =>
-      '<div class="discount-card"><label>' + t.label + '</label>'
-      + '<input type="number" min="0" max="80" value="' + (discountsByCategory[catKey]?.[i] ?? 0)
-      + '" onchange="discountsByCategory[\'' + catKey + '\'][' + i + ']=parseInt(this.value)||0;recalcAll()"'
-      + ' style="width:70px;text-align:center;margin:6px auto;display:block;">'
-      + '<div style="font-size:.7rem;color:var(--muted);">% remise</div></div>'
-    ).join('');
-    return '<div style="margin-bottom:20px;"><div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;padding:8px 12px;border-radius:8px;background:' + catMeta.bg + ';"><span style="font-size:.85rem;font-weight:600;color:' + catMeta.color + ';">' + catMeta.label + '</span></div><div class="discount-grid">' + tierInputs + '</div></div>';
+    const tiers = discountsByCategory[catKey];
+    const addBtn = '<button class="btn" style="background:' + catMeta.bg + ';color:' + catMeta.color + ';font-size:.72rem;padding:4px 10px;margin-left:auto;" onclick="addTier(\'' + catKey + '\')">+ Palier</button>';
+    const tierRows = tiers.map((t, i) => {
+      const isLast = i === tiers.length - 1;
+      return '<div style="display:grid;grid-template-columns:90px 12px 90px 90px 30px;gap:6px;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);">'
+        + '<div><input type="number" min="0" value="' + t.min + '" onchange="updateTier(\'' + catKey + '\',' + i + ',\'min\',this.value)" style="width:80px;text-align:right;font-size:.78rem;"></div>'
+        + '<span style="color:var(--muted);text-align:center;">→</span>'
+        + '<div><input type="number" min="0" value="' + (t.max >= 999999 ? '' : t.max) + '" placeholder="∞" onchange="updateTier(\'' + catKey + '\',' + i + ',\'max\',this.value)" style="width:80px;text-align:right;font-size:.78rem;"></div>'
+        + '<div><input type="number" min="0" max="80" value="' + t.discount + '" onchange="updateTier(\'' + catKey + '\',' + i + ',\'discount\',this.value)" style="width:70px;text-align:center;font-size:.78rem;font-weight:600;color:' + catMeta.color + ';"></div>'
+        + '<div>' + (tiers.length > 1 ? '<button onclick="removeTier(\'' + catKey + '\',' + i + ')" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:.9rem;" title="Supprimer">✕</button>' : '') + '</div>'
+        + '</div>';
+    }).join('');
+    const header = '<div style="display:grid;grid-template-columns:90px 12px 90px 90px 30px;gap:6px;padding:4px 0;font-size:.68rem;color:var(--muted);font-weight:600;">'
+      + '<div>Depuis</div><div></div><div>Jusqu\'à</div><div style="text-align:center;">% remise</div><div></div></div>';
+    return '<div style="margin-bottom:20px;background:var(--surface2);border-radius:10px;padding:14px 16px;">'
+      + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;"><span style="font-size:.85rem;font-weight:600;color:' + catMeta.color + ';">' + catMeta.label + '</span><span style="font-size:.7rem;color:var(--muted);">(' + catMeta.unit + '/mois)</span>' + addBtn + '</div>'
+      + header + tierRows
+      + '</div>';
   }).join('');
+}
+
+function addTier(catKey) {
+  const tiers = discountsByCategory[catKey];
+  const lastMax = tiers[tiers.length - 1]?.max || 0;
+  const newMin = lastMax >= 999999 ? lastMax : lastMax + 1;
+  tiers.push({ min: newMin, max: 999999, discount: 0 });
+  renderDiscounts();
+  recalcAll();
+}
+
+function removeTier(catKey, index) {
+  discountsByCategory[catKey].splice(index, 1);
+  renderDiscounts();
+  recalcAll();
+}
+
+function updateTier(catKey, index, field, value) {
+  const tier = discountsByCategory[catKey][index];
+  if (field === 'discount') {
+    tier.discount = parseInt(value) || 0;
+  } else if (field === 'min') {
+    tier.min = parseInt(value) || 0;
+  } else if (field === 'max') {
+    tier.max = value === '' ? 999999 : (parseInt(value) || 0);
+  }
+  recalcAll();
 }
 
 function getMarginClass(pct) {
@@ -402,9 +439,9 @@ function recalcAll() {
 }
 
 function getDiscountPct(catKey, totalActions) {
-  const catDiscounts = discountsByCategory[catKey] || discountsByCategory['estimation'] || [0,0,0,0,0];
-  for (let i = DISCOUNT_TIERS.length - 1; i >= 0; i--) {
-    if (totalActions >= DISCOUNT_TIERS[i].min) return catDiscounts[i];
+  const tiers = discountsByCategory[catKey] || [];
+  for (let i = tiers.length - 1; i >= 0; i--) {
+    if (totalActions >= tiers[i].min) return tiers[i].discount;
   }
   return 0;
 }
@@ -496,8 +533,9 @@ function exportCSV() {
   csv += '\nREMISES PAR CATÉGORIE\n';
   for (const [catKey, catMeta] of Object.entries(DISCOUNT_CATEGORIES)) {
     csv += catMeta.label + '\n';
-    csv += 'Palier;Remise %\n';
-    DISCOUNT_TIERS.forEach((t, i) => { csv += t.label + ';' + (discountsByCategory[catKey]?.[i] ?? 0) + '\n'; });
+    csv += 'Depuis;Jusqu\'à;Remise %\n';
+    const tiers = discountsByCategory[catKey] || [];
+    tiers.forEach(t => { csv += t.min + ';' + (t.max >= 999999 ? '∞' : t.max) + ';' + t.discount + '\n'; });
     csv += '\n';
   }
 
@@ -571,13 +609,20 @@ async function loadConfig() {
       }
       if (data.discounts) {
         if (Array.isArray(data.discounts)) {
-          // Legacy flat format: apply same discounts to all categories
+          // Legacy flat array format: convert to tier objects
           for (const catKey of Object.keys(DISCOUNT_CATEGORIES)) {
-            discountsByCategory[catKey] = [...data.discounts];
+            discountsByCategory[catKey] = DEFAULT_TIERS.map((t, i) => ({ min: t.min, max: t.max, discount: data.discounts[i] ?? 0 }));
           }
         } else if (typeof data.discounts === 'object') {
           for (const [catKey, arr] of Object.entries(data.discounts)) {
-            if (Array.isArray(arr)) discountsByCategory[catKey] = arr;
+            if (Array.isArray(arr)) {
+              // Check if new format (objects with min/max) or old per-cat format (plain numbers)
+              if (arr.length > 0 && typeof arr[0] === 'object') {
+                discountsByCategory[catKey] = arr;
+              } else {
+                discountsByCategory[catKey] = DEFAULT_TIERS.map((t, i) => ({ min: t.min, max: t.max, discount: arr[i] ?? 0 }));
+              }
+            }
           }
         }
       }
