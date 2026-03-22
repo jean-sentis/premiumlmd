@@ -553,7 +553,7 @@ async function loadConfig() {
         hotelIdCounter = 0;
         for (const h of data.hotels) {
           const id = hotelIdCounter++;
-          hotels.push({ id, name: h.name, sales: h.sales, lotsPerSale: h.lotsPerSale, estimationsPerMonth: h.estimationsPerMonth });
+          hotels.push({ id, name: h.name, sales: h.sales, lotsPerSale: h.lotsPerSale, estimationsPerMonth: h.estimationsPerMonth, count: h.count || 1 });
         }
       }
       renderPricing();
