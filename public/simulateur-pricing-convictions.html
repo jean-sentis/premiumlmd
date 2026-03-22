@@ -401,17 +401,19 @@ function recalcSim() {
     const el = document.getElementById('hotel-result-' + h.id);
     if (el) {
       const margin = r.totalRevenue > 0 ? ((r.totalRevenue - r.totalCost) / r.totalRevenue * 100) : 0;
-      el.innerHTML = '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;">'
-        + '<div style="background:var(--surface2);border-radius:8px;padding:10px;text-align:center;"><div style="font-size:.68rem;color:var(--muted);">Lots/mois</div><div style="font-size:1rem;font-weight:700;">' + r.totalLots.toLocaleString('fr') + '</div></div>'
-        + '<div style="background:var(--gold-dim);border-radius:8px;padding:10px;text-align:center;"><div style="font-size:.68rem;color:var(--gold);">🔍 Estimation</div><div style="font-size:1rem;font-weight:700;color:var(--gold);">' + r.estimation.revenue.toFixed(0) + ' €</div><div style="font-size:.65rem;color:var(--muted);">' + r.estimation.volume + ' analyses</div></div>'
-        + '<div style="background:var(--green-dim);border-radius:8px;padding:10px;text-align:center;"><div style="font-size:.68rem;color:var(--green);">🚀 SEO</div><div style="font-size:1rem;font-weight:700;color:var(--green);">' + r.seo.revenue.toFixed(0) + ' €</div><div style="font-size:.65rem;color:var(--muted);">' + r.seo.volume + ' lots</div></div>'
-        + '<div style="background:var(--surface2);border-radius:8px;padding:10px;text-align:center;"><div style="font-size:.68rem;color:var(--muted);">Total / mois</div><div style="font-size:1rem;font-weight:700;">' + r.totalRevenue.toFixed(0) + ' €</div><div style="font-size:.65rem;color:' + (margin>=50?'var(--green)':'var(--orange)') + ';">marge ' + margin.toFixed(0) + '%</div></div>'
+      const c = r.count;
+      el.innerHTML = '<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;">'
+        + '<div style="background:var(--gold-dim);border-radius:8px;padding:10px;text-align:center;"><div style="font-size:.68rem;color:var(--gold);">Nb HdV</div><div style="font-size:1.2rem;font-weight:700;color:var(--gold);">×' + c + '</div></div>'
+        + '<div style="background:var(--surface2);border-radius:8px;padding:10px;text-align:center;"><div style="font-size:.68rem;color:var(--muted);">Lots/mois</div><div style="font-size:1rem;font-weight:700;">' + (r.totalLots * c).toLocaleString('fr') + '</div></div>'
+        + '<div style="background:var(--gold-dim);border-radius:8px;padding:10px;text-align:center;"><div style="font-size:.68rem;color:var(--gold);">🔍 Estimation</div><div style="font-size:1rem;font-weight:700;color:var(--gold);">' + (r.estimation.revenue * c).toFixed(0) + ' €</div><div style="font-size:.65rem;color:var(--muted);">' + (r.estimation.volume * c) + ' analyses</div></div>'
+        + '<div style="background:var(--green-dim);border-radius:8px;padding:10px;text-align:center;"><div style="font-size:.68rem;color:var(--green);">🚀 SEO</div><div style="font-size:1rem;font-weight:700;color:var(--green);">' + (r.seo.revenue * c).toFixed(0) + ' €</div><div style="font-size:.65rem;color:var(--muted);">' + (r.seo.volume * c) + ' lots</div></div>'
+        + '<div style="background:var(--surface2);border-radius:8px;padding:10px;text-align:center;"><div style="font-size:.68rem;color:var(--muted);">Total / mois</div><div style="font-size:1rem;font-weight:700;">' + (r.totalRevenue * c).toFixed(0) + ' €</div><div style="font-size:.65rem;color:' + (margin>=50?'var(--green)':'var(--orange)') + ';">marge ' + margin.toFixed(0) + '%</div></div>'
         + '</div>';
     }
 
-    grandRevenue += r.totalRevenue;
-    grandCost += r.totalCost;
-    grandLots += r.totalLots;
+    grandRevenue += r.totalRevenue * r.count;
+    grandCost += r.totalCost * r.count;
+    grandLots += r.totalLots * r.count;
   }
 
   const grandMargin = grandRevenue > 0 ? ((grandRevenue - grandCost) / grandRevenue * 100) : 0;
