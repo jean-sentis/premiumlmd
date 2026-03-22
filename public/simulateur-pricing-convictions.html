@@ -368,15 +368,52 @@ function renderPricing() {
 function renderDiscounts() {
   const container = document.getElementById('discount-categories');
   container.innerHTML = Object.entries(DISCOUNT_CATEGORIES).map(([catKey, catMeta]) => {
-    const tierInputs = DISCOUNT_TIERS.map((t, i) =>
-      '<div class="discount-card"><label>' + t.label + '</label>'
-      + '<input type="number" min="0" max="80" value="' + (discountsByCategory[catKey]?.[i] ?? 0)
-      + '" onchange="discountsByCategory[\'' + catKey + '\'][' + i + ']=parseInt(this.value)||0;recalcAll()"'
-      + ' style="width:70px;text-align:center;margin:6px auto;display:block;">'
-      + '<div style="font-size:.7rem;color:var(--muted);">% remise</div></div>'
-    ).join('');
-    return '<div style="margin-bottom:20px;"><div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;padding:8px 12px;border-radius:8px;background:' + catMeta.bg + ';"><span style="font-size:.85rem;font-weight:600;color:' + catMeta.color + ';">' + catMeta.label + '</span></div><div class="discount-grid">' + tierInputs + '</div></div>';
+    const tiers = discountsByCategory[catKey];
+    const addBtn = '<button class="btn" style="background:' + catMeta.bg + ';color:' + catMeta.color + ';font-size:.72rem;padding:4px 10px;margin-left:auto;" onclick="addTier(\'' + catKey + '\')">+ Palier</button>';
+    const tierRows = tiers.map((t, i) => {
+      const isLast = i === tiers.length - 1;
+      return '<div style="display:grid;grid-template-columns:90px 12px 90px 90px 30px;gap:6px;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);">'
+        + '<div><input type="number" min="0" value="' + t.min + '" onchange="updateTier(\'' + catKey + '\',' + i + ',\'min\',this.value)" style="width:80px;text-align:right;font-size:.78rem;"></div>'
+        + '<span style="color:var(--muted);text-align:center;">→</span>'
+        + '<div><input type="number" min="0" value="' + (t.max >= 999999 ? '' : t.max) + '" placeholder="∞" onchange="updateTier(\'' + catKey + '\',' + i + ',\'max\',this.value)" style="width:80px;text-align:right;font-size:.78rem;"></div>'
+        + '<div><input type="number" min="0" max="80" value="' + t.discount + '" onchange="updateTier(\'' + catKey + '\',' + i + ',\'discount\',this.value)" style="width:70px;text-align:center;font-size:.78rem;font-weight:600;color:' + catMeta.color + ';"></div>'
+        + '<div>' + (tiers.length > 1 ? '<button onclick="removeTier(\'' + catKey + '\',' + i + ')" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:.9rem;" title="Supprimer">✕</button>' : '') + '</div>'
+        + '</div>';
+    }).join('');
+    const header = '<div style="display:grid;grid-template-columns:90px 12px 90px 90px 30px;gap:6px;padding:4px 0;font-size:.68rem;color:var(--muted);font-weight:600;">'
+      + '<div>Depuis</div><div></div><div>Jusqu\'à</div><div style="text-align:center;">% remise</div><div></div></div>';
+    return '<div style="margin-bottom:20px;background:var(--surface2);border-radius:10px;padding:14px 16px;">'
+      + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;"><span style="font-size:.85rem;font-weight:600;color:' + catMeta.color + ';">' + catMeta.label + '</span><span style="font-size:.7rem;color:var(--muted);">(' + catMeta.unit + '/mois)</span>' + addBtn + '</div>'
+      + header + tierRows
+      + '</div>';
   }).join('');
+}
+
+function addTier(catKey) {
+  const tiers = discountsByCategory[catKey];
+  const lastMax = tiers[tiers.length - 1]?.max || 0;
+  const newMin = lastMax >= 999999 ? lastMax : lastMax + 1;
+  tiers.push({ min: newMin, max: 999999, discount: 0 });
+  renderDiscounts();
+  recalcAll();
+}
+
+function removeTier(catKey, index) {
+  discountsByCategory[catKey].splice(index, 1);
+  renderDiscounts();
+  recalcAll();
+}
+
+function updateTier(catKey, index, field, value) {
+  const tier = discountsByCategory[catKey][index];
+  if (field === 'discount') {
+    tier.discount = parseInt(value) || 0;
+  } else if (field === 'min') {
+    tier.min = parseInt(value) || 0;
+  } else if (field === 'max') {
+    tier.max = value === '' ? 999999 : (parseInt(value) || 0);
+  }
+  recalcAll();
 }
 
 function getMarginClass(pct) {
@@ -402,9 +439,9 @@ function recalcAll() {
 }
 
 function getDiscountPct(catKey, totalActions) {
-  const catDiscounts = discountsByCategory[catKey] || discountsByCategory['estimation'] || [0,0,0,0,0];
-  for (let i = DISCOUNT_TIERS.length - 1; i >= 0; i--) {
-    if (totalActions >= DISCOUNT_TIERS[i].min) return catDiscounts[i];
+  const tiers = discountsByCategory[catKey] || [];
+  for (let i = tiers.length - 1; i >= 0; i--) {
+    if (totalActions >= tiers[i].min) return tiers[i].discount;
   }
   return 0;
 }
