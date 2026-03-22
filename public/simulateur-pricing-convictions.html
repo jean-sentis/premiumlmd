@@ -365,18 +365,11 @@ function recalcSim() {
 
   const totalLots = sales * lotsPerSale;
   const qrQuestions = Math.round(totalLots * qrPct / 100 * 2); // avg 2 questions per lot touched
-  const imagesPerLot = 2.5; // avg
 
   // Calculate volumes per service
   const volumes = {
     estimation_complete: estimations,
-    enrichissement_lot: totalLots,
-    meta_title: totalLots,
-    meta_description: totalLots,
-    alt_text: Math.round(totalLots * imagesPerLot),
-    keywords_longue_traine: totalLots,
-    jsonld: totalLots,
-    slug_seo: totalLots,
+    seo_complet: totalLots,
     classification: totalLots,
     analyse_ia: Math.round(totalLots * 0.3), // 30% des lots
     qr_ia: qrQuestions,
