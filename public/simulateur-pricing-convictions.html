@@ -296,9 +296,9 @@ function renderHotels() {
   container.innerHTML = hotels.map(h => `
     <div class="sim-panel" style="margin-bottom:16px;position:relative;">
       <button onclick="removeHotel(${h.id})" style="position:absolute;top:12px;right:14px;background:none;border:none;color:var(--red);cursor:pointer;font-size:1.1rem;" title="Supprimer">✕</button>
-      <div style="display:grid;grid-template-columns:2fr repeat(3,1fr);gap:12px;align-items:end;">
+      <div style="display:grid;grid-template-columns:2fr repeat(3,1fr) 90px;gap:12px;align-items:end;">
         <div>
-          <label style="font-size:.72rem;color:var(--muted);">Nom de l'hôtel</label>
+          <label style="font-size:.72rem;color:var(--muted);">Nom du profil</label>
           <input type="text" value="${h.name}" onchange="updateHotel(${h.id},'name',this.value)"
             style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:6px 8px;border-radius:6px;font-size:.82rem;width:100%;">
         </div>
@@ -313,6 +313,11 @@ function renderHotels() {
         <div>
           <label style="font-size:.72rem;color:var(--muted);">Estimations / mois</label>
           <input type="number" value="${h.estimationsPerMonth}" min="0" max="1000" oninput="updateHotel(${h.id},'estimationsPerMonth',this.value)">
+        </div>
+        <div>
+          <label style="font-size:.72rem;color:var(--gold);">Nb d'HdV</label>
+          <input type="number" value="${h.count}" min="1" max="200" oninput="updateHotel(${h.id},'count',this.value)"
+            style="border-color:var(--gold);color:var(--gold);font-weight:700;text-align:center;">
         </div>
       </div>
       <div id="hotel-result-${h.id}" style="margin-top:14px;"></div>
