@@ -493,9 +493,13 @@ function exportCSV() {
     const c = h.count || 1;
     csv += r.name + ';' + c + ';' + h.sales + ';' + h.lotsPerSale + ';' + h.estimationsPerMonth + ';' + (r.estimation.revenue*c).toFixed(2) + ';' + (r.seo.revenue*c).toFixed(2) + ';' + (r.totalRevenue*c).toFixed(2) + ';' + (r.totalCost*c).toFixed(2) + ';' + ((r.totalRevenue-r.totalCost)*c).toFixed(2) + '\n';
   }
-  csv += '\nREMISES VOLUME\n';
-  csv += 'Palier;Remise %\n';
-  DISCOUNT_TIERS.forEach((t, i) => { csv += t.label + ';' + discounts[i] + '\n'; });
+  csv += '\nREMISES PAR CATÉGORIE\n';
+  for (const [catKey, catMeta] of Object.entries(DISCOUNT_CATEGORIES)) {
+    csv += catMeta.label + '\n';
+    csv += 'Palier;Remise %\n';
+    DISCOUNT_TIERS.forEach((t, i) => { csv += t.label + ';' + (discountsByCategory[catKey]?.[i] ?? 0) + '\n'; });
+    csv += '\n';
+  }
 
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
