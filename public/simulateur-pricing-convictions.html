@@ -609,13 +609,20 @@ async function loadConfig() {
       }
       if (data.discounts) {
         if (Array.isArray(data.discounts)) {
-          // Legacy flat format: apply same discounts to all categories
+          // Legacy flat array format: convert to tier objects
           for (const catKey of Object.keys(DISCOUNT_CATEGORIES)) {
-            discountsByCategory[catKey] = [...data.discounts];
+            discountsByCategory[catKey] = DEFAULT_TIERS.map((t, i) => ({ min: t.min, max: t.max, discount: data.discounts[i] ?? 0 }));
           }
         } else if (typeof data.discounts === 'object') {
           for (const [catKey, arr] of Object.entries(data.discounts)) {
-            if (Array.isArray(arr)) discountsByCategory[catKey] = arr;
+            if (Array.isArray(arr)) {
+              // Check if new format (objects with min/max) or old per-cat format (plain numbers)
+              if (arr.length > 0 && typeof arr[0] === 'object') {
+                discountsByCategory[catKey] = arr;
+              } else {
+                discountsByCategory[catKey] = DEFAULT_TIERS.map((t, i) => ({ min: t.min, max: t.max, discount: arr[i] ?? 0 }));
+              }
+            }
           }
         }
       }
