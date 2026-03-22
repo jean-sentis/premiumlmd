@@ -565,8 +565,17 @@ async function loadConfig() {
           prices[k] = v;
         }
       }
-      if (Array.isArray(data.discounts) && data.discounts.length) {
-        discounts = data.discounts;
+      if (data.discounts) {
+        if (Array.isArray(data.discounts)) {
+          // Legacy flat format: apply same discounts to all categories
+          for (const catKey of Object.keys(DISCOUNT_CATEGORIES)) {
+            discountsByCategory[catKey] = [...data.discounts];
+          }
+        } else if (typeof data.discounts === 'object') {
+          for (const [catKey, arr] of Object.entries(data.discounts)) {
+            if (Array.isArray(arr)) discountsByCategory[catKey] = arr;
+          }
+        }
       }
       if (Array.isArray(data.hotels) && data.hotels.length) {
         hotels = [];
