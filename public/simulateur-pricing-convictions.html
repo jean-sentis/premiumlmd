@@ -468,10 +468,11 @@ function exportCSV() {
     }
   }
   csv += '\nSIMULATION HÔTELS\n';
-  csv += 'Hôtel;Ventes/mois;Lots/vente;Estimations/mois;Rev. Estimation €;Rev. SEO €;Total €;Coût €;Profit €\n';
+  csv += 'Hôtel;Nb HdV;Ventes/mois;Lots/vente;Estimations/mois;Rev. Estimation €;Rev. SEO €;Total €;Coût €;Profit €\n';
   for (const h of hotels) {
     const r = calcHotelRevenue(h);
-    csv += r.name + ';' + h.sales + ';' + h.lotsPerSale + ';' + h.estimationsPerMonth + ';' + r.estimation.revenue.toFixed(2) + ';' + r.seo.revenue.toFixed(2) + ';' + r.totalRevenue.toFixed(2) + ';' + r.totalCost.toFixed(2) + ';' + (r.totalRevenue-r.totalCost).toFixed(2) + '\n';
+    const c = h.count || 1;
+    csv += r.name + ';' + c + ';' + h.sales + ';' + h.lotsPerSale + ';' + h.estimationsPerMonth + ';' + (r.estimation.revenue*c).toFixed(2) + ';' + (r.seo.revenue*c).toFixed(2) + ';' + (r.totalRevenue*c).toFixed(2) + ';' + (r.totalCost*c).toFixed(2) + ';' + ((r.totalRevenue-r.totalCost)*c).toFixed(2) + '\n';
   }
   csv += '\nREMISES VOLUME\n';
   csv += 'Palier;Remise %\n';
