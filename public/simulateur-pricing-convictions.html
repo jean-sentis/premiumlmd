@@ -263,7 +263,7 @@ function init() {
   recalcAll();
 }
 
-function addHotel(name, sales, lots, estimations) {
+function addHotel(name, sales, lots, estimations, count) {
   const id = hotelIdCounter++;
   hotels.push({
     id,
@@ -271,6 +271,7 @@ function addHotel(name, sales, lots, estimations) {
     sales: sales || 3,
     lotsPerSale: lots || 120,
     estimationsPerMonth: estimations || 40,
+    count: count || 1,
   });
   renderHotels();
   recalcAll();
