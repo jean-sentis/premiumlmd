@@ -507,7 +507,7 @@ async function autoSave() {
       config_name: 'Ma configuration',
       prices: prices,
       discounts: discounts,
-      hotels: hotels.map(h => ({ name: h.name, sales: h.sales, lotsPerSale: h.lotsPerSale, estimationsPerMonth: h.estimationsPerMonth })),
+      hotels: hotels.map(h => ({ name: h.name, sales: h.sales, lotsPerSale: h.lotsPerSale, estimationsPerMonth: h.estimationsPerMonth, count: h.count || 1 })),
       updated_at: new Date().toISOString()
     };
     try {
