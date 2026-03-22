@@ -631,6 +631,39 @@ export type Database = {
           },
         ]
       }
+      pricing_configs: {
+        Row: {
+          config_name: string
+          created_at: string
+          discounts: Json
+          hotels: Json
+          id: string
+          prices: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          config_name?: string
+          created_at?: string
+          discounts?: Json
+          hotels?: Json
+          id?: string
+          prices?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          config_name?: string
+          created_at?: string
+          discounts?: Json
+          hotels?: Json
+          id?: string
+          prices?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           address: string | null
