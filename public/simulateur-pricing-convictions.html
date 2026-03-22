@@ -339,6 +339,7 @@ function calcHotelRevenue(h) {
 
   return {
     name: h.name,
+    count: h.count || 1,
     totalLots,
     estimation: { volume: h.estimationsPerMonth, revenue: estRevenue, cost: estCost },
     seo: { volume: totalLots, revenue: seoRevenue, cost: seoCost },
