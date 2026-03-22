@@ -366,8 +366,17 @@ function renderPricing() {
 }
 
 function renderDiscounts() {
-  const grid = document.getElementById('discount-grid');
-  grid.innerHTML = DISCOUNT_TIERS.map((t, i) => '<div class="discount-card"><label>' + t.label + '</label><input type="number" min="0" max="80" value="' + discounts[i] + '" onchange="discounts[' + i + ']=parseInt(this.value)||0;recalcAll()" style="width:70px;text-align:center;margin:6px auto;display:block;"><div style="font-size:.7rem;color:var(--muted);">% de remise</div></div>').join('');
+  const container = document.getElementById('discount-categories');
+  container.innerHTML = Object.entries(DISCOUNT_CATEGORIES).map(([catKey, catMeta]) => {
+    const tierInputs = DISCOUNT_TIERS.map((t, i) =>
+      '<div class="discount-card"><label>' + t.label + '</label>'
+      + '<input type="number" min="0" max="80" value="' + (discountsByCategory[catKey]?.[i] ?? 0)
+      + '" onchange="discountsByCategory[\'' + catKey + '\'][' + i + ']=parseInt(this.value)||0;recalcAll()"'
+      + ' style="width:70px;text-align:center;margin:6px auto;display:block;">'
+      + '<div style="font-size:.7rem;color:var(--muted);">% remise</div></div>'
+    ).join('');
+    return '<div style="margin-bottom:20px;"><div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;padding:8px 12px;border-radius:8px;background:' + catMeta.bg + ';"><span style="font-size:.85rem;font-weight:600;color:' + catMeta.color + ';">' + catMeta.label + '</span></div><div class="discount-grid">' + tierInputs + '</div></div>';
+  }).join('');
 }
 
 function getMarginClass(pct) {
@@ -392,9 +401,10 @@ function recalcAll() {
   recalcSim();
 }
 
-function getDiscountPct(totalActions) {
+function getDiscountPct(catKey, totalActions) {
+  const catDiscounts = discountsByCategory[catKey] || discountsByCategory['estimation'] || [0,0,0,0,0];
   for (let i = DISCOUNT_TIERS.length - 1; i >= 0; i--) {
-    if (totalActions >= DISCOUNT_TIERS[i].min) return discounts[i];
+    if (totalActions >= DISCOUNT_TIERS[i].min) return catDiscounts[i];
   }
   return 0;
 }
