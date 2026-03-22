@@ -533,8 +533,9 @@ function exportCSV() {
   csv += '\nREMISES PAR CATÉGORIE\n';
   for (const [catKey, catMeta] of Object.entries(DISCOUNT_CATEGORIES)) {
     csv += catMeta.label + '\n';
-    csv += 'Palier;Remise %\n';
-    DISCOUNT_TIERS.forEach((t, i) => { csv += t.label + ';' + (discountsByCategory[catKey]?.[i] ?? 0) + '\n'; });
+    csv += 'Depuis;Jusqu\'à;Remise %\n';
+    const tiers = discountsByCategory[catKey] || [];
+    tiers.forEach(t => { csv += t.min + ';' + (t.max >= 999999 ? '∞' : t.max) + ';' + t.discount + '\n'; });
     csv += '\n';
   }
 
