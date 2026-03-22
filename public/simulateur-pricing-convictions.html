@@ -233,16 +233,23 @@ const SERVICES = {
 };
 
 const DISCOUNT_TIERS = [
-  { label: '0 – 500 actions', min: 0, max: 500, defaultDiscount: 0 },
+  { label: '0 – 500', min: 0, max: 500, defaultDiscount: 0 },
   { label: '501 – 2 000', min: 501, max: 2000, defaultDiscount: 10 },
   { label: '2 001 – 5 000', min: 2001, max: 5000, defaultDiscount: 20 },
   { label: '5 001 – 15 000', min: 5001, max: 15000, defaultDiscount: 30 },
   { label: '15 001+', min: 15001, max: Infinity, defaultDiscount: 40 },
 ];
 
+const DISCOUNT_CATEGORIES = {
+  estimation: { label: '🔍 Estimation', color: 'var(--gold)', bg: 'var(--gold-dim)' },
+  seo: { label: '🚀 SEO', color: 'var(--green)', bg: 'var(--green-dim)' },
+  fideliser: { label: '💙 Fidélisation', color: 'var(--blue)', bg: 'var(--blue-dim)' },
+  super: { label: '⭐ Super-acheteurs', color: 'var(--purple)', bg: 'var(--purple-dim)' },
+};
+
 // ─── STATE ───
 let prices = {};
-let discounts = [];
+let discountsByCategory = {};
 let hotels = [];
 let hotelIdCounter = 0;
 
@@ -252,7 +259,9 @@ function init() {
       prices[svc.id] = svc.defaultPrice;
     }
   }
-  discounts = DISCOUNT_TIERS.map(t => t.defaultDiscount);
+  for (const catKey of Object.keys(DISCOUNT_CATEGORIES)) {
+    discountsByCategory[catKey] = DISCOUNT_TIERS.map(t => t.defaultDiscount);
+  }
 
   addHotel('Petit hôtel régional', 2, 80, 20);
   addHotel('Étude moyenne', 4, 150, 60);
