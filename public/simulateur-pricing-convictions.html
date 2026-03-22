@@ -416,7 +416,7 @@ function recalcSim() {
       + '<div class="kpi"><label>Coût IA total</label><div class="value" style="color:var(--muted)">' + grandCost.toFixed(0) + ' €</div></div>'
       + '<div class="kpi"><label>Profit mensuel</label><div class="value" style="color:var(--green)">' + grandProfit.toFixed(0) + ' €</div></div>'
       + '<div class="kpi"><label>Marge globale</label><div class="value" style="color:' + (grandMargin>=50?'var(--green)':grandMargin>=25?'var(--orange)':'var(--red)') + '">' + grandMargin.toFixed(0) + '%</div></div>'
-      + '<div class="kpi"><label>Revenu annuel projeté</label><div class="value" style="color:var(--gold)">' + (grandRevenue * 12).toLocaleString('fr', {maximumFractionDigits:0}) + ' €</div></div>';
+      + '<div class="kpi"><label>Marge annuelle projetée</label><div class="value" style="color:var(--gold)">' + (grandProfit * 12).toLocaleString('fr', {maximumFractionDigits:0}) + ' €</div></div>';
   }
 
   const detailEl = document.getElementById('consolidated-detail');
