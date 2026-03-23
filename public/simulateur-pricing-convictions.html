@@ -343,28 +343,23 @@ function calcHotelRevenue(h) {
   const seoPrice = prices['seo_complet'] || 0;
   const seoCostUnit = SERVICES.seo[0].costPerUnit;
 
-  // Volumes totaux (× nb HdV) pour déterminer le palier de remise
+  // Volumes totaux (× nb HdV) pour calcul par tranche
   const estVolumeTotal = h.estimationsPerMonth * c;
   const seoVolumeTotal = totalLots * c;
 
-  const estDiscountPct = getDiscountPct('estimation', estVolumeTotal);
-  const seoDiscountPct = getDiscountPct('seo', seoVolumeTotal);
+  const estTiered = calcTieredRevenue('estimation', estVolumeTotal, estimationPrice);
+  const seoTiered = calcTieredRevenue('seo', seoVolumeTotal, seoPrice);
 
-  const estPriceAfterDiscount = estimationPrice * (1 - estDiscountPct / 100);
-  const seoPriceAfterDiscount = seoPrice * (1 - seoDiscountPct / 100);
-
-  const estRevenue = h.estimationsPerMonth * estPriceAfterDiscount;
   const estCost = h.estimationsPerMonth * estimationCost;
-  const seoRevenue = totalLots * seoPriceAfterDiscount;
   const seoCost = totalLots * seoCostUnit;
 
   return {
     name: h.name,
     count: c,
     totalLots,
-    estimation: { volume: h.estimationsPerMonth, revenue: estRevenue, cost: estCost, discount: estDiscountPct },
-    seo: { volume: totalLots, revenue: seoRevenue, cost: seoCost, discount: seoDiscountPct },
-    totalRevenue: estRevenue + seoRevenue,
+    estimation: { volume: h.estimationsPerMonth, revenue: estTiered.revenue / c, cost: estCost, discount: estTiered.avgDiscount },
+    seo: { volume: totalLots, revenue: seoTiered.revenue / c, cost: seoCost, discount: seoTiered.avgDiscount },
+    totalRevenue: (estTiered.revenue + seoTiered.revenue) / c,
     totalCost: estCost + seoCost,
   };
 }
@@ -450,12 +445,27 @@ function recalcAll() {
   recalcSim();
 }
 
-function getDiscountPct(catKey, totalActions) {
-  const tiers = discountsByCategory[catKey] || [];
-  for (let i = tiers.length - 1; i >= 0; i--) {
-    if (totalActions >= tiers[i].min) return tiers[i].discount;
+// Calcul par tranche : chaque palier ne s'applique qu'aux unités de cette tranche
+function calcTieredRevenue(catKey, totalUnits, unitPrice) {
+  const tiers = (discountsByCategory[catKey] || []).slice().sort((a, b) => a.min - b.min);
+  let totalRevenue = 0;
+  let remaining = totalUnits;
+  let weightedDiscount = 0;
+
+  for (let i = 0; i < tiers.length && remaining > 0; i++) {
+    const tier = tiers[i];
+    const nextMin = (i + 1 < tiers.length) ? tiers[i + 1].min : Infinity;
+    const tierCapacity = Math.min(nextMin, tier.max + 1) - tier.min;
+    // How many units fall within the range [tier.min .. nextMin-1]
+    const unitsInRange = Math.min(remaining, tierCapacity > 0 ? tierCapacity : remaining);
+    const discountedPrice = unitPrice * (1 - tier.discount / 100);
+    totalRevenue += unitsInRange * discountedPrice;
+    weightedDiscount += unitsInRange * tier.discount;
+    remaining -= unitsInRange;
   }
-  return 0;
+
+  const avgDiscount = totalUnits > 0 ? weightedDiscount / totalUnits : 0;
+  return { revenue: totalRevenue, avgDiscount };
 }
 
 function recalcSim() {
