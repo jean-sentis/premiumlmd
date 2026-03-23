@@ -336,22 +336,34 @@ function renderHotels() {
 
 function calcHotelRevenue(h) {
   const totalLots = h.sales * h.lotsPerSale;
+  const c = h.count || 1;
+
   const estimationPrice = prices['estimation_complete'] || 0;
   const estimationCost = SERVICES.estimation[0].costPerUnit;
   const seoPrice = prices['seo_complet'] || 0;
   const seoCostUnit = SERVICES.seo[0].costPerUnit;
 
-  const estRevenue = h.estimationsPerMonth * estimationPrice;
+  // Volumes totaux (× nb HdV) pour déterminer le palier de remise
+  const estVolumeTotal = h.estimationsPerMonth * c;
+  const seoVolumeTotal = totalLots * c;
+
+  const estDiscountPct = getDiscountPct('estimation', estVolumeTotal);
+  const seoDiscountPct = getDiscountPct('seo', seoVolumeTotal);
+
+  const estPriceAfterDiscount = estimationPrice * (1 - estDiscountPct / 100);
+  const seoPriceAfterDiscount = seoPrice * (1 - seoDiscountPct / 100);
+
+  const estRevenue = h.estimationsPerMonth * estPriceAfterDiscount;
   const estCost = h.estimationsPerMonth * estimationCost;
-  const seoRevenue = totalLots * seoPrice;
+  const seoRevenue = totalLots * seoPriceAfterDiscount;
   const seoCost = totalLots * seoCostUnit;
 
   return {
     name: h.name,
-    count: h.count || 1,
+    count: c,
     totalLots,
-    estimation: { volume: h.estimationsPerMonth, revenue: estRevenue, cost: estCost },
-    seo: { volume: totalLots, revenue: seoRevenue, cost: seoCost },
+    estimation: { volume: h.estimationsPerMonth, revenue: estRevenue, cost: estCost, discount: estDiscountPct },
+    seo: { volume: totalLots, revenue: seoRevenue, cost: seoCost, discount: seoDiscountPct },
     totalRevenue: estRevenue + seoRevenue,
     totalCost: estCost + seoCost,
   };
