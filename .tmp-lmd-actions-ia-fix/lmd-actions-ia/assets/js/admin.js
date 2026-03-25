@@ -247,4 +247,45 @@
         });
     };
 
+    /* ══════════════════════════════════════════════ */
+    /* CSV EXPORT                                       */
+    /* ══════════════════════════════════════════════ */
+    window.lmdExportCSV = function(filter) {
+        lmdAjax('lmd_export_csv', { filter: filter || 'all' }, function(data) {
+            var blob = new Blob(['\uFEFF' + data.csv], { type: 'text/csv;charset=utf-8;' });
+            var url = URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.href = url;
+            a.download = data.filename || 'estimations.csv';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        });
+    };
+
+    /* ══════════════════════════════════════════════ */
+    /* SEARCH SIMILAR                                   */
+    /* ══════════════════════════════════════════════ */
+    window.lmdSearchSimilar = function(id) {
+        var $box = $('#lmd-similar-results');
+        $box.html('<p style="color:#64748b">🔍 Recherche en cours…</p>').show();
+        lmdAjax('lmd_search_similar', { id: id }, function(data) {
+            if (!data.results || data.results.length === 0) {
+                $box.html('<p style="color:#94a3b8">Aucune demande similaire trouvée.</p>');
+                return;
+            }
+            var html = '<h4>🔗 Demandes similaires (' + data.results.length + ')</h4><ul class="lmd-similar-list">';
+            data.results.forEach(function(r) {
+                var url = lmdAdmin.ajaxUrl.replace('admin-ajax.php', 'admin.php?page=lmd-estimations&view=detail&est_id=' + r.id);
+                html += '<li><a href="' + url + '">' + (r.nom || '#' + r.id) + '</a>';
+                html += ' <span class="lmd-tag lmd-tag--category">' + r.match_type + '</span>';
+                if (r.interest) html += ' ' + r.interest;
+                html += '<br><small style="color:#94a3b8">' + (r.description || '') + '</small></li>';
+            });
+            html += '</ul>';
+            $box.html(html);
+        });
+    };
+
 })(jQuery);
