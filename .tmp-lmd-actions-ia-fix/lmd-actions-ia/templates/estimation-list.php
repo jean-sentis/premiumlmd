@@ -52,11 +52,21 @@ $filters_config = [
 <?php else : ?>
 <div class="lmd-cards-grid">
     <?php foreach ($estimations as $est) :
-        $is_responded = ($est->status === 'responded');
-        $photos = json_decode($est->photo_urls ?: '[]', true);
-        $overdue_days = LMD_Estimation_Manager::get_overdue_days($est->created_at);
+        $status = (string) ($est->status ?? 'new');
+        $name = (string) ($est->nom ?? '');
+        $description = (string) ($est->description ?? '');
+        $interest_level = (string) ($est->interest_level ?? '');
+        $response_mode = (string) ($est->response_mode ?? '');
+        $delegate_to = (string) ($est->delegate_to ?? '');
+        $created_at = (string) ($est->created_at ?? '');
+        $source = (string) ($est->source ?? 'form');
+
+        $is_responded = ($status === 'responded');
+        $photos = json_decode((string)($est->photo_urls ?? '[]'), true);
+        if (!is_array($photos)) $photos = [];
+        $overdue_days = LMD_Estimation_Manager::get_overdue_days($created_at);
         $detail_url = add_query_arg(['page' => 'lmd-estimations', 'view' => 'detail', 'est_id' => $est->id], admin_url('admin.php'));
-        $interest_cfg = LMD_Estimation_Manager::INTEREST_LEVELS[$est->interest_level] ?? null;
+        $interest_cfg = LMD_Estimation_Manager::INTEREST_LEVELS[$interest_level] ?? null;
     ?>
     <a href="<?php echo esc_url($detail_url); ?>" class="lmd-est-card <?php echo $is_responded ? 'is-responded' : 'is-unread'; ?>"
        <?php if ($interest_cfg) : ?>style="border-color:<?php echo $interest_cfg['border']; ?>"<?php endif; ?>>
@@ -71,12 +81,12 @@ $filters_config = [
 
         <div class="lmd-est-card__body">
             <div class="lmd-est-card__header">
-                <strong class="lmd-est-card__name"><?php echo esc_html($est->nom); ?></strong>
+                <strong class="lmd-est-card__name"><?php echo esc_html($name !== '' ? $name : 'Sans nom'); ?></strong>
                 <?php if (!$is_responded) : ?>
                     <span class="lmd-unread-dot" title="Non lu"></span>
                 <?php endif; ?>
             </div>
-            <p class="lmd-est-card__desc"><?php echo esc_html(mb_strimwidth($est->description, 0, 100, '…')); ?></p>
+            <p class="lmd-est-card__desc"><?php echo esc_html(mb_strimwidth($description, 0, 100, '…')); ?></p>
             <div class="lmd-est-card__meta">
                 <?php if ($is_responded) : ?>
                     <span class="lmd-tag lmd-tag--ok">✓ Répondu</span>
@@ -86,15 +96,15 @@ $filters_config = [
                 <?php if ($overdue_days > 0) : ?>
                     <span class="lmd-tag lmd-tag--danger">+<?php echo $overdue_days; ?>j</span>
                 <?php endif; ?>
-                <?php echo LMD_Estimation_Manager::get_interest_badge($est->interest_level); ?>
-                <?php if ($est->response_mode === 'delegate' && $est->delegate_to) : ?>
-                    <span class="lmd-tag lmd-tag--info">→ <?php echo esc_html($est->delegate_to); ?></span>
+                <?php echo LMD_Estimation_Manager::get_interest_badge($interest_level); ?>
+                <?php if ($response_mode === 'delegate' && $delegate_to !== '') : ?>
+                    <span class="lmd-tag lmd-tag--info">→ <?php echo esc_html($delegate_to); ?></span>
                 <?php endif; ?>
             </div>
             <div class="lmd-est-card__date">
-                <?php echo date_i18n('d M Y · H:i', strtotime($est->created_at)); ?>
-                <?php if ($est->source !== 'form') : ?>
-                    <span>· <?php echo esc_html($est->source); ?></span>
+                <?php echo $created_at ? esc_html(date_i18n('d M Y · H:i', strtotime($created_at))) : '—'; ?>
+                <?php if ($source !== 'form' && $source !== '') : ?>
+                    <span>· <?php echo esc_html($source); ?></span>
                 <?php endif; ?>
             </div>
         </div>
