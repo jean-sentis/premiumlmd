@@ -1,8 +1,24 @@
 <?php if ( ! defined( 'ABSPATH' ) ) exit;
 $back_url = admin_url('admin.php?page=lmd-estimations');
+
+// Harden against legacy rows with missing columns
+$est->nom = (string) ( $est->nom ?? '' );
+$est->email = (string) ( $est->email ?? '' );
+$est->telephone = (string) ( $est->telephone ?? '' );
+$est->description = (string) ( $est->description ?? '' );
+$est->photo_urls = (string) ( $est->photo_urls ?? '[]' );
+$est->estimated_value = (string) ( $est->estimated_value ?? '' );
+$est->status = (string) ( $est->status ?? 'new' );
+$est->interest_level = (string) ( $est->interest_level ?? '' );
+$est->response_mode = (string) ( $est->response_mode ?? '' );
+$est->response_message = (string) ( $est->response_message ?? '' );
+$est->delegate_to = (string) ( $est->delegate_to ?? '' );
+$est->created_at = (string) ( $est->created_at ?? '' );
+
 $snippets = LMD_Email_Composer::get_snippets_config( $est->nom );
 $default_email = LMD_Email_Composer::build_default( $est, $ai );
 $photos = json_decode( $est->photo_urls ?: '[]', true );
+if ( ! is_array( $photos ) ) $photos = [];
 $overdue_days = LMD_Estimation_Manager::get_overdue_days($est->created_at);
 $interest_levels = LMD_Estimation_Manager::INTEREST_LEVELS;
 $current_interest = $est->interest_level;
@@ -15,7 +31,7 @@ global $wpdb;
 $nav_filter = sanitize_text_field( $_GET['filter'] ?? 'all' );
 $nav_where = "WHERE status != 'archived'";
 $nav_estimations = $wpdb->get_results(
-    "SELECT id, nom, status, photo_urls, interest_level FROM {$wpdb->prefix}lmd_estimations {$nav_where} ORDER BY created_at DESC LIMIT 60"
+    "SELECT * FROM {$wpdb->prefix}lmd_estimations {$nav_where} ORDER BY created_at DESC LIMIT 60"
 );
 ?>
 
@@ -28,8 +44,10 @@ $nav_estimations = $wpdb->get_results(
         <div class="lmd-nav-strip__list">
             <?php foreach ( $nav_estimations as $nav ) :
                 $is_current = ($nav->id == $est->id);
-                $nav_photos = json_decode($nav->photo_urls ?: '[]', true);
-                $is_nav_responded = ($nav->status === 'responded');
+                $nav_name = (string) ( $nav->nom ?? '' );
+                $nav_photos = json_decode((string)($nav->photo_urls ?? '[]'), true);
+                if ( ! is_array( $nav_photos ) ) $nav_photos = [];
+                $is_nav_responded = (($nav->status ?? '') === 'responded');
                 $detail_url = add_query_arg(['page'=>'lmd-estimations','view'=>'detail','est_id'=>$nav->id], admin_url('admin.php'));
             ?>
             <a href="<?php echo esc_url($detail_url); ?>"
@@ -41,7 +59,7 @@ $nav_estimations = $wpdb->get_results(
                         <span class="dashicons dashicons-format-image" style="opacity:.2;font-size:20px;line-height:40px"></span>
                     <?php endif; ?>
                 </div>
-                <span class="lmd-nav-strip__name"><?php echo esc_html( mb_strimwidth($nav->nom, 0, 12, '…') ); ?></span>
+                <span class="lmd-nav-strip__name"><?php echo esc_html( mb_strimwidth($nav_name, 0, 12, '…') ); ?></span>
                 <?php if ( ! $is_nav_responded ) : ?>
                     <span class="lmd-nav-strip__dot"></span>
                 <?php endif; ?>
