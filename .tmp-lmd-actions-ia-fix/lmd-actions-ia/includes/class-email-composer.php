@@ -17,10 +17,14 @@ class LMD_Email_Composer {
 
     const CLOSING = "Nous restons à votre disposition pour tout complément d'information.\n\nCordialement,\nL'équipe";
 
-    public static function get_snippets_config( string $seller_name ): array {
+    public static function get_snippets_config( $seller_name = '' ): array {
+        $safe_name = trim( (string) $seller_name );
         return [
-            'greetings' => array_map(function($tpl) use ($seller_name) {
-                return sprintf($tpl, $seller_name);
+            'greetings' => array_map(function($tpl) use ($safe_name) {
+                if ( strpos($tpl, '%s') !== false ) {
+                    return $safe_name !== '' ? sprintf($tpl, $safe_name) : 'Bonjour,';
+                }
+                return $tpl;
             }, self::GREETING_SNIPPETS),
             'intents'  => self::INTENT_SNIPPETS,
             'closing'  => self::CLOSING,
@@ -28,12 +32,13 @@ class LMD_Email_Composer {
     }
 
     public static function build_default( $est, $ai = [] ): string {
-        $msg  = sprintf("Bonjour %s,\n\n", $est->nom);
+        $name = trim( (string) ( $est->nom ?? '' ) );
+        $msg  = sprintf("Bonjour %s,\n\n", $name !== '' ? $name : 'Madame, Monsieur');
         $msg .= "Nous avons bien reçu votre demande et vous en remercions.\n\n";
         if (!empty($ai['questions_for_owner'])) {
             $msg .= "Pourriez-vous nous préciser :\n";
             foreach ($ai['questions_for_owner'] as $q) {
-                $msg .= "— $q\n";
+                $msg .= '— ' . trim((string) $q) . "\n";
             }
             $msg .= "\n";
         }
