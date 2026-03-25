@@ -3,14 +3,14 @@
  * Plugin Name: LMD Actions I.A.
  * Plugin URI:  https://lemarteaudigital.fr
  * Description: Plateforme modulaire de services IA pour commissaires-priseurs — Module principal : Aide à l'estimation.
- * Version:     3.3.0
+ * Version:     3.5.0
  * Author:      Le Marteau Digital
  * License:     GPL-2.0+
  * Text Domain: lmd-actions-ia
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'LMD_VERSION',    '3.3.0' );
+define( 'LMD_VERSION',    '3.5.0' );
 define( 'LMD_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'LMD_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 
@@ -22,6 +22,8 @@ require_once LMD_PLUGIN_DIR . 'includes/class-ai-connector.php';
 require_once LMD_PLUGIN_DIR . 'includes/class-email-composer.php';
 require_once LMD_PLUGIN_DIR . 'includes/class-shortcode-estimation.php';
 require_once LMD_PLUGIN_DIR . 'includes/class-schema-helpers.php';
+require_once LMD_PLUGIN_DIR . 'includes/class-magic-link-handler.php';
+require_once LMD_PLUGIN_DIR . 'includes/class-notifications.php';
 
 /* ═══════════════════════════════════════════ */
 /* ACTIVATION / MIGRATION                       */
@@ -34,6 +36,11 @@ function lmd_activate() {
     LMD_Schema_Helpers::seed_default_services();
     update_option( 'lmd_version', LMD_VERSION );
 }
+
+/* Deactivation */
+register_deactivation_hook( __FILE__, function() {
+    LMD_Notifications::deactivate();
+});
 
 /* ═══════════════════════════════════════════ */
 /* BOOT                                         */
@@ -53,4 +60,6 @@ add_action( 'plugins_loaded', function() {
     LMD_Admin_Menu::instance();
     LMD_Ajax_Handler::instance();
     LMD_Shortcode_Estimation::instance();
+    LMD_Magic_Link_Handler::instance();
+    LMD_Notifications::instance();
 });
