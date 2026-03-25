@@ -105,6 +105,13 @@ error_log("LMD Detail: Resolved " . count($photos) . " photo URL(s)");
             </div>
         </div>
 
+        <!-- ═══ COLOR LEGEND ═══ -->
+        <div class="lmd-color-legend">
+            <span class="lmd-color-legend__item"><span class="lmd-color-legend__dot lmd-color-legend__dot--ia"></span> IA</span>
+            <span class="lmd-color-legend__item"><span class="lmd-color-legend__dot lmd-color-legend__dot--cp"></span> Commissaire-priseur</span>
+            <span class="lmd-color-legend__item"><span class="lmd-color-legend__dot lmd-color-legend__dot--2a"></span> 2ème avis</span>
+        </div>
+
         <!-- ═══ SALE & SELLER ASSIGNMENT ═══ -->
         <div class="lmd-assignment-bar">
             <div class="lmd-assignment-item">
@@ -190,9 +197,9 @@ error_log("LMD Detail: Resolved " . count($photos) . " photo URL(s)");
                 </div>
             </div>
 
-            <!-- ▸ COL 2: Avis (tabs 1er/2ème) + Intérêt -->
+            <!-- ▸ COL 2: Avis (tabs 1er/2ème) + Intérêt — BLUE/PURPLE -->
             <div class="lmd-3col__panel lmd-3col__panel--avis">
-                <h3 class="lmd-panel-title">⚖️ Avis expert</h3>
+                <h3 class="lmd-panel-title lmd-panel-title--cp">⚖️ Avis expert</h3>
 
                 <!-- Interest selector -->
                 <div class="lmd-interest-selector">
@@ -206,22 +213,44 @@ error_log("LMD Detail: Resolved " . count($photos) . " photo URL(s)");
                     <?php endforeach; ?>
                 </div>
 
-                <!-- Tabs: 1er Avis / 2ème Avis -->
+                <!-- Tabs: 1er Avis (BLUE/CP) / 2ème Avis (PURPLE) -->
                 <div class="lmd-tabs" id="avis-tabs">
-                    <button class="lmd-tab is-active" data-tab="tab-1er-avis">1er Avis</button>
-                    <button class="lmd-tab" data-tab="tab-2eme-avis">2ème Avis</button>
+                    <button class="lmd-tab lmd-tab--cp is-active" data-tab="tab-1er-avis">🔵 1er Avis</button>
+                    <button class="lmd-tab lmd-tab--2a" data-tab="tab-2eme-avis">🟣 2ème Avis</button>
                 </div>
-                <div class="lmd-tab-content is-active" id="tab-1er-avis">
-                    <h4>Votre avis</h4>
-                    <textarea id="notes-textarea" class="lmd-textarea" rows="6"
+                <div class="lmd-tab-content lmd-tab-content--cp is-active" id="tab-1er-avis">
+                    <h4 style="color:var(--lmd-blue)">Votre avis (Commissaire-priseur)</h4>
+                    <textarea id="notes-textarea" class="lmd-textarea lmd-textarea--cp" rows="6"
                               placeholder="Vos observations, estimation, remarques (non visibles par le vendeur)…"><?php echo esc_textarea($est->auctioneer_notes); ?></textarea>
-                    <button class="button lmd-save-btn" onclick="lmdSaveNotes(<?php echo $est->id; ?>)">💾 Enregistrer</button>
+                    <button class="button lmd-save-btn lmd-save-btn--cp" onclick="lmdSaveNotes(<?php echo $est->id; ?>)">💾 Enregistrer</button>
                 </div>
-                <div class="lmd-tab-content" id="tab-2eme-avis">
-                    <h4>2ème avis</h4>
-                    <textarea id="opinion-textarea" class="lmd-textarea" rows="6"
+                <div class="lmd-tab-content lmd-tab-content--2a" id="tab-2eme-avis">
+                    <h4 style="color:var(--lmd-purple)">2ème avis (Expert externe)</h4>
+                    <textarea id="opinion-textarea" class="lmd-textarea lmd-textarea--2a" rows="6"
                               placeholder="Avis complémentaire, expertise externe…"><?php echo esc_textarea($est->second_opinion); ?></textarea>
-                    <button class="button lmd-save-btn" onclick="lmdSaveOpinion(<?php echo $est->id; ?>)">💾 Enregistrer</button>
+                    <button class="button lmd-save-btn lmd-save-btn--2a" onclick="lmdSaveOpinion(<?php echo $est->id; ?>)">💾 Enregistrer</button>
+
+                    <!-- Magic Link for 2nd opinion -->
+                    <div class="lmd-magic-link-box">
+                        <h5>🔗 Inviter un expert externe</h5>
+                        <p style="font-size:11px;color:var(--lmd-gray);margin:0 0 8px">
+                            Envoyez un lien sécurisé à un expert pour qu'il puisse donner son avis directement.
+                        </p>
+                        <div class="lmd-magic-link-input">
+                            <input type="email" id="magic-link-email" placeholder="email@expert.com"
+                                   value="<?php echo esc_attr($est->delegate_to ?: ''); ?>">
+                            <button class="lmd-magic-link-btn" onclick="lmdSendMagicLink(<?php echo $est->id; ?>)">
+                                📤 Envoyer le lien
+                            </button>
+                        </div>
+                        <div id="magic-link-status" class="lmd-magic-link-status"></div>
+                        <?php if (!empty($est->magic_link_sent_at)) : ?>
+                            <p class="lmd-magic-link-status is-sent">
+                                ✓ Lien envoyé le <?php echo esc_html(date_i18n('d/m/Y à H:i', strtotime($est->magic_link_sent_at))); ?>
+                                à <?php echo esc_html($est->magic_link_email ?? ''); ?>
+                            </p>
+                        <?php endif; ?>
+                    </div>
                 </div>
             </div>
 
@@ -332,10 +361,10 @@ error_log("LMD Detail: Resolved " . count($photos) . " photo URL(s)");
             </div>
         </div>
 
-        <!-- ═══ AI ANALYSIS PANEL (full-width, expandable) ═══ -->
+        <!-- ═══ AI ANALYSIS PANEL (full-width, expandable) — GREEN themed ═══ -->
         <div class="lmd-ai-section">
             <button class="lmd-ai-toggle" onclick="document.getElementById('ai-panel').classList.toggle('is-open')">
-                ✨ Aide à la décision (I.A.)
+                🟢 Aide à la décision (I.A.)
                 <span class="lmd-ai-toggle__arrow">▼</span>
             </button>
 
@@ -344,7 +373,8 @@ error_log("LMD Detail: Resolved " . count($photos) . " photo URL(s)");
                     <!-- No analysis yet -->
                     <div class="lmd-ai-empty">
                         <p style="color:#94a3b8;font-size:14px">Aucune analyse IA effectuée pour cette demande.</p>
-                        <button class="button button-primary button-hero" onclick="lmdRunAI(<?php echo $est->id; ?>, 'full')">
+                        <button class="button button-primary button-hero" style="background:var(--lmd-green);border-color:var(--lmd-green)"
+                                onclick="lmdRunAI(<?php echo $est->id; ?>, 'full')">
                             🚀 Lancer l'analyse complète
                         </button>
                         <p class="description" style="margin-top:8px">Identification + Google Lens + Recherche marché + Synthèse</p>
@@ -465,7 +495,8 @@ error_log("LMD Detail: Resolved " . count($photos) . " photo URL(s)");
                         <?php endif; ?>
 
                         <div class="lmd-ai-actions">
-                            <button class="button" onclick="lmdRunAI(<?php echo $est->id; ?>, 'full')">🔄 Ré-analyser</button>
+                            <button class="button" style="background:var(--lmd-green);color:#fff;border-color:var(--lmd-green)"
+                                    onclick="lmdRunAI(<?php echo $est->id; ?>, 'full')">🔄 Ré-analyser</button>
                             <?php if (!empty($ai['ai_analyzed_at']) || !empty($est->ai_analyzed_at)) : ?>
                                 <span class="description" style="margin-left:8px">
                                     Dernière analyse : <?php echo esc_html(date_i18n('d/m/Y à H:i', strtotime($est->ai_analyzed_at ?? ''))); ?>

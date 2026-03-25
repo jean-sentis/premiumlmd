@@ -91,7 +91,6 @@
     /* ── Assign sale / seller ── */
     window.lmdAssignSale = function(id, saleId) {
         lmdAjax('lmd_assign_sale', { id: id, sale_id: saleId || 0 }, function() {
-            // No reload, just confirm
             var $sel = $('#assign-sale');
             $sel.css('border-color', '#22c55e');
             setTimeout(function() { $sel.css('border-color', ''); }, 1500);
@@ -105,7 +104,100 @@
         });
     };
 
-    /* ── AI analysis with stepper + progressive green chrome tabs ── */
+    /* ══════════════════════════════════════════════ */
+    /* MULTI-SELECT / BULK ACTIONS                     */
+    /* ══════════════════════════════════════════════ */
+    window.lmdUpdateBulkCount = function() {
+        var $checked = $('.lmd-bulk-check:checked');
+        var count = $checked.length;
+        var $bar = $('#lmd-bulk-bar');
+
+        if (count > 0) {
+            $bar.show();
+        } else {
+            $bar.hide();
+        }
+        $('#lmd-bulk-count').text(count + ' sélectionné(s)');
+        $('.lmd-bulk-num').text(count);
+
+        // Visual feedback on selected cards
+        $('.lmd-est-card-wrapper').each(function() {
+            var $cb = $(this).find('.lmd-bulk-check');
+            $(this).toggleClass('is-selected', $cb.is(':checked'));
+        });
+    };
+
+    window.lmdToggleSelectAll = function(el) {
+        var checked = el.checked;
+        $('.lmd-bulk-check').prop('checked', checked);
+        lmdUpdateBulkCount();
+    };
+
+    window.lmdBulkCancel = function() {
+        $('.lmd-bulk-check').prop('checked', false);
+        $('#lmd-selectall').prop('checked', false);
+        lmdUpdateBulkCount();
+    };
+
+    window.lmdBulkAI = function() {
+        var ids = [];
+        $('.lmd-bulk-check:checked').each(function() { ids.push($(this).val()); });
+        if (ids.length === 0) { alert('Sélectionnez au moins une demande'); return; }
+        if (!confirm('Lancer l\'analyse IA sur ' + ids.length + ' demande(s) ?\n\nCela peut prendre plusieurs minutes.')) return;
+
+        // Sequential AI launch
+        var $bar = $('#lmd-bulk-bar');
+        $bar.find('.lmd-bulk-btn--ai').prop('disabled', true).text('⏳ En cours…');
+        var idx = 0;
+        function nextAI() {
+            if (idx >= ids.length) {
+                alert('Analyse terminée pour ' + ids.length + ' demande(s) ✓');
+                location.reload();
+                return;
+            }
+            $('#lmd-bulk-count').text('Analyse ' + (idx + 1) + '/' + ids.length + '…');
+            lmdAjax('lmd_run_ai', { id: ids[idx], depth: 'full' }, function() {
+                idx++;
+                nextAI();
+            });
+        }
+        nextAI();
+    };
+
+    window.lmdBulkDelete = function() {
+        var ids = [];
+        $('.lmd-bulk-check:checked').each(function() { ids.push($(this).val()); });
+        if (ids.length === 0) { alert('Sélectionnez au moins une demande'); return; }
+        if (!confirm('⚠️ Supprimer définitivement ' + ids.length + ' demande(s) ?\n\nCette action est irréversible.')) return;
+        if (!confirm('Êtes-vous vraiment sûr ? ' + ids.length + ' demande(s) seront supprimées.')) return;
+
+        lmdAjax('lmd_bulk_delete', { ids: ids }, function() {
+            alert(ids.length + ' demande(s) supprimée(s) ✓');
+            location.reload();
+        });
+    };
+
+    /* ══════════════════════════════════════════════ */
+    /* MAGIC LINK (2nd opinion)                        */
+    /* ══════════════════════════════════════════════ */
+    window.lmdSendMagicLink = function(id) {
+        var email = $('#magic-link-email').val().trim();
+        if (!email || email.indexOf('@') === -1) {
+            $('#magic-link-status').text('Veuillez saisir un email valide').removeClass('is-sent').addClass('is-error');
+            return;
+        }
+        $('#magic-link-status').text('Envoi en cours…').removeClass('is-sent is-error');
+        lmdAjax('lmd_send_magic_link', { id: id, email: email }, function(data) {
+            $('#magic-link-status')
+                .text('✓ Lien envoyé à ' + email)
+                .addClass('is-sent')
+                .removeClass('is-error');
+        });
+    };
+
+    /* ══════════════════════════════════════════════ */
+    /* AI analysis with stepper + progressive green    */
+    /* ══════════════════════════════════════════════ */
     window.lmdRunAI = function(id, depth) {
         var $loading = $('#ai-loading');
         var $steps = $loading.find('.lmd-step');

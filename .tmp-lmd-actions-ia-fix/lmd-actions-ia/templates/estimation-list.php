@@ -120,6 +120,25 @@ $filters_config = [
 </div>
 <?php endif; ?>
 
+<!-- ═══ BULK ACTIONS BAR (hidden until selection) ═══ -->
+<div id="lmd-bulk-bar" class="lmd-bulk-bar" style="display:none">
+    <label class="lmd-bulk-selectall">
+        <input type="checkbox" id="lmd-selectall" onchange="lmdToggleSelectAll(this)"> Tout sélectionner
+    </label>
+    <span id="lmd-bulk-count" class="lmd-bulk-count">0 sélectionné(s)</span>
+    <div class="lmd-bulk-actions">
+        <button class="button lmd-bulk-btn lmd-bulk-btn--ai" onclick="lmdBulkAI()">
+            🚀 Lancer l'IA (<span class="lmd-bulk-num">0</span>)
+        </button>
+        <button class="button lmd-bulk-btn lmd-bulk-btn--delete" onclick="lmdBulkDelete()">
+            🗑️ Supprimer (<span class="lmd-bulk-num">0</span>)
+        </button>
+        <button class="button lmd-bulk-btn" onclick="lmdBulkCancel()">
+            ✕ Annuler
+        </button>
+    </div>
+</div>
+
 <!-- ═══ CARDS GRID ═══ -->
 <?php if (empty($estimations)) : ?>
     <div class="lmd-empty">
@@ -153,64 +172,70 @@ $filters_config = [
         $interest_cfg = LMD_Estimation_Manager::INTEREST_LEVELS[$interest_level] ?? null;
         $description_preview = $description !== '' ? mb_strimwidth($description, 0, 100, '…') : 'Sans description';
     ?>
-    <a href="<?php echo esc_url($detail_url); ?>"
-       class="lmd-est-card <?php echo $is_responded ? 'is-responded' : ($status === 'new' ? 'is-unread' : ''); ?>"
-       <?php if ($interest_cfg) : ?>style="border-color:<?php echo $interest_cfg['border']; ?>"<?php endif; ?>>
+    <div class="lmd-est-card-wrapper" data-est-id="<?php echo $est_id; ?>">
+        <!-- Checkbox for multi-select -->
+        <label class="lmd-card-checkbox" onclick="event.stopPropagation()">
+            <input type="checkbox" class="lmd-bulk-check" value="<?php echo $est_id; ?>" onchange="lmdUpdateBulkCount()">
+        </label>
+        <a href="<?php echo esc_url($detail_url); ?>"
+           class="lmd-est-card <?php echo $is_responded ? 'is-responded' : ($status === 'new' ? 'is-unread' : ''); ?>"
+           <?php if ($interest_cfg) : ?>style="border-color:<?php echo $interest_cfg['border']; ?>"<?php endif; ?>>
 
-        <div class="lmd-est-card__photo">
-            <?php if (!empty($photos[0])) : ?>
-                <img src="<?php echo esc_url($photos[0]); ?>" alt="<?php echo esc_attr($name); ?>"
-                     onerror="this.style.display='none';this.nextElementSibling&&(this.nextElementSibling.style.display='block')">
-                <span class="dashicons dashicons-format-image" style="display:none;font-size:32px;color:#cbd5e1"></span>
-                <?php if (count($photos) > 1) : ?>
-                    <span class="lmd-est-card__photo-count"><?php echo count($photos); ?> 📷</span>
-                <?php endif; ?>
-            <?php else : ?>
-                <span class="dashicons dashicons-format-image" style="font-size:32px;color:#cbd5e1"></span>
-            <?php endif; ?>
-        </div>
-
-        <div class="lmd-est-card__body">
-            <div class="lmd-est-card__header">
-                <strong class="lmd-est-card__name"><?php echo esc_html($name !== '' ? $name : 'Sans nom'); ?></strong>
-                <?php if ($status === 'new') : ?>
-                    <span class="lmd-unread-dot" title="Non lu"></span>
-                <?php endif; ?>
-            </div>
-            <p class="lmd-est-card__desc"><?php echo esc_html($description_preview); ?></p>
-            <div class="lmd-est-card__meta">
-                <?php if ($is_responded) : ?>
-                    <span class="lmd-tag lmd-tag--ok">✓ Répondu</span>
-                <?php elseif ($status === 'archived') : ?>
-                    <span class="lmd-tag" style="background:#f1f5f9;color:#64748b;border-color:#d1d5db">Archivée</span>
+            <div class="lmd-est-card__photo">
+                <?php if (!empty($photos[0])) : ?>
+                    <img src="<?php echo esc_url($photos[0]); ?>" alt="<?php echo esc_attr($name); ?>"
+                         onerror="this.style.display='none';this.nextElementSibling&&(this.nextElementSibling.style.display='block')">
+                    <span class="dashicons dashicons-format-image" style="display:none;font-size:32px;color:#cbd5e1"></span>
+                    <?php if (count($photos) > 1) : ?>
+                        <span class="lmd-est-card__photo-count"><?php echo count($photos); ?> 📷</span>
+                    <?php endif; ?>
                 <?php else : ?>
-                    <span class="lmd-tag lmd-tag--pending">En attente</span>
-                <?php endif; ?>
-                <?php if ($overdue_days > 0 && !$is_responded) : ?>
-                    <span class="lmd-tag lmd-tag--danger">+<?php echo $overdue_days; ?>j</span>
-                <?php endif; ?>
-                <?php echo LMD_Estimation_Manager::get_interest_badge($interest_level); ?>
-                <?php if ($category !== '') : ?>
-                    <span class="lmd-tag lmd-tag--category"><?php echo esc_html(ucfirst(str_replace('_',' ',$category))); ?></span>
-                <?php endif; ?>
-                <?php if ($sale_title !== '') : ?>
-                    <span class="lmd-tag lmd-tag--info">🏷️ <?php echo esc_html(mb_strimwidth($sale_title, 0, 20, '…')); ?></span>
-                <?php endif; ?>
-                <?php if ($response_mode === 'delegate' && $delegate_to !== '') : ?>
-                    <span class="lmd-tag lmd-tag--info">→ <?php echo esc_html($delegate_to); ?></span>
+                    <span class="dashicons dashicons-format-image" style="font-size:32px;color:#cbd5e1"></span>
                 <?php endif; ?>
             </div>
-            <div class="lmd-est-card__date">
-                <?php echo $created_at ? esc_html(date_i18n('d M Y · H:i', strtotime($created_at))) : '—'; ?>
-                <?php if ($source !== 'form' && $source !== '') : ?>
-                    <span>· <span class="lmd-tag lmd-tag--source" style="font-size:9px;padding:1px 4px"><?php echo esc_html($source); ?></span></span>
-                <?php endif; ?>
-                <?php if ($seller_linked !== '') : ?>
-                    <span>· 👤 <?php echo esc_html($seller_linked); ?></span>
-                <?php endif; ?>
+
+            <div class="lmd-est-card__body">
+                <div class="lmd-est-card__header">
+                    <strong class="lmd-est-card__name"><?php echo esc_html($name !== '' ? $name : 'Sans nom'); ?></strong>
+                    <?php if ($status === 'new') : ?>
+                        <span class="lmd-unread-dot" title="Non lu"></span>
+                    <?php endif; ?>
+                </div>
+                <p class="lmd-est-card__desc"><?php echo esc_html($description_preview); ?></p>
+                <div class="lmd-est-card__meta">
+                    <?php if ($is_responded) : ?>
+                        <span class="lmd-tag lmd-tag--ok">✓ Répondu</span>
+                    <?php elseif ($status === 'archived') : ?>
+                        <span class="lmd-tag" style="background:#f1f5f9;color:#64748b;border-color:#d1d5db">Archivée</span>
+                    <?php else : ?>
+                        <span class="lmd-tag lmd-tag--pending">En attente</span>
+                    <?php endif; ?>
+                    <?php if ($overdue_days > 0 && !$is_responded) : ?>
+                        <span class="lmd-tag lmd-tag--danger">+<?php echo $overdue_days; ?>j</span>
+                    <?php endif; ?>
+                    <?php echo LMD_Estimation_Manager::get_interest_badge($interest_level); ?>
+                    <?php if ($category !== '') : ?>
+                        <span class="lmd-tag lmd-tag--category"><?php echo esc_html(ucfirst(str_replace('_',' ',$category))); ?></span>
+                    <?php endif; ?>
+                    <?php if ($sale_title !== '') : ?>
+                        <span class="lmd-tag lmd-tag--info">🏷️ <?php echo esc_html(mb_strimwidth($sale_title, 0, 20, '…')); ?></span>
+                    <?php endif; ?>
+                    <?php if ($response_mode === 'delegate' && $delegate_to !== '') : ?>
+                        <span class="lmd-tag lmd-tag--info">→ <?php echo esc_html($delegate_to); ?></span>
+                    <?php endif; ?>
+                </div>
+                <div class="lmd-est-card__date">
+                    <?php echo $created_at ? esc_html(date_i18n('d M Y · H:i', strtotime($created_at))) : '—'; ?>
+                    <?php if ($source !== 'form' && $source !== '') : ?>
+                        <span>· <span class="lmd-tag lmd-tag--source" style="font-size:9px;padding:1px 4px"><?php echo esc_html($source); ?></span></span>
+                    <?php endif; ?>
+                    <?php if ($seller_linked !== '') : ?>
+                        <span>· 👤 <?php echo esc_html($seller_linked); ?></span>
+                    <?php endif; ?>
+                </div>
             </div>
-        </div>
-    </a>
+        </a>
+    </div>
     <?php endforeach; ?>
 </div>
 <?php endif; ?>
