@@ -68,6 +68,7 @@ class LMD_Schema_Helpers {
         $sal = $wpdb->prefix . 'lmd_sales';
         $sel = $wpdb->prefix . 'lmd_sellers';
         $mlk = $wpdb->prefix . 'lmd_magic_links';
+        $aud = $wpdb->prefix . 'lmd_audit_log';
 
         /* ── Services ── */
         $wpdb->query("CREATE TABLE IF NOT EXISTS {$svc} (
@@ -162,6 +163,19 @@ class LMD_Schema_Helpers {
             created_at     DATETIME DEFAULT CURRENT_TIMESTAMP,
             KEY idx_token (token),
             KEY idx_estimation (estimation_id)
+        ) {$charset};");
+
+        /* ── Audit Log ── */
+        $wpdb->query("CREATE TABLE IF NOT EXISTS {$aud} (
+            id             BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            estimation_id  BIGINT UNSIGNED NULL,
+            user_login     VARCHAR(100) DEFAULT '',
+            action         VARCHAR(80) NOT NULL,
+            details        TEXT NULL,
+            created_at     DATETIME DEFAULT CURRENT_TIMESTAMP,
+            KEY idx_estimation (estimation_id),
+            KEY idx_action (action),
+            KEY idx_created (created_at)
         ) {$charset};");
 
         /* ── AI Usage ── */
