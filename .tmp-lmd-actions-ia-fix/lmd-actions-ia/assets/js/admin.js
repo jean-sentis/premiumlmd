@@ -88,13 +88,28 @@
         $('#btn-' + mode).addClass('is-active');
     };
 
+    /* ── Assign sale / seller ── */
+    window.lmdAssignSale = function(id, saleId) {
+        lmdAjax('lmd_assign_sale', { id: id, sale_id: saleId || 0 }, function() {
+            // No reload, just confirm
+            var $sel = $('#assign-sale');
+            $sel.css('border-color', '#22c55e');
+            setTimeout(function() { $sel.css('border-color', ''); }, 1500);
+        });
+    };
+    window.lmdAssignSeller = function(id, sellerId) {
+        lmdAjax('lmd_assign_seller', { id: id, seller_id: sellerId || 0 }, function() {
+            var $sel = $('#assign-seller');
+            $sel.css('border-color', '#22c55e');
+            setTimeout(function() { $sel.css('border-color', ''); }, 1500);
+        });
+    };
+
     /* ── AI analysis with stepper ── */
     window.lmdRunAI = function(id, depth) {
         var $loading = $('#ai-loading');
         var $steps = $loading.find('.lmd-step');
         $loading.show();
-        // Progressive stepper animation
-        var thresholds = [0, 3, 8, 15, 30];
         var stepIdx = 0;
         var timer = setInterval(function() {
             if (stepIdx < $steps.length) {

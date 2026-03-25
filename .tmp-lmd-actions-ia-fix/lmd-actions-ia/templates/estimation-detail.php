@@ -36,7 +36,6 @@ error_log("LMD Detail: Resolved " . count($photos) . " photo URL(s)");
                 $nav_id = (int) (property_exists($nav,'id') ? $nav->id : 0);
                 $is_current = ( $nav_id === (int) $est->id );
                 $nav_name = property_exists($nav,'nom') && $nav->nom !== null ? (string) $nav->nom : '';
-                // Fallback to legacy columns
                 if ( $nav_name === '' ) {
                     $nav_name = property_exists($nav,'seller_name') && $nav->seller_name !== null ? (string) $nav->seller_name : '';
                 }
@@ -106,6 +105,42 @@ error_log("LMD Detail: Resolved " . count($photos) . " photo URL(s)");
             </div>
         </div>
 
+        <!-- ═══ SALE & SELLER ASSIGNMENT ═══ -->
+        <div class="lmd-assignment-bar">
+            <div class="lmd-assignment-item">
+                <label>🏷️ Vente :</label>
+                <select id="assign-sale" onchange="lmdAssignSale(<?php echo $est->id; ?>, this.value)">
+                    <option value="">— Aucune vente —</option>
+                    <?php foreach ($all_sales as $s) : ?>
+                        <option value="<?php echo (int)$s->id; ?>" <?php selected($est->sale_id, $s->id); ?>>
+                            <?php echo esc_html(mb_strimwidth($s->title, 0, 40, '…')); ?>
+                            <?php if ($s->sale_date) echo ' (' . esc_html(date_i18n('d/m/Y', strtotime($s->sale_date))) . ')'; ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+                <?php if ($current_sale) : ?>
+                    <a href="<?php echo esc_url(add_query_arg(['page' => 'lmd-estimations', 'filter_sale' => $current_sale->id], admin_url('admin.php'))); ?>"
+                       class="lmd-tag lmd-tag--info" style="margin-left:4px">Voir la vente</a>
+                <?php endif; ?>
+            </div>
+            <div class="lmd-assignment-item">
+                <label>👤 Vendeur :</label>
+                <select id="assign-seller" onchange="lmdAssignSeller(<?php echo $est->id; ?>, this.value)">
+                    <option value="">— Aucun vendeur —</option>
+                    <?php foreach ($all_sellers as $sel) : ?>
+                        <option value="<?php echo (int)$sel->id; ?>" <?php selected($est->seller_id, $sel->id); ?>>
+                            <?php echo esc_html($sel->nom); ?>
+                            <?php if ($sel->email) echo ' (' . esc_html($sel->email) . ')'; ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+                <?php if ($current_seller) : ?>
+                    <a href="<?php echo esc_url(add_query_arg(['page' => 'lmd-estimations', 'filter_seller' => $current_seller->id], admin_url('admin.php'))); ?>"
+                       class="lmd-tag lmd-tag--info" style="margin-left:4px">Voir ses demandes</a>
+                <?php endif; ?>
+            </div>
+        </div>
+
         <!-- ═══ 3-COLUMN LAYOUT ═══ -->
         <div class="lmd-3col">
             <!-- ▸ COL 1: Client info + Photos -->
@@ -141,7 +176,6 @@ error_log("LMD Detail: Resolved " . count($photos) . " photo URL(s)");
                         </a>
                     <?php endforeach; ?>
                 </div>
-                <!-- Debug: raw photo data -->
                 <details style="margin-top:8px;font-size:10px;color:#94a3b8">
                     <summary>Debug photos</summary>
                     <pre style="white-space:pre-wrap;word-break:break-all;font-size:10px"><?php echo esc_html(mb_substr($est->photo_urls, 0, 500)); ?></pre>

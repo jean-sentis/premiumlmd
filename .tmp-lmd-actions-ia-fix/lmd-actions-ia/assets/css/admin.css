@@ -193,6 +193,14 @@
 .lmd-recall-pre { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px; font-size: 12px; white-space: pre-wrap; max-height: 200px; overflow-y: auto; }
 
 /* ══════════════════════════════════════════════ */
+/* ASSIGNMENT BAR (sale + seller)                   */
+/* ══════════════════════════════════════════════ */
+.lmd-assignment-bar { display: flex; gap: 16px; flex-wrap: wrap; padding: 10px 20px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; }
+.lmd-assignment-item { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+.lmd-assignment-item label { font-weight: 600; color: #64748b; white-space: nowrap; }
+.lmd-assignment-item select { height: 34px; font-size: 12px; padding: 0 8px; border: 1px solid #d1d5db; border-radius: var(--lmd-radius); background: #fff; cursor: pointer; max-width: 280px; transition: border-color .3s; }
+
+/* ══════════════════════════════════════════════ */
 /* AI ANALYSIS SECTION                             */
 /* ══════════════════════════════════════════════ */
 .lmd-ai-section { margin: 16px 20px; border-top: 2px solid #e2e8f0; padding-top: 12px; }

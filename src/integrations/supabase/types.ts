@@ -140,7 +140,9 @@ export type Database = {
           response_message: string | null
           response_mode: string | null
           response_template: string | null
+          sale_id: string | null
           second_opinion: string | null
+          seller_id: string | null
           source: string
           status: string
           telephone: string | null
@@ -167,7 +169,9 @@ export type Database = {
           response_message?: string | null
           response_mode?: string | null
           response_template?: string | null
+          sale_id?: string | null
           second_opinion?: string | null
+          seller_id?: string | null
           source?: string
           status?: string
           telephone?: string | null
@@ -194,7 +198,9 @@ export type Database = {
           response_message?: string | null
           response_mode?: string | null
           response_template?: string | null
+          sale_id?: string | null
           second_opinion?: string | null
+          seller_id?: string | null
           source?: string
           status?: string
           telephone?: string | null
@@ -209,7 +215,96 @@ export type Database = {
             referencedRelation: "interencheres_lots"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "estimation_requests_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "estimation_sales"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "estimation_requests_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "estimation_sellers"
+            referencedColumns: ["id"]
+          },
         ]
+      }
+      estimation_sales: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          location: string | null
+          sale_date: string | null
+          specialty: string | null
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          location?: string | null
+          sale_date?: string | null
+          specialty?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          location?: string | null
+          sale_date?: string | null
+          specialty?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      estimation_sellers: {
+        Row: {
+          address: string | null
+          city: string | null
+          created_at: string
+          email: string | null
+          estimation_count: number
+          id: string
+          nom: string
+          notes: string | null
+          telephone: string | null
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          city?: string | null
+          created_at?: string
+          email?: string | null
+          estimation_count?: number
+          id?: string
+          nom: string
+          notes?: string | null
+          telephone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          city?: string | null
+          created_at?: string
+          email?: string | null
+          estimation_count?: number
+          id?: string
+          nom?: string
+          notes?: string | null
+          telephone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
       }
       info_requests: {
         Row: {
