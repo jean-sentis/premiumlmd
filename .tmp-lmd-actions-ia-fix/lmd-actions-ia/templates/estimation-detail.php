@@ -1,30 +1,10 @@
 <?php if ( ! defined( 'ABSPATH' ) ) exit;
 $back_url = admin_url('admin.php?page=lmd-estimations');
-$rowv = static function( $row, string $prop, $default = '' ) {
-    if ( ! is_object( $row ) || ! property_exists( $row, $prop ) || $row->{$prop} === null ) {
-        return $default;
-    }
-    return $row->{$prop};
-};
-
-// Harden against legacy rows with missing columns
-$est->nom = (string) $rowv( $est, 'nom', '' );
-$est->email = (string) $rowv( $est, 'email', '' );
-$est->telephone = (string) $rowv( $est, 'telephone', '' );
-$est->description = (string) $rowv( $est, 'description', '' );
-$est->photo_urls = (string) $rowv( $est, 'photo_urls', '[]' );
-$est->estimated_value = (string) $rowv( $est, 'estimated_value', '' );
-$est->status = (string) $rowv( $est, 'status', 'new' );
-$est->interest_level = (string) $rowv( $est, 'interest_level', '' );
-$est->response_mode = (string) $rowv( $est, 'response_mode', '' );
-$est->response_message = (string) $rowv( $est, 'response_message', '' );
-$est->delegate_to = (string) $rowv( $est, 'delegate_to', '' );
-$est->created_at = (string) $rowv( $est, 'created_at', '' );
 
 $snippets = LMD_Email_Composer::get_snippets_config( $est->nom );
 $default_email = LMD_Email_Composer::build_default( $est, $ai );
-$photos = json_decode( $est->photo_urls ?: '[]', true );
-if ( ! is_array( $photos ) ) $photos = [];
+// Resolve photos (handles URLs, attachment IDs, relative paths)
+$photos = LMD_Estimation_Manager::resolve_photos( $est->photo_urls );
 $overdue_days = LMD_Estimation_Manager::get_overdue_days($est->created_at);
 $interest_levels = LMD_Estimation_Manager::INTEREST_LEVELS;
 $current_interest = $est->interest_level;
@@ -49,12 +29,14 @@ $nav_estimations = $wpdb->get_results(
         </div>
         <div class="lmd-nav-strip__list">
             <?php foreach ( $nav_estimations as $nav ) :
-                $is_current = ( (int) $rowv( $nav, 'id', 0 ) === (int) $rowv( $est, 'id', 0 ) );
-                $nav_name = (string) $rowv( $nav, 'nom', '' );
-                $nav_photos = json_decode((string) $rowv( $nav, 'photo_urls', '[]' ), true);
-                if ( ! is_array( $nav_photos ) ) $nav_photos = [];
-                $is_nav_responded = ((string) $rowv( $nav, 'status', '' ) === 'responded');
-                $detail_url = add_query_arg(['page'=>'lmd-estimations','view'=>'detail','est_id'=>(int) $rowv( $nav, 'id', 0 )], admin_url('admin.php'));
+                $nav_id = (int) (property_exists($nav,'id') ? $nav->id : 0);
+                $is_current = ( $nav_id === (int) $est->id );
+                $nav_name = property_exists($nav,'nom') && $nav->nom !== null ? (string) $nav->nom : '';
+                $nav_photos = LMD_Estimation_Manager::resolve_photos(
+                    property_exists($nav,'photo_urls') && $nav->photo_urls !== null ? (string) $nav->photo_urls : '[]'
+                );
+                $is_nav_responded = (property_exists($nav,'status') && (string) $nav->status === 'responded');
+                $detail_url = add_query_arg(['page'=>'lmd-estimations','view'=>'detail','est_id'=>$nav_id], admin_url('admin.php'));
             ?>
             <a href="<?php echo esc_url($detail_url); ?>"
                class="lmd-nav-strip__item <?php echo $is_current ? 'is-current' : ''; ?>">
@@ -65,7 +47,7 @@ $nav_estimations = $wpdb->get_results(
                         <span class="dashicons dashicons-format-image" style="opacity:.2;font-size:20px;line-height:40px"></span>
                     <?php endif; ?>
                 </div>
-                <span class="lmd-nav-strip__name"><?php echo esc_html( mb_strimwidth($nav_name, 0, 12, '…') ); ?></span>
+                <span class="lmd-nav-strip__name"><?php echo esc_html( $nav_name !== '' ? mb_strimwidth($nav_name, 0, 12, '…') : '—' ); ?></span>
                 <?php if ( ! $is_nav_responded ) : ?>
                     <span class="lmd-nav-strip__dot"></span>
                 <?php endif; ?>
@@ -79,7 +61,7 @@ $nav_estimations = $wpdb->get_results(
         <!-- Header -->
         <div class="lmd-detail__header">
             <a href="<?php echo esc_url($back_url); ?>" class="lmd-detail__back">← Retour</a>
-            <h2 class="lmd-detail__name"><?php echo esc_html($est->nom); ?></h2>
+            <h2 class="lmd-detail__name"><?php echo esc_html($est->nom ?: 'Sans nom'); ?></h2>
             <span class="lmd-detail__date"><?php echo $est->created_at ? esc_html( date_i18n('d M Y · H:i', strtotime($est->created_at)) ) : '—'; ?></span>
 
             <div class="lmd-detail__status-bar">
@@ -92,17 +74,22 @@ $nav_estimations = $wpdb->get_results(
                 <button class="lmd-status-btn <?php echo $est->status === 'responded' ? 'is-active' : ''; ?>"
                         onclick="lmdSetStatus(<?php echo $est->id; ?>, 'responded')">✅ Répondu</button>
                 <button class="lmd-status-btn lmd-status-btn--danger"
-                        onclick="if(confirm('Supprimer ?')) lmdArchive(<?php echo $est->id; ?>)">🗑</button>
+                        onclick="if(confirm('Archiver cette demande ?')) lmdArchive(<?php echo $est->id; ?>)">🗑</button>
             </div>
 
             <div class="lmd-detail__tags">
                 <?php if ($est->status === 'responded') : ?>
                     <span class="lmd-tag lmd-tag--ok">Répondu</span>
+                <?php elseif ($est->status === 'archived') : ?>
+                    <span class="lmd-tag" style="background:#f1f5f9;color:#64748b;border-color:#d1d5db">Archivée</span>
                 <?php else : ?>
                     <span class="lmd-tag lmd-tag--pending">En attente</span>
                 <?php endif; ?>
-                <?php if ($overdue_days > 0) : ?><span class="lmd-tag lmd-tag--danger">+<?php echo $overdue_days; ?>j</span><?php endif; ?>
+                <?php if ($overdue_days > 0 && $est->status !== 'responded') : ?><span class="lmd-tag lmd-tag--danger">+<?php echo $overdue_days; ?>j</span><?php endif; ?>
                 <?php echo LMD_Estimation_Manager::get_interest_badge($est->interest_level); ?>
+                <?php if ($est->object_category) : ?>
+                    <span class="lmd-tag lmd-tag--category"><?php echo esc_html(ucfirst(str_replace('_',' ',$est->object_category))); ?></span>
+                <?php endif; ?>
             </div>
         </div>
 
@@ -112,13 +99,16 @@ $nav_estimations = $wpdb->get_results(
             <div class="lmd-3col__panel lmd-3col__panel--client">
                 <h3 class="lmd-panel-title">Client</h3>
                 <div class="lmd-client-info">
-                    <p><strong><?php echo esc_html($est->nom); ?></strong></p>
+                    <p><strong><?php echo esc_html($est->nom ?: 'Sans nom'); ?></strong></p>
                     <p><a href="mailto:<?php echo esc_attr($est->email); ?>"><?php echo esc_html($est->email); ?></a></p>
                     <?php if ($est->telephone) : ?>
                         <p><a href="tel:<?php echo esc_attr($est->telephone); ?>"><?php echo esc_html($est->telephone); ?></a></p>
                     <?php endif; ?>
                     <?php if ($est->estimated_value) : ?>
                         <p>Estimation vendeur : <strong><?php echo esc_html($est->estimated_value); ?></strong></p>
+                    <?php endif; ?>
+                    <?php if ($est->object_category) : ?>
+                        <p>Catégorie : <span class="lmd-tag lmd-tag--category"><?php echo esc_html(ucfirst(str_replace('_',' ',$est->object_category))); ?></span></p>
                     <?php endif; ?>
                 </div>
 
@@ -134,7 +124,7 @@ $nav_estimations = $wpdb->get_results(
 
                 <div class="lmd-description-box">
                     <h4>Description</h4>
-                    <p><?php echo nl2br(esc_html($est->description)); ?></p>
+                    <p><?php echo nl2br(esc_html($est->description ?: 'Aucune description.')); ?></p>
                 </div>
             </div>
 
@@ -160,13 +150,13 @@ $nav_estimations = $wpdb->get_results(
                 <div class="lmd-tab-content is-active" id="tab-1er-avis">
                     <h4>Votre avis</h4>
                     <textarea id="notes-textarea" class="lmd-textarea" rows="6"
-                              placeholder="Vos observations, estimation, remarques (non visibles par le vendeur)…"><?php echo esc_textarea($est->auctioneer_notes ?? ''); ?></textarea>
+                              placeholder="Vos observations, estimation, remarques (non visibles par le vendeur)…"><?php echo esc_textarea($est->auctioneer_notes); ?></textarea>
                     <button class="button lmd-save-btn" onclick="lmdSaveNotes(<?php echo $est->id; ?>)">Enregistrer</button>
                 </div>
                 <div class="lmd-tab-content" id="tab-2eme-avis">
                     <h4>2ème avis</h4>
                     <textarea id="opinion-textarea" class="lmd-textarea" rows="6"
-                              placeholder="Avis complémentaire, expertise externe…"><?php echo esc_textarea($est->second_opinion ?? ''); ?></textarea>
+                              placeholder="Avis complémentaire, expertise externe…"><?php echo esc_textarea($est->second_opinion); ?></textarea>
                     <button class="button lmd-save-btn" onclick="lmdSaveOpinion(<?php echo $est->id; ?>)">Enregistrer</button>
                 </div>
             </div>
@@ -178,7 +168,7 @@ $nav_estimations = $wpdb->get_results(
                 <?php if ($est->status === 'responded') : ?>
                     <div class="lmd-responded-badge">
                         ✅ <?php
-                            echo esc_html(($interest_levels[$est->interest_level]['label'] ?? 'Répondu'));
+                            echo esc_html($interest_levels[$est->interest_level]['label'] ?? 'Répondu');
                             if ($est->response_mode === 'phone') echo ' · Appelé';
                             elseif ($est->response_mode === 'email') echo ' · Emailé';
                             elseif ($est->response_mode === 'delegate') echo ' · Délégué';
@@ -207,7 +197,7 @@ $nav_estimations = $wpdb->get_results(
                                 📞 <?php echo esc_html($est->telephone); ?>
                             </a>
                         </div>
-                        <button class="button button-primary" onclick="lmdMarkCalled(<?php echo $est->id; ?>)">
+                        <button class="button button-primary" style="width:100%" onclick="lmdMarkCalled(<?php echo $est->id; ?>)">
                             Marquer comme appelé
                         </button>
                     <?php endif; ?>
@@ -217,7 +207,7 @@ $nav_estimations = $wpdb->get_results(
                 <div class="lmd-action-panel" id="panel-email" style="display:none">
                     <div class="lmd-email-toolbar">
                         <select id="email-snippet" onchange="lmdInsertSnippet()">
-                            <option value="">+ Insérer…</option>
+                            <option value="">+ Insérer un bloc…</option>
                             <optgroup label="Salutations">
                                 <?php foreach ($snippets['greetings'] as $key => $text) : ?>
                                     <option value="<?php echo esc_attr($text . "\n\n"); ?>"><?php echo esc_html($key); ?></option>
@@ -229,12 +219,12 @@ $nav_estimations = $wpdb->get_results(
                                 <?php endforeach; ?>
                             </optgroup>
                             <?php if (!empty($ai_questions)) : ?>
-                            <optgroup label="IA">
+                            <optgroup label="IA — Questions suggérées">
                                 <option value="<?php
                                     $q_text = "Pourriez-vous nous préciser :\n";
-                                    foreach ($ai_questions as $q) $q_text .= "— $q\n";
+                                    foreach ($ai_questions as $q) $q_text .= "— " . trim((string) $q) . "\n";
                                     echo esc_attr($q_text . "\n");
-                                ?>">Questions suggérées (<?php echo count($ai_questions); ?>)</option>
+                                ?>">Insérer les <?php echo count($ai_questions); ?> questions</option>
                             </optgroup>
                             <?php endif; ?>
                             <optgroup label="Fermeture">
@@ -244,7 +234,7 @@ $nav_estimations = $wpdb->get_results(
                     </div>
                     <textarea id="email-body" class="lmd-textarea lmd-textarea--mono" rows="12"><?php echo esc_textarea($default_email); ?></textarea>
                     <div class="lmd-email-footer">
-                        <span>Envoi à : <?php echo esc_html($est->email); ?></span>
+                        <span>Envoi à : <strong><?php echo esc_html($est->email); ?></strong></span>
                         <button class="button button-primary" onclick="lmdSendEmail(<?php echo $est->id; ?>)">
                             📤 Envoyer
                         </button>
@@ -254,7 +244,9 @@ $nav_estimations = $wpdb->get_results(
                 <!-- Delegate mode -->
                 <div class="lmd-action-panel" id="panel-delegate" style="display:none">
                     <p class="description">Un email sera ouvert pour envoi au collaborateur.</p>
-                    <input type="text" id="delegate-name" placeholder="Nom du collaborateur / expert…" class="regular-text" style="width:100%">
+                    <input type="text" id="delegate-name" placeholder="Nom du collaborateur / expert…"
+                           value="<?php echo esc_attr($est->delegate_to); ?>"
+                           class="regular-text" style="width:100%">
                     <button class="button button-primary" style="margin-top:8px;width:100%"
                             onclick="lmdDelegate(<?php echo $est->id; ?>)">
                         👥 Confier
@@ -264,7 +256,7 @@ $nav_estimations = $wpdb->get_results(
                 <!-- Existing response recall -->
                 <?php if ($est->response_message && $est->response_mode === 'email') : ?>
                 <div class="lmd-recall-box">
-                    <h4>Message envoyé</h4>
+                    <h4>Dernier message envoyé</h4>
                     <pre class="lmd-recall-pre"><?php echo esc_html($est->response_message); ?></pre>
                 </div>
                 <?php endif; ?>
@@ -274,18 +266,19 @@ $nav_estimations = $wpdb->get_results(
         <!-- ═══ AI ANALYSIS PANEL (full-width, expandable) ═══ -->
         <div class="lmd-ai-section">
             <button class="lmd-ai-toggle" onclick="document.getElementById('ai-panel').classList.toggle('is-open')">
-                ✨ Aide à la décision
+                ✨ Aide à la décision (I.A.)
                 <span class="lmd-ai-toggle__arrow">▼</span>
             </button>
 
-            <div id="ai-panel" class="lmd-ai-panel <?php echo !empty($ai) ? 'is-open' : ''; ?>">
+            <div id="ai-panel" class="lmd-ai-panel <?php echo !empty($ai) && !empty($ai['identified_object']) ? 'is-open' : ''; ?>">
                 <?php if (empty($ai) || empty($ai['identified_object'])) : ?>
                     <!-- No analysis yet -->
                     <div class="lmd-ai-empty">
-                        <p>Aucune analyse IA effectuée.</p>
+                        <p style="color:#94a3b8">Aucune analyse IA effectuée.</p>
                         <button class="button button-primary button-hero" onclick="lmdRunAI(<?php echo $est->id; ?>, 'full')">
                             🚀 Lancer l'analyse complète
                         </button>
+                        <p class="description" style="margin-top:8px">Identification, Google Lens, recherche marché, synthèse</p>
                     </div>
                 <?php else : ?>
                     <!-- Analysis results -->
@@ -342,7 +335,7 @@ $nav_estimations = $wpdb->get_results(
                                 <h5>Correspondances trouvées (<?php echo count($lens_matches); ?>)</h5>
                                 <div class="lmd-lens-grid">
                                     <?php foreach ($lens_matches as $i => $match) : ?>
-                                        <a href="<?php echo esc_url($match['link']); ?>" target="_blank" class="lmd-lens-card" title="<?php echo esc_attr($match['title']); ?>">
+                                        <a href="<?php echo esc_url($match['link'] ?? '#'); ?>" target="_blank" class="lmd-lens-card" title="<?php echo esc_attr($match['title'] ?? ''); ?>">
                                             <span class="lmd-lens-num"><?php echo $i+1; ?></span>
                                             <?php if (!empty($match['thumbnail'])) : ?>
                                                 <img src="<?php echo esc_url($match['thumbnail']); ?>" alt="">
@@ -350,11 +343,11 @@ $nav_estimations = $wpdb->get_results(
                                                 <span class="dashicons dashicons-format-image" style="opacity:.2;font-size:24px"></span>
                                             <?php endif; ?>
                                             <div class="lmd-lens-overlay">
-                                                <span class="lmd-lens-title"><?php echo esc_html(mb_strimwidth($match['title'], 0, 60, '…')); ?></span>
+                                                <span class="lmd-lens-title"><?php echo esc_html(mb_strimwidth($match['title'] ?? '', 0, 60, '…')); ?></span>
                                                 <?php if (!empty($match['price'])) : ?>
                                                     <span class="lmd-lens-price"><?php echo esc_html($match['price']); ?></span>
                                                 <?php endif; ?>
-                                                <span class="lmd-lens-source"><?php echo esc_html($match['source']); ?></span>
+                                                <span class="lmd-lens-source"><?php echo esc_html($match['source'] ?? ''); ?></span>
                                             </div>
                                         </a>
                                     <?php endforeach; ?>
@@ -369,7 +362,7 @@ $nav_estimations = $wpdb->get_results(
                                 <h5>Sources</h5>
                                 <ul class="lmd-sources-list">
                                     <?php foreach ($web_sources as $src) : ?>
-                                        <li><a href="<?php echo esc_url($src['url']); ?>" target="_blank"><?php echo esc_html($src['title'] ?: parse_url($src['url'], PHP_URL_HOST)); ?></a></li>
+                                        <li><a href="<?php echo esc_url($src['url'] ?? '#'); ?>" target="_blank"><?php echo esc_html(($src['title'] ?? '') ?: parse_url($src['url'] ?? '', PHP_URL_HOST)); ?></a></li>
                                     <?php endforeach; ?>
                                 </ul>
                             <?php endif; ?>
@@ -390,7 +383,7 @@ $nav_estimations = $wpdb->get_results(
                         </div>
 
                         <?php if (!empty($ai['limitations'])) : ?>
-                            <p class="lmd-ai-limitations"><?php echo esc_html($ai['limitations']); ?></p>
+                            <p class="lmd-ai-limitations">⚠️ <?php echo esc_html($ai['limitations']); ?></p>
                         <?php endif; ?>
 
                         <div class="lmd-ai-actions">
@@ -400,6 +393,7 @@ $nav_estimations = $wpdb->get_results(
                 <?php endif; ?>
                 <div id="ai-loading" class="lmd-ai-loading" style="display:none">
                     <div class="lmd-spinner"></div>
+                    <p style="font-size:13px;color:#64748b">Analyse en cours…</p>
                     <div class="lmd-ai-stepper">
                         <div class="lmd-step" data-step="1">Identification…</div>
                         <div class="lmd-step" data-step="2">Google Lens…</div>

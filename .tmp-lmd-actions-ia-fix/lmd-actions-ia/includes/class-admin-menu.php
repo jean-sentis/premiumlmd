@@ -13,31 +13,51 @@ class LMD_Admin_Menu {
     }
 
     public function register_menus() {
+        $parent_slug = 'lmd-actions-ia';
+
         add_menu_page(
             'LMD Actions I.A.', 'Actions I.A.', 'manage_options',
-            'lmd-actions-ia', [ $this, 'render_dashboard' ],
+            $parent_slug, [ $this, 'render_dashboard' ],
             'dashicons-superhero-alt', 26
         );
         add_submenu_page(
-            'lmd-actions-ia', 'Tableau de bord', 'Tableau de bord',
-            'manage_options', 'lmd-actions-ia', [ $this, 'render_dashboard' ]
+            $parent_slug, 'Tableau de bord', 'Tableau de bord',
+            'manage_options', $parent_slug, [ $this, 'render_dashboard' ]
         );
-        // HARDCODED — always visible, no DB query needed
         add_submenu_page(
-            'lmd-actions-ia', "Aide à l'estimation", "📋 Aide à l'estimation",
+            $parent_slug, "Aide à l'estimation", "📋 Aide à l'estimation",
             'manage_options', 'lmd-estimations',
             [ LMD_Estimation_Manager::instance(), 'render_page' ]
         );
         add_submenu_page(
-            'lmd-actions-ia', 'Réglages', 'Réglages',
+            $parent_slug, 'Réglages', '⚙️ Réglages',
             'manage_options', 'lmd-settings', [ $this, 'render_settings' ]
         );
     }
 
     public function enqueue_assets( $hook ) {
-        if ( strpos( $hook, 'lmd-' ) === false && strpos( $hook, 'lmd_' ) === false ) return;
-        wp_enqueue_style( 'lmd-admin-css', LMD_PLUGIN_URL . 'assets/css/admin.css', [], LMD_VERSION );
-        wp_enqueue_script( 'lmd-admin-js', LMD_PLUGIN_URL . 'assets/js/admin.js', [ 'jquery' ], LMD_VERSION, true );
+        // Match any page containing lmd- in the hook
+        if ( strpos( $hook, 'lmd-' ) === false
+          && strpos( $hook, 'lmd_' ) === false
+          && strpos( $hook, 'actions-i-a' ) === false ) {
+            return;
+        }
+
+        wp_enqueue_style(
+            'lmd-admin-css',
+            LMD_PLUGIN_URL . 'assets/css/admin.css',
+            [],
+            LMD_VERSION
+        );
+
+        wp_enqueue_script(
+            'lmd-admin-js',
+            LMD_PLUGIN_URL . 'assets/js/admin.js',
+            [ 'jquery' ],
+            LMD_VERSION,
+            true
+        );
+
         wp_localize_script( 'lmd-admin-js', 'lmdAdmin', [
             'ajaxUrl' => admin_url( 'admin-ajax.php' ),
             'nonce'   => wp_create_nonce( 'lmd_nonce' ),
@@ -45,9 +65,13 @@ class LMD_Admin_Menu {
     }
 
     public function render_dashboard() {
+        echo '<div class="wrap lmd-wrap">';
         include LMD_PLUGIN_DIR . 'templates/dashboard.php';
+        echo '</div>';
     }
     public function render_settings() {
+        echo '<div class="wrap lmd-wrap">';
         include LMD_PLUGIN_DIR . 'templates/settings.php';
+        echo '</div>';
     }
 }
