@@ -34,6 +34,14 @@ class LMD_Estimation_Manager {
     private function render_list() {
         global $wpdb;
         $table = $wpdb->prefix . 'lmd_estimations';
+
+        if ( ! function_exists( 'lmd_table_exists' ) || ! lmd_table_exists( $table ) ) {
+            echo '<div class="notice notice-error"><p>La table des estimations est absente. Réactivez le plugin pour lancer la migration.</p></div>';
+            return;
+        }
+
+        $has_interest_level = (bool) $wpdb->get_var( "SHOW COLUMNS FROM `{$table}` LIKE 'interest_level'" );
+
         $filter = sanitize_text_field( $_GET['filter'] ?? 'all' );
         $search = sanitize_text_field( $_GET['s'] ?? '' );
 
@@ -46,7 +54,7 @@ class LMD_Estimation_Manager {
             case 'all': default: $where .= " AND status != 'archived'"; break;
         }
         // Interest level filter
-        if ( isset( self::INTEREST_LEVELS[ $filter ] ) ) {
+        if ( $has_interest_level && isset( self::INTEREST_LEVELS[ $filter ] ) ) {
             $where = "WHERE interest_level = '" . esc_sql($filter) . "' AND status != 'archived'";
         }
         if ( $search ) {
@@ -55,6 +63,20 @@ class LMD_Estimation_Manager {
         }
 
         $estimations = $wpdb->get_results("SELECT * FROM {$table} {$where} ORDER BY created_at DESC LIMIT 200");
+
+        foreach ( $estimations as $est ) {
+            $est->nom = (string) ( $est->nom ?? '' );
+            $est->email = (string) ( $est->email ?? '' );
+            $est->telephone = (string) ( $est->telephone ?? '' );
+            $est->description = (string) ( $est->description ?? '' );
+            $est->photo_urls = (string) ( $est->photo_urls ?? '[]' );
+            $est->source = (string) ( $est->source ?? 'form' );
+            $est->status = (string) ( $est->status ?? 'new' );
+            $est->interest_level = (string) ( $est->interest_level ?? '' );
+            $est->response_mode = (string) ( $est->response_mode ?? '' );
+            $est->delegate_to = (string) ( $est->delegate_to ?? '' );
+            $est->created_at = (string) ( $est->created_at ?? '' );
+        }
 
         // Counts
         $counts = [
@@ -66,9 +88,16 @@ class LMD_Estimation_Manager {
         ];
         $interest_counts = [];
         foreach ( array_keys(self::INTEREST_LEVELS) as $key ) {
-            $interest_counts[$key] = (int) $wpdb->get_var($wpdb->prepare(
-                "SELECT COUNT(*) FROM {$table} WHERE interest_level = %s AND status != 'archived'", $key
-            ));
+            if ( ! $has_interest_level ) {
+                $interest_counts[$key] = 0;
+                continue;
+            }
+            $interest_counts[$key] = (int) $wpdb->get_var(
+                $wpdb->prepare(
+                    "SELECT COUNT(*) FROM {$table} WHERE interest_level = %s AND status != 'archived'",
+                    $key
+                )
+            );
         }
 
         include LMD_PLUGIN_DIR . 'templates/estimation-list.php';
@@ -83,6 +112,22 @@ class LMD_Estimation_Manager {
             echo '<div class="notice notice-error"><p>Demande introuvable.</p></div>';
             return;
         }
+
+        $est->nom = (string) ( $est->nom ?? '' );
+        $est->email = (string) ( $est->email ?? '' );
+        $est->telephone = (string) ( $est->telephone ?? '' );
+        $est->description = (string) ( $est->description ?? '' );
+        $est->photo_urls = (string) ( $est->photo_urls ?? '[]' );
+        $est->estimated_value = (string) ( $est->estimated_value ?? '' );
+        $est->status = (string) ( $est->status ?? 'new' );
+        $est->interest_level = (string) ( $est->interest_level ?? '' );
+        $est->response_mode = (string) ( $est->response_mode ?? '' );
+        $est->response_message = (string) ( $est->response_message ?? '' );
+        $est->delegate_to = (string) ( $est->delegate_to ?? '' );
+        $est->auctioneer_notes = (string) ( $est->auctioneer_notes ?? '' );
+        $est->second_opinion = (string) ( $est->second_opinion ?? '' );
+        $est->created_at = (string) ( $est->created_at ?? '' );
+
         // Mark as read if new
         if ( $est->status === 'new' ) {
             $wpdb->update($table, ['status' => 'in_review'], ['id' => $id]);
@@ -94,6 +139,9 @@ class LMD_Estimation_Manager {
 
     /* ─── Helpers ─── */
     public static function get_overdue_days( $created_at ) {
+        if ( empty( $created_at ) || strtotime( $created_at ) === false ) {
+            return 0;
+        }
         $hours = ( time() - strtotime($created_at) ) / 3600;
         if ( $hours <= 48 ) return 0;
         return max(1, ceil(($hours - 48) / 24));
