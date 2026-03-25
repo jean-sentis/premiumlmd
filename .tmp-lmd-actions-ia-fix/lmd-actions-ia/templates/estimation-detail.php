@@ -1,19 +1,25 @@
 <?php if ( ! defined( 'ABSPATH' ) ) exit;
 $back_url = admin_url('admin.php?page=lmd-estimations');
+$rowv = static function( $row, string $prop, $default = '' ) {
+    if ( ! is_object( $row ) || ! property_exists( $row, $prop ) || $row->{$prop} === null ) {
+        return $default;
+    }
+    return $row->{$prop};
+};
 
 // Harden against legacy rows with missing columns
-$est->nom = (string) ( $est->nom ?? '' );
-$est->email = (string) ( $est->email ?? '' );
-$est->telephone = (string) ( $est->telephone ?? '' );
-$est->description = (string) ( $est->description ?? '' );
-$est->photo_urls = (string) ( $est->photo_urls ?? '[]' );
-$est->estimated_value = (string) ( $est->estimated_value ?? '' );
-$est->status = (string) ( $est->status ?? 'new' );
-$est->interest_level = (string) ( $est->interest_level ?? '' );
-$est->response_mode = (string) ( $est->response_mode ?? '' );
-$est->response_message = (string) ( $est->response_message ?? '' );
-$est->delegate_to = (string) ( $est->delegate_to ?? '' );
-$est->created_at = (string) ( $est->created_at ?? '' );
+$est->nom = (string) $rowv( $est, 'nom', '' );
+$est->email = (string) $rowv( $est, 'email', '' );
+$est->telephone = (string) $rowv( $est, 'telephone', '' );
+$est->description = (string) $rowv( $est, 'description', '' );
+$est->photo_urls = (string) $rowv( $est, 'photo_urls', '[]' );
+$est->estimated_value = (string) $rowv( $est, 'estimated_value', '' );
+$est->status = (string) $rowv( $est, 'status', 'new' );
+$est->interest_level = (string) $rowv( $est, 'interest_level', '' );
+$est->response_mode = (string) $rowv( $est, 'response_mode', '' );
+$est->response_message = (string) $rowv( $est, 'response_message', '' );
+$est->delegate_to = (string) $rowv( $est, 'delegate_to', '' );
+$est->created_at = (string) $rowv( $est, 'created_at', '' );
 
 $snippets = LMD_Email_Composer::get_snippets_config( $est->nom );
 $default_email = LMD_Email_Composer::build_default( $est, $ai );
@@ -43,12 +49,12 @@ $nav_estimations = $wpdb->get_results(
         </div>
         <div class="lmd-nav-strip__list">
             <?php foreach ( $nav_estimations as $nav ) :
-                $is_current = ($nav->id == $est->id);
-                $nav_name = (string) ( $nav->nom ?? '' );
-                $nav_photos = json_decode((string)($nav->photo_urls ?? '[]'), true);
+                $is_current = ( (int) $rowv( $nav, 'id', 0 ) === (int) $rowv( $est, 'id', 0 ) );
+                $nav_name = (string) $rowv( $nav, 'nom', '' );
+                $nav_photos = json_decode((string) $rowv( $nav, 'photo_urls', '[]' ), true);
                 if ( ! is_array( $nav_photos ) ) $nav_photos = [];
-                $is_nav_responded = (($nav->status ?? '') === 'responded');
-                $detail_url = add_query_arg(['page'=>'lmd-estimations','view'=>'detail','est_id'=>$nav->id], admin_url('admin.php'));
+                $is_nav_responded = ((string) $rowv( $nav, 'status', '' ) === 'responded');
+                $detail_url = add_query_arg(['page'=>'lmd-estimations','view'=>'detail','est_id'=>(int) $rowv( $nav, 'id', 0 )], admin_url('admin.php'));
             ?>
             <a href="<?php echo esc_url($detail_url); ?>"
                class="lmd-nav-strip__item <?php echo $is_current ? 'is-current' : ''; ?>">
@@ -74,7 +80,7 @@ $nav_estimations = $wpdb->get_results(
         <div class="lmd-detail__header">
             <a href="<?php echo esc_url($back_url); ?>" class="lmd-detail__back">← Retour</a>
             <h2 class="lmd-detail__name"><?php echo esc_html($est->nom); ?></h2>
-            <span class="lmd-detail__date"><?php echo date_i18n('d M Y · H:i', strtotime($est->created_at)); ?></span>
+            <span class="lmd-detail__date"><?php echo $est->created_at ? esc_html( date_i18n('d M Y · H:i', strtotime($est->created_at)) ) : '—'; ?></span>
 
             <div class="lmd-detail__status-bar">
                 <?php if ($est->status !== 'new') : ?>

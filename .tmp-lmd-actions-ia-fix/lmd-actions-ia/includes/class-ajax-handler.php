@@ -97,11 +97,16 @@ class LMD_Ajax_Handler {
         ], ['id' => $id]);
 
         // Return mailto data for the front-end to open
-        $subject = "Demande d'estimation à examiner — " . $est->nom;
+        $nom = is_object($est) && property_exists($est, 'nom') && $est->nom !== null ? (string) $est->nom : 'Sans nom';
+        $email = is_object($est) && property_exists($est, 'email') && $est->email !== null ? (string) $est->email : '';
+        $telephone = is_object($est) && property_exists($est, 'telephone') && $est->telephone !== null ? (string) $est->telephone : '';
+        $description = is_object($est) && property_exists($est, 'description') && $est->description !== null ? (string) $est->description : '';
+
+        $subject = "Demande d'estimation à examiner — " . $nom;
         $body = "Bonjour,\n\nJe vous transfère cette demande d'estimation pour avis.\n\n";
-        $body .= "De : {$est->nom} ({$est->email})\n";
-        if ($est->telephone) $body .= "Tél : {$est->telephone}\n";
-        $body .= "Description : " . mb_substr($est->description, 0, 300) . "\n\n";
+        $body .= "De : {$nom}" . ($email !== '' ? " ({$email})" : '') . "\n";
+        if ($telephone !== '') $body .= "Tél : {$telephone}\n";
+        $body .= "Description : " . mb_substr($description, 0, 300) . "\n\n";
         $body .= "Merci de me faire part de votre analyse.\n\nCordialement";
 
         wp_send_json_success([

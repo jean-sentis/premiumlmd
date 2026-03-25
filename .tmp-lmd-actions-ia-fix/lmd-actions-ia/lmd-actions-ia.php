@@ -3,14 +3,14 @@
  * Plugin Name: LMD Actions I.A.
  * Plugin URI:  https://lemarteaudigital.fr
  * Description: Plateforme modulaire de services IA pour commissaires-priseurs — Module principal : Aide à l'estimation.
- * Version:     3.0.1
+ * Version:     3.0.2
  * Author:      Le Marteau Digital
  * License:     GPL-2.0+
  * Text Domain: lmd-actions-ia
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'LMD_VERSION',    '3.0.1' );
+define( 'LMD_VERSION',    '3.0.2' );
 define( 'LMD_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'LMD_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 
@@ -24,12 +24,35 @@ require_once LMD_PLUGIN_DIR . 'includes/class-shortcode-estimation.php';
 
 function lmd_table_exists( $table ) {
     global $wpdb;
-    return $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) ) === $table;
+    $exists = $wpdb->get_var(
+        $wpdb->prepare(
+            'SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = %s',
+            $table
+        )
+    );
+    return (int) $exists > 0;
 }
 
 function lmd_column_exists( $table, $column ) {
     global $wpdb;
-    return (bool) $wpdb->get_var( "SHOW COLUMNS FROM `{$table}` LIKE '{$column}'" );
+    $exists = $wpdb->get_var(
+        $wpdb->prepare(
+            'SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = %s AND COLUMN_NAME = %s',
+            $table,
+            $column
+        )
+    );
+    return (int) $exists > 0;
+}
+
+function lmd_get_missing_columns( $table, array $required_columns ) {
+    $missing = [];
+    foreach ( $required_columns as $column ) {
+        if ( ! lmd_column_exists( $table, $column ) ) {
+            $missing[] = $column;
+        }
+    }
+    return $missing;
 }
 
 function lmd_add_column_if_missing( $table, $column, $definition ) {
@@ -85,6 +108,38 @@ function lmd_seed_default_services() {
             'sort_order' => $s[6],
             'config' => '{}',
         ] );
+    }
+}
+
+function lmd_maybe_repair_schema() {
+    global $wpdb;
+
+    $services_table    = $wpdb->prefix . 'lmd_services';
+    $estimations_table = $wpdb->prefix . 'lmd_estimations';
+    $usage_table       = $wpdb->prefix . 'lmd_ai_usage';
+
+    $needs_repair = ! lmd_table_exists( $services_table )
+        || ! lmd_table_exists( $estimations_table )
+        || ! lmd_table_exists( $usage_table );
+
+    if ( ! $needs_repair ) {
+        $required_estimations_columns = [
+            'nom', 'email', 'telephone', 'description', 'photo_urls',
+            'status', 'interest_level', 'auctioneer_notes', 'second_opinion',
+            'response_message', 'response_mode', 'responded_at', 'delegate_to',
+            'created_at', 'updated_at',
+        ];
+
+        $required_services_columns = [ 'slug', 'label', 'config', 'is_active', 'sort_order' ];
+
+        $missing_estimations = lmd_get_missing_columns( $estimations_table, $required_estimations_columns );
+        $missing_services    = lmd_get_missing_columns( $services_table, $required_services_columns );
+
+        $needs_repair = ! empty( $missing_estimations ) || ! empty( $missing_services );
+    }
+
+    if ( $needs_repair ) {
+        lmd_activate();
     }
 }
 
@@ -205,6 +260,8 @@ function lmd_activate() {
 
 /* ─── Boot ─── */
 add_action( 'plugins_loaded', function() {
+    lmd_maybe_repair_schema();
+
     if ( get_option( 'lmd_version' ) !== LMD_VERSION ) {
         lmd_activate();
     }

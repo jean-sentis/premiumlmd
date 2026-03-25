@@ -1,5 +1,11 @@
 <?php if ( ! defined( 'ABSPATH' ) ) exit;
 $page_url = admin_url('admin.php?page=lmd-estimations');
+$rowv = static function( $row, string $prop, $default = '' ) {
+    if ( ! is_object( $row ) || ! property_exists( $row, $prop ) || $row->{$prop} === null ) {
+        return $default;
+    }
+    return $row->{$prop};
+};
 $filters_config = [
     'all'       => ['label' => 'Toutes',     'count' => $counts['all']],
     'unread'    => ['label' => 'Non lues',   'count' => $counts['unread']],
@@ -52,21 +58,23 @@ $filters_config = [
 <?php else : ?>
 <div class="lmd-cards-grid">
     <?php foreach ($estimations as $est) :
-        $status = (string) ($est->status ?? 'new');
-        $name = (string) ($est->nom ?? '');
-        $description = (string) ($est->description ?? '');
-        $interest_level = (string) ($est->interest_level ?? '');
-        $response_mode = (string) ($est->response_mode ?? '');
-        $delegate_to = (string) ($est->delegate_to ?? '');
-        $created_at = (string) ($est->created_at ?? '');
-        $source = (string) ($est->source ?? 'form');
+        $status = (string) $rowv($est, 'status', 'new');
+        $name = (string) $rowv($est, 'nom', '');
+        $description = (string) $rowv($est, 'description', '');
+        $interest_level = (string) $rowv($est, 'interest_level', '');
+        $response_mode = (string) $rowv($est, 'response_mode', '');
+        $delegate_to = (string) $rowv($est, 'delegate_to', '');
+        $created_at = (string) $rowv($est, 'created_at', '');
+        $source = (string) $rowv($est, 'source', 'form');
+        $est_id = (int) $rowv($est, 'id', 0);
 
         $is_responded = ($status === 'responded');
-        $photos = json_decode((string)($est->photo_urls ?? '[]'), true);
+        $photos = json_decode((string) $rowv($est, 'photo_urls', '[]'), true);
         if (!is_array($photos)) $photos = [];
         $overdue_days = LMD_Estimation_Manager::get_overdue_days($created_at);
-        $detail_url = add_query_arg(['page' => 'lmd-estimations', 'view' => 'detail', 'est_id' => $est->id], admin_url('admin.php'));
+        $detail_url = add_query_arg(['page' => 'lmd-estimations', 'view' => 'detail', 'est_id' => $est_id], admin_url('admin.php'));
         $interest_cfg = LMD_Estimation_Manager::INTEREST_LEVELS[$interest_level] ?? null;
+        $description_preview = $description !== '' ? mb_strimwidth($description, 0, 100, '…') : 'Sans description';
     ?>
     <a href="<?php echo esc_url($detail_url); ?>" class="lmd-est-card <?php echo $is_responded ? 'is-responded' : 'is-unread'; ?>"
        <?php if ($interest_cfg) : ?>style="border-color:<?php echo $interest_cfg['border']; ?>"<?php endif; ?>>
@@ -86,7 +94,7 @@ $filters_config = [
                     <span class="lmd-unread-dot" title="Non lu"></span>
                 <?php endif; ?>
             </div>
-            <p class="lmd-est-card__desc"><?php echo esc_html(mb_strimwidth($description, 0, 100, '…')); ?></p>
+            <p class="lmd-est-card__desc"><?php echo esc_html($description_preview); ?></p>
             <div class="lmd-est-card__meta">
                 <?php if ($is_responded) : ?>
                     <span class="lmd-tag lmd-tag--ok">✓ Répondu</span>
