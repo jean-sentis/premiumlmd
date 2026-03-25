@@ -105,19 +105,49 @@
         });
     };
 
-    /* ── AI analysis with stepper ── */
+    /* ── AI analysis with stepper + progressive green chrome tabs ── */
     window.lmdRunAI = function(id, depth) {
         var $loading = $('#ai-loading');
         var $steps = $loading.find('.lmd-step');
+        var $chromeTabs = $('#ai-chrome-tabs .lmd-chrome-tab');
         $loading.show();
         var stepIdx = 0;
+
+        // Progressive green tinting thresholds (ms): ID, Matches, Marché, Scraping, Synthèse
+        var thresholds = [5000, 13000, 25000, 45000, 85000];
+        var startTime = Date.now();
+
         var timer = setInterval(function() {
+            var elapsed = Date.now() - startTime;
+
+            // Update steps
             if (stepIdx < $steps.length) {
                 $steps.eq(stepIdx).addClass('is-active');
                 if (stepIdx > 0) $steps.eq(stepIdx - 1).removeClass('is-active').addClass('is-done');
                 stepIdx++;
             }
-        }, 5000);
+
+            // Progressive green tinting on chrome tabs
+            for (var t = 0; t < thresholds.length; t++) {
+                if (elapsed >= thresholds[t] && $chromeTabs.eq(t).length) {
+                    $chromeTabs.eq(t)
+                        .css('border-top', '3px solid #22c55e')
+                        .addClass('has-content');
+                }
+            }
+
+            // Show spinner on currently processing tab
+            $chromeTabs.removeClass('is-loading');
+            for (var u = thresholds.length - 1; u >= 0; u--) {
+                if (elapsed >= thresholds[u] && u + 1 < thresholds.length && elapsed < thresholds[u + 1]) {
+                    $chromeTabs.eq(u + 1).addClass('is-loading');
+                    break;
+                }
+            }
+            if (elapsed < thresholds[0] && $chromeTabs.eq(0).length) {
+                $chromeTabs.eq(0).addClass('is-loading');
+            }
+        }, 1000);
 
         lmdAjax('lmd_run_ai', { id: id, depth: depth || 'full' }, function() {
             clearInterval(timer);
