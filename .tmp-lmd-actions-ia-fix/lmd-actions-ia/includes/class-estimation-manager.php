@@ -59,58 +59,81 @@ class LMD_Estimation_Manager {
     private function render_list() {
         global $wpdb;
         $table = $wpdb->prefix . 'lmd_estimations';
+        $sales_table = $wpdb->prefix . 'lmd_sales';
+        $sellers_table = $wpdb->prefix . 'lmd_sellers';
 
         // Ensure schema
-        if ( function_exists( 'lmd_ensure_estimations_columns' ) ) {
-            lmd_ensure_estimations_columns( $table );
+        if ( class_exists('LMD_Schema_Helpers') ) {
+            LMD_Schema_Helpers::ensure_all_columns();
         }
 
-        if ( ! function_exists( 'lmd_table_exists' ) || ! lmd_table_exists( $table ) ) {
+        if ( ! LMD_Schema_Helpers::table_exists( $table ) ) {
             echo '<div class="notice notice-error"><p>La table des estimations est absente. Réactivez le plugin.</p></div>';
             return;
         }
 
         // Check which columns exist
         $cols_exist = [];
-        foreach ( ['interest_level','nom','email','description','object_category','source','delegate_to','photo_urls','telephone','responded_at','auctioneer_decision'] as $c ) {
-            $cols_exist[$c] = function_exists('lmd_column_exists') ? lmd_column_exists($table, $c) : true;
+        foreach ( ['interest_level','nom','email','description','object_category','source','delegate_to','photo_urls','telephone','responded_at','auctioneer_decision','sale_id','seller_id'] as $c ) {
+            $cols_exist[$c] = LMD_Schema_Helpers::column_exists($table, $c);
         }
 
         // ── Filter ──
-        $filter = sanitize_text_field( $_GET['filter'] ?? 'all' );
-        $search = sanitize_text_field( $_GET['s'] ?? '' );
+        $filter       = sanitize_text_field( $_GET['filter'] ?? 'all' );
+        $search       = sanitize_text_field( $_GET['s'] ?? '' );
+        $filter_sale  = absint( $_GET['filter_sale'] ?? 0 );
+        $filter_seller= absint( $_GET['filter_seller'] ?? 0 );
 
         // ── Sort ──
         $sort_by  = sanitize_text_field( $_GET['sort'] ?? 'created_at' );
         $sort_dir = strtoupper( sanitize_text_field( $_GET['dir'] ?? 'DESC' ) );
         if ( ! in_array( $sort_dir, ['ASC','DESC'] ) ) $sort_dir = 'DESC';
 
-        $allowed_sorts = ['created_at' => 'created_at', 'nom' => 'nom', 'status' => 'status'];
-        if ( $cols_exist['interest_level'] ) $allowed_sorts['interest_level'] = 'interest_level';
+        $allowed_sorts = ['created_at' => 'e.created_at', 'nom' => 'e.nom', 'status' => 'e.status'];
+        if ( $cols_exist['interest_level'] ) $allowed_sorts['interest_level'] = 'e.interest_level';
+        if ( $cols_exist['sale_id'] )        $allowed_sorts['sale'] = 's.title';
         if ( ! isset( $allowed_sorts[$sort_by] ) ) $sort_by = 'created_at';
         $order_col = $allowed_sorts[$sort_by];
 
+        // ── Build query with JOINs ──
+        $joins = '';
+        if ( $cols_exist['sale_id'] && LMD_Schema_Helpers::table_exists($sales_table) ) {
+            $joins .= " LEFT JOIN `{$sales_table}` s ON e.sale_id = s.id";
+        }
+        if ( $cols_exist['seller_id'] && LMD_Schema_Helpers::table_exists($sellers_table) ) {
+            $joins .= " LEFT JOIN `{$sellers_table}` sel ON e.seller_id = sel.id";
+        }
+
         // ── WHERE ──
         $where = "WHERE 1=1";
-        $interest_col = $cols_exist['interest_level'] ? 'interest_level' : ($cols_exist['auctioneer_decision'] ? 'auctioneer_decision' : '');
+        $interest_col = $cols_exist['interest_level'] ? 'e.interest_level' : ($cols_exist['auctioneer_decision'] ? 'e.auctioneer_decision' : '');
 
         switch ( $filter ) {
-            case 'unread':    $where .= " AND status = 'new'"; break;
-            case 'pending':   $where .= " AND status NOT IN ('responded','archived')"; break;
-            case 'overdue':   $where .= " AND status NOT IN ('responded','archived') AND created_at < DATE_SUB(NOW(), INTERVAL 48 HOUR)"; break;
-            case 'responded': $where .= " AND status = 'responded'"; break;
-            case 'archived':  $where .= " AND status = 'archived'"; break;
+            case 'unread':    $where .= " AND e.status = 'new'"; break;
+            case 'pending':   $where .= " AND e.status NOT IN ('responded','archived')"; break;
+            case 'overdue':   $where .= " AND e.status NOT IN ('responded','archived') AND e.created_at < DATE_SUB(NOW(), INTERVAL 48 HOUR)"; break;
+            case 'responded': $where .= " AND e.status = 'responded'"; break;
+            case 'archived':  $where .= " AND e.status = 'archived'"; break;
+            case 'no_sale':   $where .= " AND (e.sale_id IS NULL OR e.sale_id = 0) AND e.status != 'archived'"; break;
             case 'all':
-                $where .= " AND status != 'archived'";
+                $where .= " AND e.status != 'archived'";
                 break;
             default:
-                // Interest level filter
                 if ( $interest_col && isset( self::INTEREST_LEVELS[$filter] ) ) {
-                    $where .= $wpdb->prepare( " AND `{$interest_col}` = %s AND status != 'archived'", $filter );
+                    $where .= $wpdb->prepare( " AND {$interest_col} = %s AND e.status != 'archived'", $filter );
                 } else {
-                    $where .= " AND status != 'archived'";
+                    $where .= " AND e.status != 'archived'";
                 }
                 break;
+        }
+
+        // Sale filter
+        if ( $filter_sale > 0 && $cols_exist['sale_id'] ) {
+            $where .= $wpdb->prepare( " AND e.sale_id = %d", $filter_sale );
+        }
+        // Seller filter
+        if ( $filter_seller > 0 && $cols_exist['seller_id'] ) {
+            $where .= $wpdb->prepare( " AND e.seller_id = %d", $filter_seller );
         }
 
         // ── Search ──
@@ -120,9 +143,21 @@ class LMD_Estimation_Manager {
             $vals = [];
             foreach ( ['nom','email','description','telephone'] as $sc ) {
                 if ( $cols_exist[$sc] ?? false ) {
-                    $clauses[] = "`{$sc}` LIKE %s";
+                    $clauses[] = "e.`{$sc}` LIKE %s";
                     $vals[] = $like;
                 }
+            }
+            // Also search in seller email/name
+            if ( $cols_exist['seller_id'] && LMD_Schema_Helpers::table_exists($sellers_table) ) {
+                $clauses[] = "sel.nom LIKE %s";
+                $vals[] = $like;
+                $clauses[] = "sel.email LIKE %s";
+                $vals[] = $like;
+            }
+            // Also search in sale title
+            if ( $cols_exist['sale_id'] && LMD_Schema_Helpers::table_exists($sales_table) ) {
+                $clauses[] = "s.title LIKE %s";
+                $vals[] = $like;
             }
             if ( ! empty( $clauses ) ) {
                 $where .= $wpdb->prepare( ' AND (' . implode( ' OR ', $clauses ) . ')', ...$vals );
@@ -130,7 +165,9 @@ class LMD_Estimation_Manager {
         }
 
         $estimations = $wpdb->get_results(
-            "SELECT * FROM `{$table}` {$where} ORDER BY `{$order_col}` {$sort_dir} LIMIT 200"
+            "SELECT e.*, s.title AS sale_title, s.sale_date AS sale_date_val, sel.nom AS seller_name_linked, sel.email AS seller_email_linked
+             FROM `{$table}` e {$joins} {$where}
+             ORDER BY {$order_col} {$sort_dir} LIMIT 200"
         );
 
         if ( $wpdb->last_error ) {
@@ -146,12 +183,16 @@ class LMD_Estimation_Manager {
             $est->photo_urls     = (string) self::rv( $est, 'photo_urls', '[]' );
             $est->source         = (string) self::rv( $est, 'source', 'form' );
             $est->status         = (string) self::rv( $est, 'status', 'new' );
-            // Support both column names
             $est->interest_level = (string) ( self::rv( $est, 'interest_level', '' ) ?: self::rv( $est, 'auctioneer_decision', '' ) );
             $est->object_category= (string) self::rv( $est, 'object_category', '' );
             $est->response_mode  = (string) self::rv( $est, 'response_mode', '' );
             $est->delegate_to    = (string) self::rv( $est, 'delegate_to', '' );
             $est->created_at     = (string) self::rv( $est, 'created_at', '' );
+            $est->sale_id        = self::rv( $est, 'sale_id', null );
+            $est->seller_id      = self::rv( $est, 'seller_id', null );
+            $est->sale_title     = (string) self::rv( $est, 'sale_title', '' );
+            $est->seller_name_linked = (string) self::rv( $est, 'seller_name_linked', '' );
+            $est->seller_email_linked = (string) self::rv( $est, 'seller_email_linked', '' );
         }
 
         // ── Counts ──
@@ -162,15 +203,13 @@ class LMD_Estimation_Manager {
             'overdue'   => (int) $wpdb->get_var("SELECT COUNT(*) FROM `{$table}` WHERE status NOT IN ('responded','archived') AND created_at < DATE_SUB(NOW(), INTERVAL 48 HOUR)"),
             'responded' => (int) $wpdb->get_var("SELECT COUNT(*) FROM `{$table}` WHERE status = 'responded'"),
             'archived'  => (int) $wpdb->get_var("SELECT COUNT(*) FROM `{$table}` WHERE status = 'archived'"),
+            'no_sale'   => $cols_exist['sale_id'] ? (int) $wpdb->get_var("SELECT COUNT(*) FROM `{$table}` WHERE (sale_id IS NULL OR sale_id = 0) AND status != 'archived'") : 0,
         ];
         $interest_counts = [];
         foreach ( array_keys(self::INTEREST_LEVELS) as $key ) {
-            if ( ! $interest_col ) {
-                $interest_counts[$key] = 0;
-                continue;
-            }
+            if ( ! $interest_col ) { $interest_counts[$key] = 0; continue; }
             $interest_counts[$key] = (int) $wpdb->get_var(
-                $wpdb->prepare("SELECT COUNT(*) FROM `{$table}` WHERE `{$interest_col}` = %s AND status != 'archived'", $key)
+                $wpdb->prepare("SELECT COUNT(*) FROM `{$table}` WHERE `interest_level` = %s AND status != 'archived'", $key)
             );
         }
 
@@ -183,6 +222,20 @@ class LMD_Estimation_Manager {
             }
         }
 
+        // Sales for dropdown
+        $all_sales = LMD_Schema_Helpers::table_exists($sales_table)
+            ? $wpdb->get_results("SELECT id, title, sale_date FROM `{$sales_table}` ORDER BY sale_date DESC")
+            : [];
+
+        // Sale counts
+        $sale_counts = [];
+        if ( $cols_exist['sale_id'] && LMD_Schema_Helpers::table_exists($sales_table) ) {
+            $sc_rows = $wpdb->get_results("SELECT sale_id, COUNT(*) as cnt FROM `{$table}` WHERE sale_id IS NOT NULL AND sale_id > 0 AND status != 'archived' GROUP BY sale_id");
+            foreach ( $sc_rows as $scr ) {
+                $sale_counts[(int)$scr->sale_id] = (int) $scr->cnt;
+            }
+        }
+
         include LMD_PLUGIN_DIR . 'templates/estimation-list.php';
     }
 
@@ -192,9 +245,11 @@ class LMD_Estimation_Manager {
     private function render_detail( int $id ) {
         global $wpdb;
         $table = $wpdb->prefix . 'lmd_estimations';
+        $sales_table = $wpdb->prefix . 'lmd_sales';
+        $sellers_table = $wpdb->prefix . 'lmd_sellers';
 
-        if ( function_exists( 'lmd_ensure_estimations_columns' ) ) {
-            lmd_ensure_estimations_columns( $table );
+        if ( class_exists('LMD_Schema_Helpers') ) {
+            LMD_Schema_Helpers::ensure_all_columns();
         }
 
         $est = $wpdb->get_row( $wpdb->prepare("SELECT * FROM `{$table}` WHERE id = %d", $id) );
@@ -219,6 +274,8 @@ class LMD_Estimation_Manager {
         $est->auctioneer_notes = (string) self::rv( $est, 'auctioneer_notes', '' );
         $est->second_opinion   = (string) self::rv( $est, 'second_opinion', '' );
         $est->created_at       = (string) self::rv( $est, 'created_at', '' );
+        $est->sale_id          = self::rv( $est, 'sale_id', null );
+        $est->seller_id        = self::rv( $est, 'seller_id', null );
 
         // Mark as read
         if ( $est->status === 'new' ) {
@@ -228,6 +285,20 @@ class LMD_Estimation_Manager {
 
         $ai = json_decode( self::rv($est, 'ai_analysis', '{}'), true );
         if ( ! is_array($ai) ) $ai = [];
+
+        // Fetch all sales for the dropdown
+        $all_sales = LMD_Schema_Helpers::table_exists($sales_table)
+            ? $wpdb->get_results("SELECT id, title, sale_date FROM `{$sales_table}` ORDER BY sale_date DESC")
+            : [];
+
+        // Fetch all sellers for the dropdown
+        $all_sellers = LMD_Schema_Helpers::table_exists($sellers_table)
+            ? $wpdb->get_results("SELECT id, nom, email FROM `{$sellers_table}` ORDER BY nom ASC")
+            : [];
+
+        // Current sale/seller info
+        $current_sale = $est->sale_id ? $wpdb->get_row($wpdb->prepare("SELECT * FROM `{$sales_table}` WHERE id = %d", $est->sale_id)) : null;
+        $current_seller = $est->seller_id ? $wpdb->get_row($wpdb->prepare("SELECT * FROM `{$sellers_table}` WHERE id = %d", $est->seller_id)) : null;
 
         include LMD_PLUGIN_DIR . 'templates/estimation-detail.php';
     }
@@ -286,7 +357,6 @@ class LMD_Estimation_Manager {
                     $urls[] = $url;
                     continue;
                 }
-                // If attachment not found, try to build URL from metadata
                 if ( function_exists('get_attached_file') ) {
                     $file = get_attached_file( (int) $item );
                     if ( $file && file_exists( $file ) ) {
@@ -296,7 +366,6 @@ class LMD_Estimation_Manager {
                         continue;
                     }
                 }
-                // Last resort: skip missing attachment
                 error_log("LMD: Attachment ID {$item} not found");
                 continue;
             }
@@ -313,7 +382,7 @@ class LMD_Estimation_Manager {
                 continue;
             }
 
-            // Relative path — prepend uploads base URL
+            // Relative path
             if ( strpos($item, '/') !== false || strpos($item, '.') !== false ) {
                 if ( function_exists('wp_upload_dir') ) {
                     $upload_dir = wp_upload_dir();

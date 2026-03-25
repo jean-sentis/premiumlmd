@@ -32,6 +32,16 @@ class LMD_Admin_Menu {
             [ LMD_Estimation_Manager::instance(), 'render_page' ]
         );
         $this->hook_suffixes[] = add_submenu_page(
+            $parent_slug, 'Ventes', '🏷️ Ventes',
+            'manage_options', 'lmd-sales',
+            [ $this, 'render_sales' ]
+        );
+        $this->hook_suffixes[] = add_submenu_page(
+            $parent_slug, 'Vendeurs', '👤 Vendeurs',
+            'manage_options', 'lmd-sellers',
+            [ $this, 'render_sellers' ]
+        );
+        $this->hook_suffixes[] = add_submenu_page(
             $parent_slug, 'Réglages', '⚙️ Réglages',
             'manage_options', 'lmd-settings', [ $this, 'render_settings' ]
         );
@@ -46,6 +56,8 @@ class LMD_Admin_Menu {
             $is_our_page = (
                 strpos( $hook, 'lmd-actions-ia' ) !== false ||
                 strpos( $hook, 'lmd-estimations' ) !== false ||
+                strpos( $hook, 'lmd-sales' ) !== false ||
+                strpos( $hook, 'lmd-sellers' ) !== false ||
                 strpos( $hook, 'lmd-settings' ) !== false ||
                 strpos( $hook, 'lmd_' ) !== false ||
                 strpos( $hook, 'actions-i-a' ) !== false
@@ -55,19 +67,18 @@ class LMD_Admin_Menu {
         // Method 3: check current page parameter
         if ( ! $is_our_page && isset( $_GET['page'] ) ) {
             $page = sanitize_text_field( $_GET['page'] );
-            $is_our_page = in_array( $page, ['lmd-actions-ia', 'lmd-estimations', 'lmd-settings'], true );
+            $is_our_page = in_array( $page, ['lmd-actions-ia', 'lmd-estimations', 'lmd-sales', 'lmd-sellers', 'lmd-settings'], true );
         }
 
         if ( ! $is_our_page ) return;
 
-        // Debug log to help troubleshoot
         error_log( "LMD: Loading assets on hook: {$hook}" );
 
         wp_enqueue_style(
             'lmd-admin-css',
             LMD_PLUGIN_URL . 'assets/css/admin.css',
             [],
-            LMD_VERSION . '.' . time() // cache bust during debugging
+            LMD_VERSION . '.' . time()
         );
 
         wp_enqueue_script(
@@ -97,6 +108,16 @@ class LMD_Admin_Menu {
     public function render_settings() {
         echo '<div class="wrap lmd-wrap">';
         include LMD_PLUGIN_DIR . 'templates/settings.php';
+        echo '</div>';
+    }
+    public function render_sales() {
+        echo '<div class="wrap lmd-wrap">';
+        include LMD_PLUGIN_DIR . 'templates/sales.php';
+        echo '</div>';
+    }
+    public function render_sellers() {
+        echo '<div class="wrap lmd-wrap">';
+        include LMD_PLUGIN_DIR . 'templates/sellers.php';
         echo '</div>';
     }
 }

@@ -12,6 +12,7 @@ class LMD_Ajax_Handler {
             'lmd_update_status', 'lmd_archive', 'lmd_save_notes',
             'lmd_save_second_opinion', 'lmd_set_interest',
             'lmd_send_response', 'lmd_delegate', 'lmd_run_ai',
+            'lmd_assign_sale', 'lmd_assign_seller',
         ];
         foreach ($actions as $action) {
             add_action("wp_ajax_{$action}", [$this, $action]);
@@ -96,7 +97,6 @@ class LMD_Ajax_Handler {
             'status'        => 'in_review',
         ], ['id' => $id]);
 
-        // Return mailto data for the front-end to open
         $nom = is_object($est) && property_exists($est, 'nom') && $est->nom !== null ? (string) $est->nom : 'Sans nom';
         $email = is_object($est) && property_exists($est, 'email') && $est->email !== null ? (string) $est->email : '';
         $telephone = is_object($est) && property_exists($est, 'telephone') && $est->telephone !== null ? (string) $est->telephone : '';
@@ -112,6 +112,30 @@ class LMD_Ajax_Handler {
         wp_send_json_success([
             'mailto' => 'mailto:?subject=' . rawurlencode($subject) . '&body=' . rawurlencode($body),
         ]);
+    }
+
+    /* ── Assign sale ── */
+    public function lmd_assign_sale() {
+        $this->verify();
+        global $wpdb;
+        $id      = absint($_POST['id']);
+        $sale_id = absint($_POST['sale_id']);
+        $wpdb->update($wpdb->prefix . 'lmd_estimations', [
+            'sale_id' => $sale_id > 0 ? $sale_id : null,
+        ], ['id' => $id]);
+        wp_send_json_success();
+    }
+
+    /* ── Assign seller ── */
+    public function lmd_assign_seller() {
+        $this->verify();
+        global $wpdb;
+        $id        = absint($_POST['id']);
+        $seller_id = absint($_POST['seller_id']);
+        $wpdb->update($wpdb->prefix . 'lmd_estimations', [
+            'seller_id' => $seller_id > 0 ? $seller_id : null,
+        ], ['id' => $id]);
+        wp_send_json_success();
     }
 
     public function lmd_run_ai() {
