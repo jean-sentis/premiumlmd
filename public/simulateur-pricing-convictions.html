@@ -568,7 +568,8 @@ function exportCSV() {
   a.click(); URL.revokeObjectURL(url);
 }
 
-// ─── SUPABASE PERSISTENCE ───
+// ─── PERSISTENCE (localStorage + Supabase) ───
+const LS_KEY = 'pricing-simulator-config';
 let sbClient = null;
 let currentUserId = null;
 let saveTimeout = null;
@@ -581,19 +582,73 @@ function showSaveStatus(msg, color) {
   el.textContent = msg;
 }
 
+function getConfigPayload() {
+  return {
+    prices: prices,
+    discounts: discountsByCategory,
+    hotels: hotels.map(h => ({ name: h.name, sales: h.sales, lotsPerSale: h.lotsPerSale, estimationsPerMonth: h.estimationsPerMonth, count: h.count || 1 })),
+  };
+}
+
+function saveToLocalStorage() {
+  try { localStorage.setItem(LS_KEY, JSON.stringify(getConfigPayload())); } catch(e) {}
+}
+
+function applyConfigData(data) {
+  if (data.prices) {
+    for (const [k, v] of Object.entries(data.prices)) { prices[k] = v; }
+  }
+  if (data.discounts) {
+    if (Array.isArray(data.discounts)) {
+      for (const catKey of Object.keys(DISCOUNT_CATEGORIES)) {
+        discountsByCategory[catKey] = DEFAULT_TIERS.map((t, i) => ({ min: t.min, max: t.max, discount: data.discounts[i] ?? 0 }));
+      }
+    } else if (typeof data.discounts === 'object') {
+      for (const [catKey, arr] of Object.entries(data.discounts)) {
+        if (Array.isArray(arr)) {
+          if (arr.length > 0 && typeof arr[0] === 'object') {
+            discountsByCategory[catKey] = arr;
+          } else {
+            discountsByCategory[catKey] = DEFAULT_TIERS.map((t, i) => ({ min: t.min, max: t.max, discount: arr[i] ?? 0 }));
+          }
+        }
+      }
+    }
+  }
+  if (Array.isArray(data.hotels) && data.hotels.length) {
+    hotels = [];
+    hotelIdCounter = 0;
+    for (const h of data.hotels) {
+      const id = hotelIdCounter++;
+      hotels.push({ id, name: h.name, sales: h.sales, lotsPerSale: h.lotsPerSale, estimationsPerMonth: h.estimationsPerMonth, count: h.count || 1 });
+    }
+  }
+  renderPricing();
+  renderDiscounts();
+  renderHotels();
+  recalcAll();
+}
+
+function loadFromLocalStorage() {
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if (raw) {
+      const data = JSON.parse(raw);
+      applyConfigData(data);
+      showSaveStatus('✓ Configuration restaurée', 'var(--green)');
+      return true;
+    }
+  } catch(e) {}
+  return false;
+}
+
 async function autoSave() {
+  saveToLocalStorage();
   if (!sbClient || !currentUserId) return;
   clearTimeout(saveTimeout);
   saveTimeout = setTimeout(async () => {
     showSaveStatus('💾 Sauvegarde…', 'var(--gold)');
-    const data = {
-      user_id: currentUserId,
-      config_name: 'Ma configuration',
-      prices: prices,
-      discounts: discountsByCategory,
-      hotels: hotels.map(h => ({ name: h.name, sales: h.sales, lotsPerSale: h.lotsPerSale, estimationsPerMonth: h.estimationsPerMonth, count: h.count || 1 })),
-      updated_at: new Date().toISOString()
-    };
+    const data = { user_id: currentUserId, config_name: 'Ma configuration', ...getConfigPayload(), updated_at: new Date().toISOString() };
     try {
       if (currentConfigId) {
         const { error } = await sbClient.from('pricing_configs').update(data).eq('id', currentConfigId);
@@ -606,7 +661,7 @@ async function autoSave() {
       showSaveStatus('✓ Sauvegardé', 'var(--green)');
     } catch (e) {
       console.error('Save error:', e);
-      showSaveStatus('✗ Erreur de sauvegarde', 'var(--red)');
+      showSaveStatus('✗ Erreur cloud — sauvé localement', 'var(--orange)');
     }
   }, 800);
 }
@@ -624,48 +679,17 @@ async function loadConfig() {
     if (error) throw error;
     if (data) {
       currentConfigId = data.id;
-      if (data.prices) {
-        for (const [k, v] of Object.entries(data.prices)) {
-          prices[k] = v;
-        }
-      }
-      if (data.discounts) {
-        if (Array.isArray(data.discounts)) {
-          // Legacy flat array format: convert to tier objects
-          for (const catKey of Object.keys(DISCOUNT_CATEGORIES)) {
-            discountsByCategory[catKey] = DEFAULT_TIERS.map((t, i) => ({ min: t.min, max: t.max, discount: data.discounts[i] ?? 0 }));
-          }
-        } else if (typeof data.discounts === 'object') {
-          for (const [catKey, arr] of Object.entries(data.discounts)) {
-            if (Array.isArray(arr)) {
-              // Check if new format (objects with min/max) or old per-cat format (plain numbers)
-              if (arr.length > 0 && typeof arr[0] === 'object') {
-                discountsByCategory[catKey] = arr;
-              } else {
-                discountsByCategory[catKey] = DEFAULT_TIERS.map((t, i) => ({ min: t.min, max: t.max, discount: arr[i] ?? 0 }));
-              }
-            }
-          }
-        }
-      }
-      if (Array.isArray(data.hotels) && data.hotels.length) {
-        hotels = [];
-        hotelIdCounter = 0;
-        for (const h of data.hotels) {
-          const id = hotelIdCounter++;
-          hotels.push({ id, name: h.name, sales: h.sales, lotsPerSale: h.lotsPerSale, estimationsPerMonth: h.estimationsPerMonth, count: h.count || 1 });
-        }
-      }
-      renderPricing();
-      renderDiscounts();
-      renderHotels();
-      recalcAll();
+      applyConfigData(data);
+      saveToLocalStorage();
       showSaveStatus('✓ Configuration chargée', 'var(--green)');
     }
   } catch (e) {
     console.error('Load error:', e);
   }
 }
+
+// On init: load from localStorage immediately (no auth needed)
+loadFromLocalStorage();
 
 // Listen for Supabase session from parent React app
 window.addEventListener('message', async (event) => {
