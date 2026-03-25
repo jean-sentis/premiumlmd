@@ -240,6 +240,8 @@
 .lmd-chrome-tab.has-content { border-top: 3px solid var(--lmd-green); }
 .lmd-chrome-tab__count { display: inline-block; background: rgba(0,0,0,.06); padding: 0 6px; border-radius: 10px; font-size: 10px; margin-left: 4px; }
 .lmd-chrome-tab.has-content .lmd-chrome-tab__count { background: #dcfce7; color: #16a34a; }
+.lmd-chrome-tab.is-loading { position: relative; }
+.lmd-chrome-tab.is-loading::after { content: ''; position: absolute; top: 6px; right: 6px; width: 10px; height: 10px; border: 2px solid #e2e8f0; border-top-color: var(--lmd-blue); border-radius: 50%; animation: lmd-spin .8s linear infinite; }
 .lmd-chrome-content { border: 1px solid #e2e8f0; border-radius: 0 0 var(--lmd-radius) var(--lmd-radius); padding: 16px; background: #fff; font-size: 13px; line-height: 1.6; }
 
 /* Lens grid */
