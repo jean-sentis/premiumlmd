@@ -67,6 +67,7 @@ class LMD_Schema_Helpers {
         $use = $wpdb->prefix . 'lmd_ai_usage';
         $sal = $wpdb->prefix . 'lmd_sales';
         $sel = $wpdb->prefix . 'lmd_sellers';
+        $mlk = $wpdb->prefix . 'lmd_magic_links';
 
         /* ── Services ── */
         $wpdb->query("CREATE TABLE IF NOT EXISTS {$svc} (
@@ -138,12 +139,29 @@ class LMD_Schema_Helpers {
             delegate_to     VARCHAR(255) DEFAULT '',
             sale_id         BIGINT UNSIGNED NULL,
             seller_id       BIGINT UNSIGNED NULL,
+            magic_link_email   VARCHAR(255) DEFAULT '',
+            magic_link_sent_at DATETIME NULL,
             created_at      DATETIME     DEFAULT CURRENT_TIMESTAMP,
             updated_at      DATETIME     DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             KEY idx_status (status),
             KEY idx_created (created_at),
             KEY idx_sale_id (sale_id),
             KEY idx_seller_id (seller_id)
+        ) {$charset};");
+
+        /* ── Magic Links (2nd opinion) ── */
+        $wpdb->query("CREATE TABLE IF NOT EXISTS {$mlk} (
+            id             BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            estimation_id  BIGINT UNSIGNED NOT NULL,
+            token          VARCHAR(64) NOT NULL UNIQUE,
+            email          VARCHAR(255) NOT NULL,
+            opinion        TEXT NULL,
+            is_used        TINYINT(1) DEFAULT 0,
+            used_at        DATETIME NULL,
+            expires_at     DATETIME NOT NULL,
+            created_at     DATETIME DEFAULT CURRENT_TIMESTAMP,
+            KEY idx_token (token),
+            KEY idx_estimation (estimation_id)
         ) {$charset};");
 
         /* ── AI Usage ── */
@@ -201,6 +219,8 @@ class LMD_Schema_Helpers {
             'delegate_to'      => "VARCHAR(255) DEFAULT ''",
             'sale_id'          => 'BIGINT UNSIGNED NULL',
             'seller_id'        => 'BIGINT UNSIGNED NULL',
+            'magic_link_email'    => "VARCHAR(255) DEFAULT ''",
+            'magic_link_sent_at'  => 'DATETIME NULL',
         ];
 
         foreach ( $cols as $col => $def ) {
