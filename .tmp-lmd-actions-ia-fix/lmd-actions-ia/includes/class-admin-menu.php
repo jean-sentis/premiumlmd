@@ -3,6 +3,8 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 
 class LMD_Admin_Menu {
     private static $instance = null;
+    private $hook_suffixes = [];
+
     public static function instance() {
         if ( null === self::$instance ) self::$instance = new self();
         return self::$instance;
@@ -15,46 +17,64 @@ class LMD_Admin_Menu {
     public function register_menus() {
         $parent_slug = 'lmd-actions-ia';
 
-        add_menu_page(
+        $this->hook_suffixes[] = add_menu_page(
             'LMD Actions I.A.', 'Actions I.A.', 'manage_options',
             $parent_slug, [ $this, 'render_dashboard' ],
             'dashicons-superhero-alt', 26
         );
-        add_submenu_page(
+        $this->hook_suffixes[] = add_submenu_page(
             $parent_slug, 'Tableau de bord', 'Tableau de bord',
             'manage_options', $parent_slug, [ $this, 'render_dashboard' ]
         );
-        add_submenu_page(
+        $this->hook_suffixes[] = add_submenu_page(
             $parent_slug, "Aide à l'estimation", "📋 Aide à l'estimation",
             'manage_options', 'lmd-estimations',
             [ LMD_Estimation_Manager::instance(), 'render_page' ]
         );
-        add_submenu_page(
+        $this->hook_suffixes[] = add_submenu_page(
             $parent_slug, 'Réglages', '⚙️ Réglages',
             'manage_options', 'lmd-settings', [ $this, 'render_settings' ]
         );
     }
 
     public function enqueue_assets( $hook ) {
-        // Match any page containing lmd- in the hook
-        if ( strpos( $hook, 'lmd-' ) === false
-          && strpos( $hook, 'lmd_' ) === false
-          && strpos( $hook, 'actions-i-a' ) === false ) {
-            return;
+        // Method 1: exact hook match
+        $is_our_page = in_array( $hook, $this->hook_suffixes, true );
+
+        // Method 2: fallback string search (covers edge cases)
+        if ( ! $is_our_page ) {
+            $is_our_page = (
+                strpos( $hook, 'lmd-actions-ia' ) !== false ||
+                strpos( $hook, 'lmd-estimations' ) !== false ||
+                strpos( $hook, 'lmd-settings' ) !== false ||
+                strpos( $hook, 'lmd_' ) !== false ||
+                strpos( $hook, 'actions-i-a' ) !== false
+            );
         }
+
+        // Method 3: check current page parameter
+        if ( ! $is_our_page && isset( $_GET['page'] ) ) {
+            $page = sanitize_text_field( $_GET['page'] );
+            $is_our_page = in_array( $page, ['lmd-actions-ia', 'lmd-estimations', 'lmd-settings'], true );
+        }
+
+        if ( ! $is_our_page ) return;
+
+        // Debug log to help troubleshoot
+        error_log( "LMD: Loading assets on hook: {$hook}" );
 
         wp_enqueue_style(
             'lmd-admin-css',
             LMD_PLUGIN_URL . 'assets/css/admin.css',
             [],
-            LMD_VERSION
+            LMD_VERSION . '.' . time() // cache bust during debugging
         );
 
         wp_enqueue_script(
             'lmd-admin-js',
             LMD_PLUGIN_URL . 'assets/js/admin.js',
             [ 'jquery' ],
-            LMD_VERSION,
+            LMD_VERSION . '.' . time(),
             true
         );
 
@@ -62,6 +82,11 @@ class LMD_Admin_Menu {
             'ajaxUrl' => admin_url( 'admin-ajax.php' ),
             'nonce'   => wp_create_nonce( 'lmd_nonce' ),
         ]);
+
+        // Also enqueue WordPress media library if on detail view
+        if ( isset( $_GET['view'] ) && $_GET['view'] === 'detail' ) {
+            wp_enqueue_media();
+        }
     }
 
     public function render_dashboard() {
