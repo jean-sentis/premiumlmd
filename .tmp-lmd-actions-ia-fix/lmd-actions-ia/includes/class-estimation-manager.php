@@ -18,6 +18,24 @@ class LMD_Estimation_Manager {
         'hors_spécialité'    => [ 'label' => 'Hors spécialité',  'color' => '#9ca3af', 'dot' => '#9ca3af', 'bg' => '#f9fafb', 'border' => '#d1d5db' ],
     ];
 
+    const OBJECT_CATEGORIES = [
+        'tableaux'      => 'Tableaux',
+        'mobilier'      => 'Mobilier',
+        'bijoux'        => 'Bijoux & Montres',
+        'ceramiques'    => 'Céramiques',
+        'argenterie'    => 'Argenterie',
+        'objets_art'    => "Objets d'art",
+        'livres'        => 'Livres & Manuscrits',
+        'sculptures'    => 'Sculptures',
+        'photographies' => 'Photographies',
+        'estampes'      => 'Estampes',
+        'tapis'         => 'Tapis & Textiles',
+        'militaria'     => 'Militaria',
+        'vins'          => 'Vins & Spiritueux',
+        'voitures'      => 'Voitures de collection',
+        'autre'         => 'Autre',
+    ];
+
     public static function instance() {
         if ( null === self::$instance ) self::$instance = new self();
         return self::$instance;
@@ -54,7 +72,7 @@ class LMD_Estimation_Manager {
 
         // Check which columns exist
         $cols_exist = [];
-        foreach ( ['interest_level','nom','email','description','object_category','source','delegate_to','photo_urls','telephone','responded_at'] as $c ) {
+        foreach ( ['interest_level','nom','email','description','object_category','source','delegate_to','photo_urls','telephone','responded_at','auctioneer_decision'] as $c ) {
             $cols_exist[$c] = function_exists('lmd_column_exists') ? lmd_column_exists($table, $c) : true;
         }
 
@@ -74,6 +92,8 @@ class LMD_Estimation_Manager {
 
         // ── WHERE ──
         $where = "WHERE 1=1";
+        $interest_col = $cols_exist['interest_level'] ? 'interest_level' : ($cols_exist['auctioneer_decision'] ? 'auctioneer_decision' : '');
+
         switch ( $filter ) {
             case 'unread':    $where .= " AND status = 'new'"; break;
             case 'pending':   $where .= " AND status NOT IN ('responded','archived')"; break;
@@ -81,9 +101,12 @@ class LMD_Estimation_Manager {
             case 'responded': $where .= " AND status = 'responded'"; break;
             case 'archived':  $where .= " AND status = 'archived'"; break;
             case 'all':
+                $where .= " AND status != 'archived'";
+                break;
             default:
-                if ( $cols_exist['interest_level'] && isset( self::INTEREST_LEVELS[$filter] ) ) {
-                    $where .= $wpdb->prepare( " AND interest_level = %s AND status != 'archived'", $filter );
+                // Interest level filter
+                if ( $interest_col && isset( self::INTEREST_LEVELS[$filter] ) ) {
+                    $where .= $wpdb->prepare( " AND `{$interest_col}` = %s AND status != 'archived'", $filter );
                 } else {
                     $where .= " AND status != 'archived'";
                 }
@@ -97,7 +120,7 @@ class LMD_Estimation_Manager {
             $vals = [];
             foreach ( ['nom','email','description','telephone'] as $sc ) {
                 if ( $cols_exist[$sc] ?? false ) {
-                    $clauses[] = "$sc LIKE %s";
+                    $clauses[] = "`{$sc}` LIKE %s";
                     $vals[] = $like;
                 }
             }
@@ -107,8 +130,12 @@ class LMD_Estimation_Manager {
         }
 
         $estimations = $wpdb->get_results(
-            "SELECT * FROM {$table} {$where} ORDER BY `{$order_col}` {$sort_dir} LIMIT 200"
+            "SELECT * FROM `{$table}` {$where} ORDER BY `{$order_col}` {$sort_dir} LIMIT 200"
         );
+
+        if ( $wpdb->last_error ) {
+            error_log( "LMD SQL Error: " . $wpdb->last_error );
+        }
 
         // Normalize rows
         foreach ( $estimations as $est ) {
@@ -119,7 +146,8 @@ class LMD_Estimation_Manager {
             $est->photo_urls     = (string) self::rv( $est, 'photo_urls', '[]' );
             $est->source         = (string) self::rv( $est, 'source', 'form' );
             $est->status         = (string) self::rv( $est, 'status', 'new' );
-            $est->interest_level = (string) self::rv( $est, 'interest_level', '' );
+            // Support both column names
+            $est->interest_level = (string) ( self::rv( $est, 'interest_level', '' ) ?: self::rv( $est, 'auctioneer_decision', '' ) );
             $est->object_category= (string) self::rv( $est, 'object_category', '' );
             $est->response_mode  = (string) self::rv( $est, 'response_mode', '' );
             $est->delegate_to    = (string) self::rv( $est, 'delegate_to', '' );
@@ -128,22 +156,31 @@ class LMD_Estimation_Manager {
 
         // ── Counts ──
         $counts = [
-            'all'       => (int) $wpdb->get_var("SELECT COUNT(*) FROM {$table} WHERE status != 'archived'"),
-            'unread'    => (int) $wpdb->get_var("SELECT COUNT(*) FROM {$table} WHERE status = 'new'"),
-            'pending'   => (int) $wpdb->get_var("SELECT COUNT(*) FROM {$table} WHERE status NOT IN ('responded','archived')"),
-            'overdue'   => (int) $wpdb->get_var("SELECT COUNT(*) FROM {$table} WHERE status NOT IN ('responded','archived') AND created_at < DATE_SUB(NOW(), INTERVAL 48 HOUR)"),
-            'responded' => (int) $wpdb->get_var("SELECT COUNT(*) FROM {$table} WHERE status = 'responded'"),
-            'archived'  => (int) $wpdb->get_var("SELECT COUNT(*) FROM {$table} WHERE status = 'archived'"),
+            'all'       => (int) $wpdb->get_var("SELECT COUNT(*) FROM `{$table}` WHERE status != 'archived'"),
+            'unread'    => (int) $wpdb->get_var("SELECT COUNT(*) FROM `{$table}` WHERE status = 'new'"),
+            'pending'   => (int) $wpdb->get_var("SELECT COUNT(*) FROM `{$table}` WHERE status NOT IN ('responded','archived')"),
+            'overdue'   => (int) $wpdb->get_var("SELECT COUNT(*) FROM `{$table}` WHERE status NOT IN ('responded','archived') AND created_at < DATE_SUB(NOW(), INTERVAL 48 HOUR)"),
+            'responded' => (int) $wpdb->get_var("SELECT COUNT(*) FROM `{$table}` WHERE status = 'responded'"),
+            'archived'  => (int) $wpdb->get_var("SELECT COUNT(*) FROM `{$table}` WHERE status = 'archived'"),
         ];
         $interest_counts = [];
         foreach ( array_keys(self::INTEREST_LEVELS) as $key ) {
-            if ( ! $cols_exist['interest_level'] ) {
+            if ( ! $interest_col ) {
                 $interest_counts[$key] = 0;
                 continue;
             }
             $interest_counts[$key] = (int) $wpdb->get_var(
-                $wpdb->prepare("SELECT COUNT(*) FROM {$table} WHERE interest_level = %s AND status != 'archived'", $key)
+                $wpdb->prepare("SELECT COUNT(*) FROM `{$table}` WHERE `{$interest_col}` = %s AND status != 'archived'", $key)
             );
+        }
+
+        // Category counts
+        $category_counts = [];
+        if ( $cols_exist['object_category'] ) {
+            $cat_rows = $wpdb->get_results("SELECT object_category, COUNT(*) as cnt FROM `{$table}` WHERE status != 'archived' AND object_category IS NOT NULL AND object_category != '' GROUP BY object_category");
+            foreach ( $cat_rows as $cr ) {
+                $category_counts[$cr->object_category] = (int) $cr->cnt;
+            }
         }
 
         include LMD_PLUGIN_DIR . 'templates/estimation-list.php';
@@ -160,7 +197,7 @@ class LMD_Estimation_Manager {
             lmd_ensure_estimations_columns( $table );
         }
 
-        $est = $wpdb->get_row( $wpdb->prepare("SELECT * FROM {$table} WHERE id = %d", $id) );
+        $est = $wpdb->get_row( $wpdb->prepare("SELECT * FROM `{$table}` WHERE id = %d", $id) );
         if ( ! $est ) {
             echo '<div class="notice notice-error"><p>Demande introuvable.</p></div>';
             return;
@@ -175,7 +212,7 @@ class LMD_Estimation_Manager {
         $est->estimated_value  = (string) self::rv( $est, 'estimated_value', '' );
         $est->object_category  = (string) self::rv( $est, 'object_category', '' );
         $est->status           = (string) self::rv( $est, 'status', 'new' );
-        $est->interest_level   = (string) self::rv( $est, 'interest_level', '' );
+        $est->interest_level   = (string) ( self::rv( $est, 'interest_level', '' ) ?: self::rv( $est, 'auctioneer_decision', '' ) );
         $est->response_mode    = (string) self::rv( $est, 'response_mode', '' );
         $est->response_message = (string) self::rv( $est, 'response_message', '' );
         $est->delegate_to      = (string) self::rv( $est, 'delegate_to', '' );
@@ -215,47 +252,77 @@ class LMD_Estimation_Manager {
     }
 
     /**
-     * Resolve photo URLs — handles both direct URLs and WordPress attachment IDs.
+     * Resolve photo URLs — handles:
+     * 1. Direct HTTP(S) URLs
+     * 2. WordPress attachment IDs (numeric)
+     * 3. Relative paths (prepends uploads baseurl)
+     * 4. Comma-separated values
+     * 5. JSON arrays
      */
     public static function resolve_photos( string $json_or_csv ): array {
         $json_or_csv = trim( $json_or_csv );
-        if ( $json_or_csv === '' || $json_or_csv === '[]' ) return [];
+        if ( $json_or_csv === '' || $json_or_csv === '[]' || $json_or_csv === 'null' ) return [];
 
-        // Try JSON array
+        $items = [];
+
+        // Try JSON array first
         $decoded = json_decode( $json_or_csv, true );
         if ( is_array( $decoded ) ) {
-            $urls = [];
-            foreach ( $decoded as $item ) {
-                $item = trim( (string) $item );
-                if ( $item === '' ) continue;
-                // If it's a numeric ID, it's an attachment
-                if ( is_numeric( $item ) ) {
-                    $url = wp_get_attachment_url( (int) $item );
-                    if ( $url ) $urls[] = $url;
-                } elseif ( filter_var( $item, FILTER_VALIDATE_URL ) ) {
-                    $urls[] = $item;
-                } elseif ( strpos($item, '/') !== false ) {
-                    // Could be a relative path
+            $items = $decoded;
+        } else {
+            // Try comma-separated
+            $items = explode( ',', $json_or_csv );
+        }
+
+        $urls = [];
+        foreach ( $items as $item ) {
+            $item = trim( (string) $item );
+            if ( $item === '' ) continue;
+
+            // Numeric = WordPress attachment ID
+            if ( is_numeric( $item ) && function_exists('wp_get_attachment_url') ) {
+                $url = wp_get_attachment_url( (int) $item );
+                if ( $url ) {
+                    $urls[] = $url;
+                    continue;
+                }
+                // If attachment not found, try to build URL from metadata
+                if ( function_exists('get_attached_file') ) {
+                    $file = get_attached_file( (int) $item );
+                    if ( $file && file_exists( $file ) ) {
+                        $upload_dir = wp_upload_dir();
+                        $rel = str_replace( $upload_dir['basedir'], '', $file );
+                        $urls[] = $upload_dir['baseurl'] . $rel;
+                        continue;
+                    }
+                }
+                // Last resort: skip missing attachment
+                error_log("LMD: Attachment ID {$item} not found");
+                continue;
+            }
+
+            // Full URL
+            if ( strpos($item, 'http://') === 0 || strpos($item, 'https://') === 0 ) {
+                $urls[] = $item;
+                continue;
+            }
+
+            // Data URI (base64 encoded)
+            if ( strpos($item, 'data:image/') === 0 ) {
+                $urls[] = $item;
+                continue;
+            }
+
+            // Relative path — prepend uploads base URL
+            if ( strpos($item, '/') !== false || strpos($item, '.') !== false ) {
+                if ( function_exists('wp_upload_dir') ) {
                     $upload_dir = wp_upload_dir();
                     $urls[] = $upload_dir['baseurl'] . '/' . ltrim($item, '/');
                 }
+                continue;
             }
-            return $urls;
         }
 
-        // Try comma-separated
-        $parts = explode( ',', $json_or_csv );
-        $urls = [];
-        foreach ( $parts as $part ) {
-            $part = trim( $part );
-            if ( $part === '' ) continue;
-            if ( is_numeric( $part ) ) {
-                $url = wp_get_attachment_url( (int) $part );
-                if ( $url ) $urls[] = $url;
-            } elseif ( filter_var( $part, FILTER_VALIDATE_URL ) ) {
-                $urls[] = $part;
-            }
-        }
         return $urls;
     }
 }
