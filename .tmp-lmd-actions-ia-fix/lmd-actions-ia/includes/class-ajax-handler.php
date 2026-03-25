@@ -13,6 +13,7 @@ class LMD_Ajax_Handler {
             'lmd_save_second_opinion', 'lmd_set_interest',
             'lmd_send_response', 'lmd_delegate', 'lmd_run_ai',
             'lmd_assign_sale', 'lmd_assign_seller',
+            'lmd_bulk_delete', 'lmd_send_magic_link',
         ];
         foreach ($actions as $action) {
             add_action("wp_ajax_{$action}", [$this, $action]);
@@ -138,6 +139,118 @@ class LMD_Ajax_Handler {
         wp_send_json_success();
     }
 
+    /* ══════════════════════════════════════════════ */
+    /* BULK DELETE                                      */
+    /* ══════════════════════════════════════════════ */
+    public function lmd_bulk_delete() {
+        $this->verify();
+        global $wpdb;
+        $ids = isset($_POST['ids']) ? array_map('absint', (array) $_POST['ids']) : [];
+        if (empty($ids)) wp_send_json_error('Aucune demande sélectionnée');
+
+        $placeholders = implode(',', array_fill(0, count($ids), '%d'));
+        $wpdb->query($wpdb->prepare(
+            "DELETE FROM {$wpdb->prefix}lmd_estimations WHERE id IN ({$placeholders})",
+            ...$ids
+        ));
+        wp_send_json_success(['deleted' => count($ids)]);
+    }
+
+    /* ══════════════════════════════════════════════ */
+    /* MAGIC LINK — 2nd opinion                        */
+    /* ══════════════════════════════════════════════ */
+    public function lmd_send_magic_link() {
+        $this->verify();
+        global $wpdb;
+        $id    = absint($_POST['id']);
+        $email = sanitize_email($_POST['email']);
+        if (!is_email($email)) wp_send_json_error('Email invalide');
+
+        $est = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$wpdb->prefix}lmd_estimations WHERE id = %d", $id));
+        if (!$est) wp_send_json_error('Demande introuvable');
+
+        // Generate a unique token
+        $token = wp_generate_password(32, false);
+        $expiry = date('Y-m-d H:i:s', strtotime('+7 days'));
+
+        // Store the magic link token
+        $wpdb->replace($wpdb->prefix . 'lmd_magic_links', [
+            'estimation_id' => $id,
+            'token'         => $token,
+            'email'         => $email,
+            'expires_at'    => $expiry,
+            'created_at'    => current_time('mysql'),
+        ]);
+
+        // Update estimation with magic link info
+        $wpdb->update($wpdb->prefix . 'lmd_estimations', [
+            'magic_link_email'   => $email,
+            'magic_link_sent_at' => current_time('mysql'),
+        ], ['id' => $id]);
+
+        // Build the magic link URL
+        $magic_url = add_query_arg([
+            'lmd_opinion' => 1,
+            'token'       => $token,
+        ], home_url('/'));
+
+        // Prepare photos for the email
+        $photos = LMD_Estimation_Manager::resolve_photos($est->photo_urls);
+        $photo_html = '';
+        if (!empty($photos)) {
+            $photo_html = '<div style="margin:16px 0">';
+            foreach (array_slice($photos, 0, 3) as $url) {
+                $photo_html .= '<img src="' . esc_url($url) . '" style="max-width:200px;max-height:150px;margin:4px;border-radius:6px;border:1px solid #e2e8f0" />';
+            }
+            $photo_html .= '</div>';
+        }
+
+        $nom = $est->nom ?: 'Sans nom';
+        $description = mb_strimwidth($est->description ?: '', 0, 300, '…');
+
+        // Send the email
+        $subject = "Demande d'avis expert — " . $nom . ' — Le Marteau Digital';
+        $body = '
+        <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px">
+            <div style="text-align:center;padding:20px;background:#faf5ff;border-radius:8px;margin-bottom:20px">
+                <h1 style="color:#7c3aed;font-size:22px;margin:0">🟣 Demande de 2ème avis</h1>
+                <p style="color:#64748b;font-size:14px;margin:8px 0 0">Le Marteau Digital</p>
+            </div>
+
+            <p>Bonjour,</p>
+            <p>Nous sollicitons votre expertise pour l\'objet suivant :</p>
+
+            <div style="background:#f8fafc;border:1px solid #e2e8f0;border-left:4px solid #7c3aed;border-radius:6px;padding:16px;margin:16px 0">
+                <p style="margin:0 0 4px"><strong>' . esc_html($nom) . '</strong></p>
+                <p style="margin:0;color:#64748b;font-size:13px">' . esc_html($description) . '</p>
+            </div>
+
+            ' . $photo_html . '
+
+            <div style="text-align:center;margin:24px 0">
+                <a href="' . esc_url($magic_url) . '"
+                   style="display:inline-block;padding:14px 32px;background:#7c3aed;color:#fff;font-size:16px;font-weight:600;text-decoration:none;border-radius:8px">
+                    📝 Donner mon avis
+                </a>
+            </div>
+
+            <p style="font-size:12px;color:#94a3b8;text-align:center">
+                Ce lien est valable 7 jours et à usage unique.<br>
+                En cliquant, vous accéderez à un formulaire sécurisé pour donner votre avis.
+            </p>
+        </div>';
+
+        $headers = ['Content-Type: text/html; charset=UTF-8'];
+        $sent = wp_mail($email, $subject, $body, $headers);
+
+        if (!$sent) {
+            wp_send_json_error('Erreur lors de l\'envoi de l\'email');
+        }
+
+        wp_send_json_success(['email' => $email, 'expires' => $expiry]);
+    }
+
+    /* ── AI Analysis ── */
     public function lmd_run_ai() {
         $this->verify();
         global $wpdb;
