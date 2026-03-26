@@ -10,7 +10,7 @@
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'LMD_VERSION',    '3.5.0' );
+define( 'LMD_VERSION',    '3.6.0' );
 define( 'LMD_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'LMD_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 
