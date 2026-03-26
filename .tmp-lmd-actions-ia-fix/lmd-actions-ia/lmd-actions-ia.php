@@ -3,14 +3,14 @@
  * Plugin Name: LMD Actions I.A.
  * Plugin URI:  https://lemarteaudigital.fr
  * Description: Plateforme modulaire de services IA pour commissaires-priseurs — Module principal : Aide à l'estimation.
- * Version:     3.6.0
+ * Version:     3.7.0
  * Author:      Le Marteau Digital
  * License:     GPL-2.0+
  * Text Domain: lmd-actions-ia
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'LMD_VERSION',    '3.6.0' );
+define( 'LMD_VERSION',    '3.7.0' );
 define( 'LMD_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'LMD_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 
