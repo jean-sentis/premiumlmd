@@ -386,8 +386,6 @@ class LMD_Estimation_Manager {
                 }
             }
 
-            $items = $decoded;
-
             // Numeric = WordPress attachment ID
             if ( is_numeric( $item ) && function_exists('wp_get_attachment_url') ) {
                 $url = wp_get_attachment_url( (int) $item );
