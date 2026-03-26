@@ -79,10 +79,11 @@ class LMD_Estimation_Manager {
         }
 
         // ── Filter ──
-        $filter       = sanitize_text_field( $_GET['filter'] ?? 'all' );
-        $search       = sanitize_text_field( $_GET['s'] ?? '' );
-        $filter_sale  = absint( $_GET['filter_sale'] ?? 0 );
-        $filter_seller= absint( $_GET['filter_seller'] ?? 0 );
+        $filter        = sanitize_text_field( $_GET['filter'] ?? 'all' );
+        $search        = sanitize_text_field( $_GET['s'] ?? '' );
+        $filter_sale   = absint( $_GET['filter_sale'] ?? 0 );
+        $filter_seller = absint( $_GET['filter_seller'] ?? 0 );
+        $filter_tag    = sanitize_key( $_GET['filter_tag'] ?? '' );
 
         // ── Sort ──
         $sort_by  = sanitize_text_field( $_GET['sort'] ?? 'created_at' );
@@ -91,7 +92,9 @@ class LMD_Estimation_Manager {
 
         $allowed_sorts = ['created_at' => 'e.created_at', 'nom' => 'e.nom', 'status' => 'e.status'];
         if ( $cols_exist['interest_level'] ) $allowed_sorts['interest_level'] = 'e.interest_level';
+        if ( $cols_exist['object_category'] ) $allowed_sorts['category'] = 'e.object_category';
         if ( $cols_exist['sale_id'] )        $allowed_sorts['sale'] = 's.title';
+        if ( $cols_exist['seller_id'] )      $allowed_sorts['seller'] = 'sel.nom';
         if ( ! isset( $allowed_sorts[$sort_by] ) ) $sort_by = 'created_at';
         $order_col = $allowed_sorts[$sort_by];
 
@@ -134,6 +137,11 @@ class LMD_Estimation_Manager {
         // Seller filter
         if ( $filter_seller > 0 && $cols_exist['seller_id'] ) {
             $where .= $wpdb->prepare( " AND e.seller_id = %d", $filter_seller );
+        }
+
+        // Category/tag filter
+        if ( $filter_tag !== '' && $cols_exist['object_category'] ) {
+            $where .= $wpdb->prepare( " AND e.object_category = %s", $filter_tag );
         }
 
         // ── Search ──
@@ -206,10 +214,13 @@ class LMD_Estimation_Manager {
             'no_sale'   => $cols_exist['sale_id'] ? (int) $wpdb->get_var("SELECT COUNT(*) FROM `{$table}` WHERE (sale_id IS NULL OR sale_id = 0) AND status != 'archived'") : 0,
         ];
         $interest_counts = [];
+        $interest_db_col = $cols_exist['interest_level']
+            ? 'interest_level'
+            : ( $cols_exist['auctioneer_decision'] ? 'auctioneer_decision' : '' );
         foreach ( array_keys(self::INTEREST_LEVELS) as $key ) {
-            if ( ! $interest_col ) { $interest_counts[$key] = 0; continue; }
+            if ( ! $interest_db_col ) { $interest_counts[$key] = 0; continue; }
             $interest_counts[$key] = (int) $wpdb->get_var(
-                $wpdb->prepare("SELECT COUNT(*) FROM `{$table}` WHERE `interest_level` = %s AND status != 'archived'", $key)
+                $wpdb->prepare("SELECT COUNT(*) FROM `{$table}` WHERE `{$interest_db_col}` = %s AND status != 'archived'", $key)
             );
         }
 
@@ -331,24 +342,49 @@ class LMD_Estimation_Manager {
      * 5. JSON arrays
      */
     public static function resolve_photos( string $json_or_csv ): array {
-        $json_or_csv = trim( $json_or_csv );
+        $json_or_csv = trim( (string) $json_or_csv );
         if ( $json_or_csv === '' || $json_or_csv === '[]' || $json_or_csv === 'null' ) return [];
 
         $items = [];
 
+        // Try serialized arrays first (legacy WP storage)
+        if ( function_exists('is_serialized') && is_serialized( $json_or_csv ) && function_exists('maybe_unserialize') ) {
+            $unserialized = maybe_unserialize( $json_or_csv );
+            if ( is_array( $unserialized ) ) {
+                $items = $unserialized;
+            }
+        }
+
         // Try JSON array first
-        $decoded = json_decode( $json_or_csv, true );
-        if ( is_array( $decoded ) ) {
-            $items = $decoded;
-        } else {
-            // Try comma-separated
-            $items = explode( ',', $json_or_csv );
+        if ( empty($items) ) {
+            $decoded = json_decode( $json_or_csv, true );
+            if ( is_array( $decoded ) ) {
+                $items = $decoded;
+            } elseif ( is_string( $decoded ) && $decoded !== '' ) {
+                $items = [ $decoded ];
+            }
+        }
+
+        if ( empty($items) ) {
+            // Try comma / semicolon / pipe / line-break separated values
+            $items = preg_split('/[\n\r,;|]+/', $json_or_csv) ?: [];
         }
 
         $urls = [];
         foreach ( $items as $item ) {
-            $item = trim( (string) $item );
+            $item = trim( stripslashes( (string) $item ), " \t\n\r\0\x0B\"'" );
             if ( $item === '' ) continue;
+
+            // Sometimes JSON is double-encoded per element
+            if ( ( strpos($item, '[') === 0 || strpos($item, '{') === 0 ) ) {
+                $nested = json_decode($item, true);
+                if ( is_array($nested) ) {
+                    foreach ($nested as $n) {
+                        if (is_string($n) && $n !== '') $items[] = $n;
+                    }
+                    continue;
+                }
+            }
 
             // Numeric = WordPress attachment ID
             if ( is_numeric( $item ) && function_exists('wp_get_attachment_url') ) {
@@ -384,14 +420,20 @@ class LMD_Estimation_Manager {
 
             // Relative path
             if ( strpos($item, '/') !== false || strpos($item, '.') !== false ) {
-                if ( function_exists('wp_upload_dir') ) {
+                if ( strpos($item, '/wp-content/') === 0 || strpos($item, 'wp-content/') === 0 ) {
+                    $urls[] = site_url( '/' . ltrim($item, '/') );
+                } elseif ( strpos($item, '/images/') === 0 || strpos($item, 'images/') === 0 ) {
+                    $urls[] = site_url( '/' . ltrim($item, '/') );
+                } elseif ( strpos($item, '/') === 0 ) {
+                    $urls[] = site_url( $item );
+                } elseif ( function_exists('wp_upload_dir') ) {
                     $upload_dir = wp_upload_dir();
-                    $urls[] = $upload_dir['baseurl'] . '/' . ltrim($item, '/');
+                    $urls[] = rtrim($upload_dir['baseurl'], '/') . '/' . ltrim($item, '/');
                 }
                 continue;
             }
         }
 
-        return $urls;
+        return array_values(array_unique($urls));
     }
 }

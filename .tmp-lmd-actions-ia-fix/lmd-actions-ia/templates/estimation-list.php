@@ -8,7 +8,9 @@ $sort_labels  = [
     'nom'            => 'Nom',
     'status'         => 'Statut',
     'interest_level' => 'Intérêt',
+    'category'       => 'Catégorie',
     'sale'           => 'Vente',
+    'seller'         => 'Vendeur',
 ];
 $filters_config = [
     'all'       => ['label' => 'Toutes',     'icon' => '📋', 'count' => $counts['all']],
@@ -27,7 +29,7 @@ $filters_config = [
     <div class="lmd-filters">
         <?php foreach ($filters_config as $key => $cfg) : ?>
             <?php if ($cfg['count'] <= 0 && $key === 'no_sale') continue; ?>
-            <a href="<?php echo esc_url(add_query_arg(['filter' => $key, 's' => $search, 'sort' => $current_sort, 'dir' => $current_dir, 'filter_sale' => $filter_sale, 'filter_seller' => $filter_seller], $page_url)); ?>"
+            <a href="<?php echo esc_url(add_query_arg(['filter' => $key, 's' => $search, 'sort' => $current_sort, 'dir' => $current_dir, 'filter_sale' => $filter_sale, 'filter_seller' => $filter_seller, 'filter_tag' => $filter_tag], $page_url)); ?>"
                class="lmd-filter-btn <?php echo $filter === $key ? 'is-active' : ''; ?>">
                 <?php echo $cfg['icon']; ?> <?php echo esc_html($cfg['label']); ?>
                 <span class="lmd-filter-count"><?php echo $cfg['count']; ?></span>
@@ -38,7 +40,7 @@ $filters_config = [
         <span class="lmd-filter-sep"></span>
         <?php foreach (LMD_Estimation_Manager::INTEREST_LEVELS as $key => $cfg) : ?>
             <?php if (($interest_counts[$key] ?? 0) > 0) : ?>
-            <a href="<?php echo esc_url(add_query_arg(['filter' => $key, 's' => $search, 'sort' => $current_sort, 'dir' => $current_dir], $page_url)); ?>"
+            <a href="<?php echo esc_url(add_query_arg(['filter' => $key, 's' => $search, 'sort' => $current_sort, 'dir' => $current_dir, 'filter_sale' => $filter_sale, 'filter_seller' => $filter_seller, 'filter_tag' => $filter_tag], $page_url)); ?>"
                class="lmd-filter-btn lmd-filter-btn--interest <?php echo $filter === $key ? 'is-active' : ''; ?>"
                style="<?php echo $filter === $key ? "background:{$cfg['bg']};color:{$cfg['color']};border-color:{$cfg['border']}" : ''; ?>">
                 <span class="lmd-interest-dot" style="background:<?php echo $cfg['dot']; ?>"></span>
@@ -54,6 +56,7 @@ $filters_config = [
     <form method="get" action="<?php echo esc_url($page_url); ?>" class="lmd-search-inline" id="lmd-sort-form">
         <input type="hidden" name="page" value="lmd-estimations">
         <input type="hidden" name="filter" value="<?php echo esc_attr($filter); ?>">
+        <input type="hidden" name="filter_tag" value="<?php echo esc_attr($filter_tag); ?>">
         <input type="search" name="s" value="<?php echo esc_attr($search); ?>" placeholder="Rechercher nom, email, description, vendeur, vente…" class="lmd-search-input">
 
         <!-- Sale filter dropdown -->
@@ -79,7 +82,7 @@ $filters_config = [
                 <?php endforeach; ?>
             </select>
             <input type="hidden" name="dir" value="<?php echo esc_attr($current_dir); ?>">
-            <a href="<?php echo esc_url(add_query_arg(['filter' => $filter, 's' => $search, 'sort' => $current_sort, 'dir' => $toggle_dir, 'filter_sale' => $filter_sale, 'filter_seller' => $filter_seller], $page_url)); ?>"
+            <a href="<?php echo esc_url(add_query_arg(['filter' => $filter, 's' => $search, 'sort' => $current_sort, 'dir' => $toggle_dir, 'filter_sale' => $filter_sale, 'filter_seller' => $filter_seller, 'filter_tag' => $filter_tag], $page_url)); ?>"
                class="lmd-sort-dir" title="<?php echo $current_dir === 'DESC' ? 'Plus ancien d\'abord' : 'Plus récent d\'abord'; ?>">
                 <?php echo $current_dir === 'DESC' ? '↓ Récent' : '↑ Ancien'; ?>
             </a>
@@ -92,17 +95,20 @@ $filters_config = [
 <div class="lmd-category-bar">
     <?php foreach ($category_counts as $cat_key => $cat_count) :
         $cat_label = LMD_Estimation_Manager::OBJECT_CATEGORIES[$cat_key] ?? ucfirst(str_replace('_', ' ', $cat_key));
+        $is_tag_active = ($filter_tag === (string)$cat_key);
     ?>
-        <span class="lmd-tag lmd-tag--category" style="cursor:default">
+        <a href="<?php echo esc_url(add_query_arg(['filter' => $filter, 's' => $search, 'sort' => $current_sort, 'dir' => $current_dir, 'filter_sale' => $filter_sale, 'filter_seller' => $filter_seller, 'filter_tag' => $cat_key], $page_url)); ?>"
+           class="lmd-filter-btn <?php echo $is_tag_active ? 'is-active' : ''; ?>"
+           title="Filtrer sur <?php echo esc_attr($cat_label); ?>">
             <?php echo esc_html($cat_label); ?>
             <span class="lmd-filter-count"><?php echo $cat_count; ?></span>
-        </span>
+        </a>
     <?php endforeach; ?>
 </div>
 <?php endif; ?>
 
 <!-- Active sale/seller filter indicator -->
-<?php if ($filter_sale > 0 || $filter_seller > 0) : ?>
+<?php if ($filter_sale > 0 || $filter_seller > 0 || $filter_tag !== '') : ?>
 <div style="margin-bottom:12px;display:flex;gap:8px;align-items:center">
     <?php if ($filter_sale > 0) :
         $active_sale_name = '';
@@ -115,6 +121,13 @@ $filters_config = [
     <?php if ($filter_seller > 0) : ?>
         <span class="lmd-tag lmd-tag--info">👤 Vendeur filtré
             <a href="<?php echo esc_url(remove_query_arg('filter_seller')); ?>" style="margin-left:4px;color:inherit">✕</a>
+        </span>
+    <?php endif; ?>
+    <?php if ($filter_tag !== '') :
+        $active_tag_label = LMD_Estimation_Manager::OBJECT_CATEGORIES[$filter_tag] ?? ucfirst(str_replace('_', ' ', $filter_tag));
+    ?>
+        <span class="lmd-tag lmd-tag--category">🏷️ Catégorie : <?php echo esc_html($active_tag_label); ?>
+            <a href="<?php echo esc_url(remove_query_arg('filter_tag')); ?>" style="margin-left:4px;color:inherit">✕</a>
         </span>
     <?php endif; ?>
 </div>
