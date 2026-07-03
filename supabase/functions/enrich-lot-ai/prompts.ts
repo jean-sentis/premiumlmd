@@ -67,7 +67,7 @@ export const ANALYZE_LOT_TOOL = {
       properties: {
         explanation: {
           type: 'string',
-          description: "Explication grand public en français en EXACTEMENT 2 paragraphes. Paragraphe 1 : valeur ajoutée sur l'objet, sans paraphraser ni répéter la description fournie (usage réel, technique/savoir-faire, ce qui le rend remarquable). Paragraphe 2 : contexte autour du lot — éléments biographiques du créateur/artisan/fabricant si identifiable, sinon rattachement à des mouvements artistiques, industriels, politiques ou historiques. Aucun fait inventé, aucune estimation de prix.",
+          description: "Explication grand public en français en EXACTEMENT 2 paragraphes SÉPARÉS PAR UNE LIGNE VIDE (deux sauts de ligne \\n\\n). Paragraphe 1 : valeur ajoutée sur l'objet, sans paraphraser ni répéter la description fournie (usage réel, technique/savoir-faire, ce qui le rend remarquable). Paragraphe 2 : contexte autour du lot — éléments biographiques du créateur/artisan/fabricant si identifiable, sinon rattachement à des mouvements artistiques, industriels, politiques ou historiques. Aucun fait inventé, aucune estimation de prix.",
         },
         creator_info: {
           type: 'string',
