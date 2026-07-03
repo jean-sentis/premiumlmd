@@ -121,6 +121,7 @@ serve(async (req) => {
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt }
         ],
+        temperature: 0.4,
         tools: [ANALYZE_LOT_TOOL],
         tool_choice: { type: 'function', function: { name: 'analyze_lot' } }
       }),
@@ -141,7 +142,15 @@ serve(async (req) => {
       throw new Error('Unexpected AI response format');
     }
 
-    const analysis: AnalysisResult = JSON.parse(toolCall.function.arguments);
+    // Les 2 paragraphes sont renvoyés séparément puis assemblés : la structure
+    // "exactement 2 paragraphes séparés par une ligne vide" est ainsi garantie.
+    const parsed = JSON.parse(toolCall.function.arguments);
+    const p1 = (parsed.paragraph_added_value ?? '').trim();
+    const p2 = (parsed.paragraph_context ?? '').trim();
+    const analysis: AnalysisResult = {
+      explanation: [p1, p2].filter(Boolean).join('\n\n'),
+      creator_info: parsed.creator_info ?? null,
+    };
     console.log('Text analysis complete');
 
     // Analyse des images si demandé
