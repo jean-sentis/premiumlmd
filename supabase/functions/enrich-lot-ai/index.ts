@@ -71,14 +71,16 @@ serve(async (req) => {
 MISSION
 Produire une fiche claire, vivante et fiable à partir des seules informations fournies (titre, description, dimensions). Tu peux mobiliser tes connaissances générales sur les techniques, styles, époques et créateurs, mais tu ne dois JAMAIS inventer de faits spécifiques au lot.
 
-1) EXPLICATION (champ "explanation")
-Structure ton propos, du général au concret :
-- Nature de l'objet : de quoi s'agit-il précisément (typologie, catégorie) ?
-- Usage et contexte : à quoi servait-il, dans quel milieu et à quelle époque était-il utilisé ?
-- Technique et matériaux : matériaux, procédés de fabrication ou d'exécution suggérés par la description.
-- Style et datation : mouvement, courant, période ou influence probables (formulés avec prudence : « probablement », « dans le goût de », « style… »).
-- Intérêt pour l'amateur : ce qui rend l'objet remarquable, rare, décoratif ou historiquement intéressant, et à quel type de collectionneur il peut parler.
-Rends le tout concret et évocateur, comme un guide de musée passionné, sans jargon inutile.
+1) EXPLICATION (champ "explanation") — EXACTEMENT DEUX PARAGRAPHES
+
+PARAGRAPHE 1 — VALEUR AJOUTÉE sur l'objet lui-même.
+Ce paragraphe doit APPORTER quelque chose que la description ne dit PAS. Ne paraphrase jamais, ne répète jamais, ne reformule jamais ce qui figure déjà dans la description fournie : le lecteur l'a déjà sous les yeux. Apporte un éclairage complémentaire : ce que l'objet révèle sur sa fonction et son usage réel, la technique ou le savoir-faire de fabrication qu'il suppose, ce qui le rend remarquable, rare ou intéressant pour un amateur, les points d'attention ou de lecture qu'un œil averti remarquerait. Si la description est déjà très complète, va plus loin encore dans l'analyse plutôt que de résumer. Reste prudent sur les hypothèses (« probablement », « dans le goût de », « style… ») et n'invente aucun fait spécifique au lot.
+
+PARAGRAPHE 2 — CONTEXTE autour du lot.
+Deux cas :
+- Si un auteur, un artiste, un artisan, un créateur, un fabricant, un atelier ou une manufacture est mentionné ou clairement déductible : donne des éléments biographiques et historiques sur cette personne ou cet établissement (dates, lieux, spécialité, production, réputation) permettant de situer et d'apprécier le lot.
+- S'il n'y a rien de tout cela : relie l'objet aux mouvements, courants ou ensembles auxquels il ressemble ou appartient — qu'ils soient artistiques, industriels, politiques ou historiques — pour lui donner un cadre et une profondeur.
+Reste factuel et prudent ; n'invente aucune attribution non suggérée par le lot.
 
 2) INFOS SUR LE CRÉATEUR (champ "creator_info")
 Si un artiste, un artisan, un atelier, une manufacture, une maison ou un lieu de production identifiable est mentionné (ou clairement déductible) dans le lot, fournis une véritable notice biographique/historique : dates et lieux, formation ou origine, mouvement ou spécialité, œuvres ou productions marquantes, cote et réputation, éléments permettant de situer et valoriser le lot. Sois aussi complet que tes connaissances le permettent.
@@ -90,7 +92,7 @@ RÈGLES DE FIABILITÉ
 - Reste factuel et sobre : pas de superlatifs commerciaux ni d'estimation de prix.
 
 FORMAT
-Réponds exclusivement en français. Explication : 2 à 3 paragraphes. Notice créateur : 1 à 2 paragraphes. Prose fluide, sans listes ni markdown dans les valeurs renvoyées.`;
+Réponds exclusivement en français. Explication : EXACTEMENT 2 paragraphes (1 = valeur ajoutée sur l'objet sans paraphraser la description ; 2 = contexte biographique du créateur ou rattachement à des mouvements). Notice créateur : 1 à 2 paragraphes. Prose fluide, sans listes ni markdown dans les valeurs renvoyées.`;
 
     const userPrompt = `Analyse le lot suivant et aide-moi à le comprendre en respectant strictement les données ci-dessous (n'ajoute aucun fait non fourni) :
 
@@ -98,7 +100,7 @@ Titre : "${lot.title}"
 ${lot.description ? `Description : "${lot.description}"` : 'Description : (aucune description fournie — appuie-toi uniquement sur le titre et sois prudent)'}
 ${lot.dimensions ? `Dimensions : "${lot.dimensions}"` : ''}
 
-Rédige l'explication grand public puis, si et seulement si un créateur est identifiable, sa notice biographique. Sinon, laisse la notice à null.`;
+Rédige l'explication en 2 paragraphes : (1) une valeur ajoutée sur l'objet qui NE répète PAS et NE paraphrase PAS la description ci-dessus ; (2) le contexte autour du lot (éléments biographiques du créateur/fabricant si identifiable, sinon rattachement à des mouvements artistiques, industriels, politiques ou historiques). Puis, si et seulement si un créateur est identifiable, remplis sa notice biographique. Sinon, laisse la notice à null.`;
 
     // Appel à l'IA avec tool calling pour extraction structurée
     const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
@@ -124,7 +126,7 @@ Rédige l'explication grand public puis, si et seulement si un créateur est ide
                 properties: {
                   explanation: {
                     type: 'string',
-                    description: 'Explication grand public en français (2-3 paragraphes) : nature de l\'objet, usage et contexte, technique et matériaux, style et datation prudents, intérêt pour l\'amateur. Aucun fait inventé, aucune estimation de prix.'
+                    description: 'Explication grand public en français en EXACTEMENT 2 paragraphes. Paragraphe 1 : valeur ajoutée sur l\'objet, sans paraphraser ni répéter la description fournie (usage réel, technique/savoir-faire, ce qui le rend remarquable). Paragraphe 2 : contexte autour du lot — éléments biographiques du créateur/artisan/fabricant si identifiable, sinon rattachement à des mouvements artistiques, industriels, politiques ou historiques. Aucun fait inventé, aucune estimation de prix.'
                   },
                   creator_info: {
                     type: 'string',
