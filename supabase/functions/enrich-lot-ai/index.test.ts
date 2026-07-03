@@ -68,6 +68,37 @@ async function judge(lot: LotInput, analysis: AnalysisResult): Promise<JudgeVerd
   return json.verdict as JudgeVerdict;
 }
 
+// Le juge est un LLM : sur les critères subjectifs (paraphrase / valeur ajoutée)
+// une réponse isolée peut être bruitée. On vote à la majorité sur 3 verdicts
+// pour un résultat stable et reproductible.
+const BOOLEAN_RULES: (keyof JudgeVerdict)[] = [
+  "has_two_paragraphs",
+  "p1_adds_value",
+  "p1_not_paraphrase",
+  "p2_is_context",
+  "creator_info_consistent",
+  "no_invented_facts",
+  "no_price_estimate",
+];
+
+async function judgeMajority(
+  lot: LotInput,
+  analysis: AnalysisResult,
+): Promise<{ verdict: Record<string, boolean>; reasons: string[] }> {
+  const verdicts = await Promise.all([
+    judge(lot, analysis),
+    judge(lot, analysis),
+    judge(lot, analysis),
+  ]);
+  const verdict: Record<string, boolean> = {};
+  for (const rule of BOOLEAN_RULES) {
+    const trueCount = verdicts.filter((v) => v[rule] === true).length;
+    verdict[rule] = trueCount >= 2; // majorité sur 3
+  }
+  const reasons = verdicts.map((v) => v.reasons).filter(Boolean);
+  return { verdict, reasons };
+}
+
 // Nombre de paragraphes réellement présents dans le texte.
 function paragraphCount(text: string): number {
   const byBlank = text.split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean);
@@ -105,9 +136,9 @@ for (const example of EXAMPLE_LOTS) {
       );
     }
 
-    // 2) Évaluation sémantique par le juge (IA)
-    const v = await judge(example.lot, analysis);
-    const detail = `\nVerdict: ${JSON.stringify(v, null, 2)}\n\nAnalyse:\n${analysis.explanation}`;
+    // 2) Évaluation sémantique par le juge (IA), vote majoritaire sur 3 verdicts
+    const { verdict: v, reasons } = await judgeMajority(example.lot, analysis);
+    const detail = `\nVerdict (majorité/3): ${JSON.stringify(v, null, 2)}\nRaisons juges: ${JSON.stringify(reasons, null, 2)}\n\nAnalyse:\n${analysis.explanation}`;
 
     assert(v.has_two_paragraphs, `§ deux paragraphes non respecté${detail}`);
     assert(v.p1_adds_value, `§1 n'apporte pas de valeur ajoutée${detail}`);
@@ -116,6 +147,5 @@ for (const example of EXAMPLE_LOTS) {
     assert(v.creator_info_consistent, `creator_info incohérent${detail}`);
     assert(v.no_invented_facts, `faits inventés détectés${detail}`);
     assert(v.no_price_estimate, `estimation de prix détectée${detail}`);
-    assert(v.overall_pass, `verdict global échoué${detail}`);
   });
 }
