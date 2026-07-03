@@ -124,11 +124,11 @@ Rédige l'explication grand public puis, si et seulement si un créateur est ide
                 properties: {
                   explanation: {
                     type: 'string',
-                    description: 'Explication de ce qu\'est cet objet, son contexte, sa valeur artistique ou historique'
+                    description: 'Explication grand public en français (2-3 paragraphes) : nature de l\'objet, usage et contexte, technique et matériaux, style et datation prudents, intérêt pour l\'amateur. Aucun fait inventé, aucune estimation de prix.'
                   },
                   creator_info: {
                     type: 'string',
-                    description: 'Informations sur l\'artiste, l\'atelier ou la manufacture mentionnés, ou null si aucun créateur n\'est mentionné',
+                    description: 'Notice biographique/historique en français (1-2 paragraphes) du créateur identifiable (artiste, atelier, manufacture, maison), ou null si aucun créateur n\'est identifiable. Ne jamais inventer d\'auteur.',
                     nullable: true
                   }
                 },
