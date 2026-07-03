@@ -55,7 +55,7 @@ Titre : "${lot.title}"
 ${lot.description ? `Description : "${lot.description}"` : 'Description : (aucune description fournie — appuie-toi uniquement sur le titre et sois prudent)'}
 ${lot.dimensions ? `Dimensions : "${lot.dimensions}"` : ''}
 
-Rédige l'explication en EXACTEMENT 2 paragraphes séparés par une ligne vide (deux sauts de ligne) : (1) une valeur ajoutée sur l'objet qui NE répète PAS et NE paraphrase PAS la description ci-dessus ; (2) le contexte autour du lot (éléments biographiques du créateur/fabricant si identifiable, sinon rattachement à des mouvements artistiques, industriels, politiques ou historiques). Puis, si et seulement si un créateur est identifiable, remplis sa notice biographique. Sinon, laisse la notice à null.`;
+Rédige l'explication en EXACTEMENT 2 paragraphes séparés par une ligne vide (deux sauts de ligne) : (1) une valeur ajoutée sur l'objet qui NE répète PAS et NE paraphrase PAS la description ci-dessus ; (2) le contexte artistique, historique, technique ou mouvementaire du lot (ne reproduis pas la notice biographique du créateur ; dis en quoi ce lot s'inscrit dans un mouvement, une période, un courant ou une pratique particulière). Puis, si et seulement si un créateur est identifiable, remplis sa notice biographique. Sinon, laisse la notice à null.`;
 }
 
 export const ANALYZE_LOT_TOOL = {
