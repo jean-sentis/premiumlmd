@@ -65,9 +65,13 @@ export const ANALYZE_LOT_TOOL = {
     parameters: {
       type: 'object',
       properties: {
-        explanation: {
+        paragraph_added_value: {
           type: 'string',
-          description: "Explication grand public en français en EXACTEMENT 2 paragraphes SÉPARÉS PAR UNE LIGNE VIDE (deux sauts de ligne \\n\\n). Paragraphe 1 : valeur ajoutée sur l'objet, sans paraphraser ni répéter la description fournie (usage réel, technique/savoir-faire, ce qui le rend remarquable). Paragraphe 2 : contexte autour du lot — éléments biographiques du créateur/artisan/fabricant si identifiable, sinon rattachement à des mouvements artistiques, industriels, politiques ou historiques. Aucun fait inventé, aucune estimation de prix.",
+          description: "PARAGRAPHE 1 (3 à 5 phrases). Valeur ajoutée sur l'objet : n'inclut AUCUN élément déjà présent dans la description (matériau, dimensions, décor, patine, signature, marque, forme déjà citée). Apporte uniquement des angles NOUVEAUX : usage réel, technique/savoir-faire, ce qui le rend remarquable, points d'attention non déjà donnés. Aucun fait inventé, aucune estimation de prix. Un seul paragraphe, sans saut de ligne.",
+        },
+        paragraph_context: {
+          type: 'string',
+          description: "PARAGRAPHE 2 (3 à 5 phrases). Contexte autour du lot : éléments biographiques/historiques du créateur, artisan, fabricant ou manufacture si identifiable ; sinon rattachement à des mouvements artistiques, industriels, politiques ou historiques. Aucun fait inventé. Un seul paragraphe, sans saut de ligne.",
         },
         creator_info: {
           type: 'string',
@@ -75,7 +79,7 @@ export const ANALYZE_LOT_TOOL = {
           nullable: true,
         },
       },
-      required: ['explanation'],
+      required: ['paragraph_added_value', 'paragraph_context'],
       additionalProperties: false,
     },
   },
