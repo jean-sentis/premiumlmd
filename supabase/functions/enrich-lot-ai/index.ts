@@ -1,5 +1,15 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import {
+  SYSTEM_PROMPT,
+  buildUserPrompt,
+  ANALYZE_LOT_TOOL,
+  JUDGE_SYSTEM_PROMPT,
+  buildJudgeUserPrompt,
+  JUDGE_TOOL,
+  type LotInput,
+  type AnalysisResult as SharedAnalysisResult,
+} from "./prompts.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -43,64 +53,59 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { lot_id, dry_run = true, analyze_images = false } = await req.json();
+    const body = await req.json();
+    const { lot_id, dry_run = true, analyze_images = false, mode, test_lot, analysis } = body;
 
-    if (!lot_id) {
+    // ---- MODE JUGE : évalue une analyse existante (utilisé par la suite de tests) ----
+    if (mode === 'judge') {
+      if (!test_lot || !analysis) {
+        return new Response(
+          JSON.stringify({ success: false, error: 'mode "judge" requires test_lot and analysis' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      const verdict = await runJudge(LOVABLE_API_KEY, test_lot as LotInput, analysis as SharedAnalysisResult);
       return new Response(
-        JSON.stringify({ success: false, error: 'lot_id is required' }),
+        JSON.stringify({ success: true, verdict }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (!lot_id && !test_lot) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'lot_id or test_lot is required' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Récupérer le lot
-    const { data: lot, error: lotError } = await supabase
-      .from('interencheres_lots')
-      .select('*')
-      .eq('id', lot_id)
-      .single();
+    // Récupérer le lot (ou utiliser un lot fourni en clair pour les tests)
+    let lot: any;
+    if (test_lot) {
+      lot = {
+        lot_number: 'TEST',
+        title: test_lot.title,
+        description: test_lot.description ?? null,
+        dimensions: test_lot.dimensions ?? null,
+        images: [],
+      };
+    } else {
+      const { data, error: lotError } = await supabase
+        .from('interencheres_lots')
+        .select('*')
+        .eq('id', lot_id)
+        .single();
 
-    if (lotError || !lot) {
-      throw new Error(`Lot not found: ${lot_id}`);
+      if (lotError || !data) {
+        throw new Error(`Lot not found: ${lot_id}`);
+      }
+      lot = data;
     }
 
     console.log(`Processing lot ${lot.lot_number}: "${lot.title}"`);
 
-    // Construire le prompt pour l'IA - mode explicatif
-    const systemPrompt = `Tu es un expert généraliste en art, antiquités et objets de collection, au service d'une maison de ventes aux enchères. Tu écris pour aider un acheteur potentiel à comprendre, apprécier et se projeter sur le lot qu'il consulte.
-
-MISSION
-Produire une fiche claire, vivante et fiable à partir des seules informations fournies (titre, description, dimensions). Tu peux mobiliser tes connaissances générales sur les techniques, styles, époques et créateurs, mais tu ne dois JAMAIS inventer de faits spécifiques au lot.
-
-1) EXPLICATION (champ "explanation") — EXACTEMENT DEUX PARAGRAPHES
-
-PARAGRAPHE 1 — VALEUR AJOUTÉE sur l'objet lui-même.
-Ce paragraphe doit APPORTER quelque chose que la description ne dit PAS. Ne paraphrase jamais, ne répète jamais, ne reformule jamais ce qui figure déjà dans la description fournie : le lecteur l'a déjà sous les yeux. Apporte un éclairage complémentaire : ce que l'objet révèle sur sa fonction et son usage réel, la technique ou le savoir-faire de fabrication qu'il suppose, ce qui le rend remarquable, rare ou intéressant pour un amateur, les points d'attention ou de lecture qu'un œil averti remarquerait. Si la description est déjà très complète, va plus loin encore dans l'analyse plutôt que de résumer. Reste prudent sur les hypothèses (« probablement », « dans le goût de », « style… ») et n'invente aucun fait spécifique au lot.
-
-PARAGRAPHE 2 — CONTEXTE autour du lot.
-Deux cas :
-- Si un auteur, un artiste, un artisan, un créateur, un fabricant, un atelier ou une manufacture est mentionné ou clairement déductible : donne des éléments biographiques et historiques sur cette personne ou cet établissement (dates, lieux, spécialité, production, réputation) permettant de situer et d'apprécier le lot.
-- S'il n'y a rien de tout cela : relie l'objet aux mouvements, courants ou ensembles auxquels il ressemble ou appartient — qu'ils soient artistiques, industriels, politiques ou historiques — pour lui donner un cadre et une profondeur.
-Reste factuel et prudent ; n'invente aucune attribution non suggérée par le lot.
-
-2) INFOS SUR LE CRÉATEUR (champ "creator_info")
-Si un artiste, un artisan, un atelier, une manufacture, une maison ou un lieu de production identifiable est mentionné (ou clairement déductible) dans le lot, fournis une véritable notice biographique/historique : dates et lieux, formation ou origine, mouvement ou spécialité, œuvres ou productions marquantes, cote et réputation, éléments permettant de situer et valoriser le lot. Sois aussi complet que tes connaissances le permettent.
-Si aucun créateur n'est identifiable, retourne null. N'invente jamais un auteur qui n'est pas suggéré par le lot.
-
-RÈGLES DE FIABILITÉ
-- N'invente aucune date, provenance, signature, mesure ou attribution absente des données fournies.
-- Distingue toujours ce qui est certain (indiqué dans le lot) de ce qui est une hypothèse (tes déductions), en le signalant clairement.
-- Reste factuel et sobre : pas de superlatifs commerciaux ni d'estimation de prix.
-
-FORMAT
-Réponds exclusivement en français. Explication : EXACTEMENT 2 paragraphes (1 = valeur ajoutée sur l'objet sans paraphraser la description ; 2 = contexte biographique du créateur ou rattachement à des mouvements). Notice créateur : 1 à 2 paragraphes. Prose fluide, sans listes ni markdown dans les valeurs renvoyées.`;
-
-    const userPrompt = `Analyse le lot suivant et aide-moi à le comprendre en respectant strictement les données ci-dessous (n'ajoute aucun fait non fourni) :
-
-Titre : "${lot.title}"
-${lot.description ? `Description : "${lot.description}"` : 'Description : (aucune description fournie — appuie-toi uniquement sur le titre et sois prudent)'}
-${lot.dimensions ? `Dimensions : "${lot.dimensions}"` : ''}
-
-Rédige l'explication en 2 paragraphes : (1) une valeur ajoutée sur l'objet qui NE répète PAS et NE paraphrase PAS la description ci-dessus ; (2) le contexte autour du lot (éléments biographiques du créateur/fabricant si identifiable, sinon rattachement à des mouvements artistiques, industriels, politiques ou historiques). Puis, si et seulement si un créateur est identifiable, remplis sa notice biographique. Sinon, laisse la notice à null.`;
+    // Prompts partagés (voir prompts.ts)
+    const systemPrompt = SYSTEM_PROMPT;
+    const userPrompt = buildUserPrompt(lot as LotInput);
 
     // Appel à l'IA avec tool calling pour extraction structurée
     const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
@@ -115,31 +120,7 @@ Rédige l'explication en 2 paragraphes : (1) une valeur ajoutée sur l'objet qui
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt }
         ],
-        tools: [
-          {
-            type: 'function',
-            function: {
-              name: 'analyze_lot',
-              description: 'Fournit une explication du lot et des informations sur le créateur',
-              parameters: {
-                type: 'object',
-                properties: {
-                  explanation: {
-                    type: 'string',
-                    description: 'Explication grand public en français en EXACTEMENT 2 paragraphes. Paragraphe 1 : valeur ajoutée sur l\'objet, sans paraphraser ni répéter la description fournie (usage réel, technique/savoir-faire, ce qui le rend remarquable). Paragraphe 2 : contexte autour du lot — éléments biographiques du créateur/artisan/fabricant si identifiable, sinon rattachement à des mouvements artistiques, industriels, politiques ou historiques. Aucun fait inventé, aucune estimation de prix.'
-                  },
-                  creator_info: {
-                    type: 'string',
-                    description: 'Notice biographique/historique en français (1-2 paragraphes) du créateur identifiable (artiste, atelier, manufacture, maison), ou null si aucun créateur n\'est identifiable. Ne jamais inventer d\'auteur.',
-                    nullable: true
-                  }
-                },
-                required: ['explanation'],
-                additionalProperties: false
-              }
-            }
-          }
-        ],
+        tools: [ANALYZE_LOT_TOOL],
         tool_choice: { type: 'function', function: { name: 'analyze_lot' } }
       }),
     });
