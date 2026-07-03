@@ -264,14 +264,19 @@ Rédige l'explication grand public puis, si et seulement si un créateur est ide
                 
                 console.log(`Sending image to vision API...`);
                 
-                const imagePrompt = `Décris précisément cet objet d'art ou antiquité visible sur la photo.
+                const imagePrompt = `Tu es commissaire-priseur. Observe la photo de ce lot et décris UNIQUEMENT ce que tu vois réellement, sans rien inventer.
 
-1. Que vois-tu EXACTEMENT sur cette image ? Décris l'objet tel que tu le vois.
-2. Quel style, époque ou mouvement artistique semble correspondre ?
-3. Quels matériaux et techniques sont visibles ?
-4. Y a-t-il des détails intéressants (signatures, marques, motifs décoratifs) ?
+Contexte du lot (pour vérifier la cohérence, sans le recopier) :
+- Titre : "${lot.title}"
+${lot.description ? `- Description : "${lot.description}"` : ''}
 
-Sois précis et factuel, comme un commissaire-priseur décrivant un lot. 3-4 phrases.`;
+Analyse en 3 à 4 phrases :
+1. Objet visible : ce que montre exactement l'image (typologie, forme, sujet).
+2. Style, époque ou mouvement suggérés (avec prudence : « probablement », « dans le goût de »).
+3. Matériaux, techniques et état apparent.
+4. Détails notables visibles : signature, cachet, marque, motifs, inscriptions.
+
+Cohérence : si ce que tu vois semble en contradiction avec le titre/la description (autre type d'objet, autre sujet), signale-le explicitement. Reste factuel, en français, sans estimation de prix.`;
 
                 const visionResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
                   method: 'POST',
