@@ -31,12 +31,7 @@ INTERDICTION FORMELLE des phrases vagues, décoratives ou émotionnelles qui ne 
 Reste prudent sur les hypothèses (« probablement », « dans le goût de », « style… ») et n'invente aucun fait spécifique au lot. Mais utilise tes connaissances réelles sur le modèle/l'auteur/la période nommés pour être concret. Longueur : 3 à 5 phrases, pas davantage.
 
 PARAGRAPHE 2 — CONTEXTE autour du lot.
-Deux cas :
-- Si un auteur, un artiste, un artisan, un créateur, un fabricant, un atelier ou une manufacture est mentionné ou clairement déductible : donne des éléments biographiques et historiques sur cette personne ou cet établissement (dates, lieux, spécialité, production, réputation) permettant de situer et d'apprécier le lot.
-- S'il n'y a rien de tout cela : relie l'objet aux mouvements, courants ou ensembles auxquels il ressemble ou appartient — qu'ils soient artistiques, industriels, politiques ou historiques — pour lui donner un cadre et une profondeur.
-RÈGLE DE PRÉCISION (impérative) : si tu DISPOSES d'un savoir réel et pertinent, tu DOIS le donner explicitement plutôt que de rester vague. Nomme les éléments concrets qui s'appliquent : aires culturelles, peuples ou ethnies, écoles, ateliers, foyers de production, courants, périodes datées, et influences artistiques précises (par ex. pour un masque ouest-africain : peuples comme Dan, Baoulé, Sénoufo, Bwa selon le style ; usage rituel documenté ; influence reconnue de la statuaire africaine sur le cubisme et l'art moderne). N'appauvris jamais volontairement le propos : une information vraie et utile qui existe doit être livrée.
-DISTINCTION CERTAIN / HYPOTHÈSE : ces précisions restent des rattachements contextuels prudents, pas des attributions catégoriques du lot. Emploie des formulations d'hypothèse (« ce type de masque est souvent associé aux… », « le style évoque… », « on rattache généralement… ») dès que le lot ne le confirme pas explicitement. N'affirme jamais comme certain un peuple, un atelier, une datation ou une provenance que les données ne fournissent pas.
-Reste factuel ; n'invente aucune attribution non suggérée par le lot, mais ne te réfugie pas dans le générique quand une connaissance réelle et spécifique est disponible. Longueur : 3 à 5 phrases, pas davantage.
+Ne reproduis PAS ici la notice biographique du créateur qui sera fournie dans le champ "creator_info". Ce paragraphe doit situer l'objet dans son environnement immédiat : le mouvement, l'école, la période, le courant artistique/industriel/politique auquel il se rattache, ou la place de ce type d'œuvre dans la production du créateur nommé. Privilégie ce qui éclaire le lot lui-même (son style, sa technique, son usage, son époque, son public) plutôt que la biographie pure du créateur. Si aucun créateur n'est identifiable, rattache l'objet aux mouvements, courants ou ensembles auxquels il ressemble ou appartient pour lui donner un cadre. Reste factuel ; n'invente aucune attribution non suggérée par le lot. Longueur : 3 à 5 phrases, pas davantage.
 
 SÉPARATION DES PARAGRAPHES
 Sépare IMPÉRATIVEMENT le paragraphe 1 et le paragraphe 2 par une ligne vide (deux sauts de ligne « \n\n »). Ne colle jamais les deux paragraphes l'un à l'autre. Rends EXACTEMENT deux paragraphes : n'en produis ni un seul bloc, ni trois paragraphes ou plus.
@@ -51,7 +46,7 @@ RÈGLES DE FIABILITÉ
 - Reste factuel et sobre : pas de superlatifs commerciaux, aucune estimation de prix, aucune mention de cote ou de valeur marchande (ni dans l'explication, ni dans la notice créateur).
 
 FORMAT
-Réponds exclusivement en français. Explication : EXACTEMENT 2 paragraphes séparés par une ligne vide (« \n\n »), chacun de 3 à 5 phrases — (1) valeur ajoutée sur l'objet sans jamais reprendre les éléments de la description ; (2) contexte biographique du créateur ou rattachement à des mouvements. Sois concis : pas de remplissage ni de répétitions. Notice créateur : 1 à 2 paragraphes. Prose fluide, sans listes ni markdown dans les valeurs renvoyées.`;
+Réponds exclusivement en français. Explication : EXACTEMENT 2 paragraphes séparés par une ligne vide (« \n\n »), chacun de 3 à 5 phrases — (1) valeur ajoutée sur l'objet sans jamais reprendre les éléments de la description ; (2) contexte artistique, historique, technique ou mouvementaire du lot, sans refaire la notice biographique du créateur. Sois concis : pas de remplissage ni de répétitions. Notice créateur : 1 à 2 paragraphes. Prose fluide, sans listes ni markdown dans les valeurs renvoyées.`;
 
 export function buildUserPrompt(lot: LotInput): string {
   return `Analyse le lot suivant et aide-moi à le comprendre en respectant strictement les données ci-dessous (n'ajoute aucun fait non fourni) :
@@ -60,7 +55,7 @@ Titre : "${lot.title}"
 ${lot.description ? `Description : "${lot.description}"` : 'Description : (aucune description fournie — appuie-toi uniquement sur le titre et sois prudent)'}
 ${lot.dimensions ? `Dimensions : "${lot.dimensions}"` : ''}
 
-Rédige l'explication en EXACTEMENT 2 paragraphes séparés par une ligne vide (deux sauts de ligne) : (1) une valeur ajoutée sur l'objet qui NE répète PAS et NE paraphrase PAS la description ci-dessus ; (2) le contexte autour du lot (éléments biographiques du créateur/fabricant si identifiable, sinon rattachement à des mouvements artistiques, industriels, politiques ou historiques). Puis, si et seulement si un créateur est identifiable, remplis sa notice biographique. Sinon, laisse la notice à null.`;
+Rédige l'explication en EXACTEMENT 2 paragraphes séparés par une ligne vide (deux sauts de ligne) : (1) une valeur ajoutée sur l'objet qui NE répète PAS et NE paraphrase PAS la description ci-dessus ; (2) le contexte artistique, historique, technique ou mouvementaire du lot (ne reproduis pas la notice biographique du créateur ; dis en quoi ce lot s'inscrit dans un mouvement, une période, un courant ou une pratique particulière). Puis, si et seulement si un créateur est identifiable, remplis sa notice biographique. Sinon, laisse la notice à null.`;
 }
 
 export const ANALYZE_LOT_TOOL = {
@@ -77,7 +72,7 @@ export const ANALYZE_LOT_TOOL = {
         },
         paragraph_context: {
           type: 'string',
-          description: "PARAGRAPHE 2 (3 à 5 phrases). Contexte autour du lot : éléments biographiques/historiques du créateur, artisan, fabricant ou manufacture si identifiable ; sinon rattachement à des mouvements artistiques, industriels, politiques ou historiques. PRÉCISION IMPÉRATIVE : si un savoir réel et pertinent existe, nomme-le explicitement (aires culturelles, peuples/ethnies, écoles, ateliers, courants, périodes datées, influences artistiques précises) au lieu de rester générique — l'information vraie qui existe doit être donnée. Formule ces rattachements comme des hypothèses prudentes (« souvent associé à… », « le style évoque… ») quand le lot ne les confirme pas ; n'affirme jamais comme certaine une attribution absente des données. Aucun fait inventé. Un seul paragraphe, sans saut de ligne.",
+          description: "PARAGRAPHE 2 (3 à 5 phrases). Contexte artistique, historique, technique ou mouvementaire du lot, sans reproduire la notice biographique du créateur. Si un créateur est identifiable, indique la place de ce type d'œuvre dans sa production, le mouvement auquel il se rattache ou ce que son style/technique apporte au lot. Sinon, rattache l'objet à des mouvements, courants, périodes, écoles ou ensembles précis. PRÉCISION IMPÉRATIVE : si un savoir réel et pertinent existe, nomme-le explicitement (aires culturelles, peuples/ethnies, écoles, ateliers, courants, périodes datées, influences artistiques précises) au lieu de rester générique. Formule ces rattachements comme des hypothèses prudentes (« souvent associé à… », « le style évoque… ») quand le lot ne les confirme pas ; n'affirme jamais comme certaine une attribution absente des données. Aucun fait inventé. Un seul paragraphe, sans saut de ligne.",
         },
         creator_info: {
           type: 'string',
