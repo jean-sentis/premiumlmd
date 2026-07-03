@@ -33,7 +33,9 @@ PARAGRAPHE 2 — CONTEXTE autour du lot.
 Deux cas :
 - Si un auteur, un artiste, un artisan, un créateur, un fabricant, un atelier ou une manufacture est mentionné ou clairement déductible : donne des éléments biographiques et historiques sur cette personne ou cet établissement (dates, lieux, spécialité, production, réputation) permettant de situer et d'apprécier le lot.
 - S'il n'y a rien de tout cela : relie l'objet aux mouvements, courants ou ensembles auxquels il ressemble ou appartient — qu'ils soient artistiques, industriels, politiques ou historiques — pour lui donner un cadre et une profondeur.
-Reste factuel et prudent ; n'invente aucune attribution non suggérée par le lot. Longueur : 3 à 5 phrases, pas davantage.
+RÈGLE DE PRÉCISION (impérative) : si tu DISPOSES d'un savoir réel et pertinent, tu DOIS le donner explicitement plutôt que de rester vague. Nomme les éléments concrets qui s'appliquent : aires culturelles, peuples ou ethnies, écoles, ateliers, foyers de production, courants, périodes datées, et influences artistiques précises (par ex. pour un masque ouest-africain : peuples comme Dan, Baoulé, Sénoufo, Bwa selon le style ; usage rituel documenté ; influence reconnue de la statuaire africaine sur le cubisme et l'art moderne). N'appauvris jamais volontairement le propos : une information vraie et utile qui existe doit être livrée.
+DISTINCTION CERTAIN / HYPOTHÈSE : ces précisions restent des rattachements contextuels prudents, pas des attributions catégoriques du lot. Emploie des formulations d'hypothèse (« ce type de masque est souvent associé aux… », « le style évoque… », « on rattache généralement… ») dès que le lot ne le confirme pas explicitement. N'affirme jamais comme certain un peuple, un atelier, une datation ou une provenance que les données ne fournissent pas.
+Reste factuel ; n'invente aucune attribution non suggérée par le lot, mais ne te réfugie pas dans le générique quand une connaissance réelle et spécifique est disponible. Longueur : 3 à 5 phrases, pas davantage.
 
 SÉPARATION DES PARAGRAPHES
 Sépare IMPÉRATIVEMENT le paragraphe 1 et le paragraphe 2 par une ligne vide (deux sauts de ligne « \n\n »). Ne colle jamais les deux paragraphes l'un à l'autre. Rends EXACTEMENT deux paragraphes : n'en produis ni un seul bloc, ni trois paragraphes ou plus.
@@ -74,7 +76,7 @@ export const ANALYZE_LOT_TOOL = {
         },
         paragraph_context: {
           type: 'string',
-          description: "PARAGRAPHE 2 (3 à 5 phrases). Contexte autour du lot : éléments biographiques/historiques du créateur, artisan, fabricant ou manufacture si identifiable ; sinon rattachement à des mouvements artistiques, industriels, politiques ou historiques. Aucun fait inventé. Un seul paragraphe, sans saut de ligne.",
+          description: "PARAGRAPHE 2 (3 à 5 phrases). Contexte autour du lot : éléments biographiques/historiques du créateur, artisan, fabricant ou manufacture si identifiable ; sinon rattachement à des mouvements artistiques, industriels, politiques ou historiques. PRÉCISION IMPÉRATIVE : si un savoir réel et pertinent existe, nomme-le explicitement (aires culturelles, peuples/ethnies, écoles, ateliers, courants, périodes datées, influences artistiques précises) au lieu de rester générique — l'information vraie qui existe doit être donnée. Formule ces rattachements comme des hypothèses prudentes (« souvent associé à… », « le style évoque… ») quand le lot ne les confirme pas ; n'affirme jamais comme certaine une attribution absente des données. Aucun fait inventé. Un seul paragraphe, sans saut de ligne.",
         },
         creator_info: {
           type: 'string',
