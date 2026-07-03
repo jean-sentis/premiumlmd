@@ -121,7 +121,7 @@ serve(async (req) => {
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt }
         ],
-        temperature: 0.4,
+        temperature: 0.2,
         tools: [ANALYZE_LOT_TOOL],
         tool_choice: { type: 'function', function: { name: 'analyze_lot' } }
       }),
