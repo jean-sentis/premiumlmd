@@ -54,17 +54,18 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     const body = await req.json();
-    const { lot_id, dry_run = true, analyze_images = false, mode, test_lot, analysis } = body;
+    const { lot_id, dry_run = true, analyze_images = false, mode, test_lot } = body;
+    const judgeAnalysis = body.analysis;
 
     // ---- MODE JUGE : évalue une analyse existante (utilisé par la suite de tests) ----
     if (mode === 'judge') {
-      if (!test_lot || !analysis) {
+      if (!test_lot || !judgeAnalysis) {
         return new Response(
           JSON.stringify({ success: false, error: 'mode "judge" requires test_lot and analysis' }),
           { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
-      const verdict = await runJudge(LOVABLE_API_KEY, test_lot as LotInput, analysis as SharedAnalysisResult);
+      const verdict = await runJudge(LOVABLE_API_KEY, test_lot as LotInput, judgeAnalysis as SharedAnalysisResult);
       return new Response(
         JSON.stringify({ success: true, verdict }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
