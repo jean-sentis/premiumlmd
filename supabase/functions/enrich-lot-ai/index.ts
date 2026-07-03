@@ -126,7 +126,7 @@ Rédige l'explication en 2 paragraphes : (1) une valeur ajoutée sur l'objet qui
                 properties: {
                   explanation: {
                     type: 'string',
-                    description: 'Explication grand public en français (2-3 paragraphes) : nature de l\'objet, usage et contexte, technique et matériaux, style et datation prudents, intérêt pour l\'amateur. Aucun fait inventé, aucune estimation de prix.'
+                    description: 'Explication grand public en français en EXACTEMENT 2 paragraphes. Paragraphe 1 : valeur ajoutée sur l\'objet, sans paraphraser ni répéter la description fournie (usage réel, technique/savoir-faire, ce qui le rend remarquable). Paragraphe 2 : contexte autour du lot — éléments biographiques du créateur/artisan/fabricant si identifiable, sinon rattachement à des mouvements artistiques, industriels, politiques ou historiques. Aucun fait inventé, aucune estimation de prix.'
                   },
                   creator_info: {
                     type: 'string',
