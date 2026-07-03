@@ -115,7 +115,11 @@ RÈGLES À VÉRIFIER :
 7. no_price_estimate : aucune estimation de prix ni de valeur monétaire.
 
 overall_pass = true UNIQUEMENT si toutes les règles ci-dessus sont respectées.
-Dans "reasons", explique brièvement (2-4 phrases) chaque violation éventuelle.`;
+Dans "reasons", explique brièvement (2-4 phrases) chaque violation éventuelle.
+
+IMPORTANT — INDÉPENDANCE DES CRITÈRES : évalue chaque champ booléen SÉPARÉMENT et de façon strictement indépendante. Ne mets un champ à false que si CE critère précis est violé. Par exemple, un problème de paraphrase (p1_not_paraphrase=false) ne doit JAMAIS faire passer no_invented_facts à false s'il n'y a pas réellement de fait inventé. Chaque "reasons" ne doit citer que les critères réellement en défaut.
+
+NUANCE SUR LA PARAPHRASE (p1_not_paraphrase) : ne mets ce champ à false QUE si le 1er paragraphe se contente essentiellement de redire/reformuler la description sans apporter d'angle neuf. S'il apporte des informations nouvelles (usage réel, technique, savoir-faire, intérêt pour l'amateur), même en évoquant brièvement un élément déjà connu pour l'introduire, considère la règle comme RESPECTÉE (true).`;
 
 export function buildJudgeUserPrompt(lot: LotInput, analysis: AnalysisResult): string {
   return `DONNÉES BRUTES DU LOT
