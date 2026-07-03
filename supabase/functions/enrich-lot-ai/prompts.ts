@@ -72,11 +72,11 @@ export const ANALYZE_LOT_TOOL = {
       properties: {
         paragraph_added_value: {
           type: 'string',
-          description: "PARAGRAPHE 1 (3 à 5 phrases). Valeur ajoutée sur l'objet : n'inclut AUCUN élément déjà présent dans la description (matériau, dimensions, décor, patine, signature, marque, forme déjà citée). Apporte uniquement des angles NOUVEAUX : usage réel, technique/savoir-faire, ce qui le rend remarquable, points d'attention non déjà donnés. Aucun fait inventé, aucune estimation de prix. Un seul paragraphe, sans saut de ligne.",
+          description: "PARAGRAPHE 1 (3 à 5 phrases). Valeur ajoutée sur CE lot précis (dis « ce masque / cette pièce », jamais « ces objets en général »). N'inclut AUCUN élément déjà présent dans la description (matériau, dimensions, décor, patine, signature, marque, forme déjà citée). Apporte uniquement des angles NOUVEAUX propres à l'objet : usage réel, technique/savoir-faire, ce qui le rend remarquable, points d'attention à examiner. Interdit de disserter sur la catégorie en général. Aucun fait inventé, aucune estimation de prix. Un seul paragraphe, sans saut de ligne.",
         },
         paragraph_context: {
           type: 'string',
-          description: "PARAGRAPHE 2 (3 à 5 phrases). Contexte autour du lot : éléments biographiques/historiques du créateur, artisan, fabricant ou manufacture si identifiable ; sinon rattachement à des mouvements artistiques, industriels, politiques ou historiques. Aucun fait inventé. Un seul paragraphe, sans saut de ligne.",
+          description: "PARAGRAPHE 2 (3 à 5 phrases). Contexte autour du lot : éléments biographiques/historiques du créateur si identifiable ; sinon PISTES CONCRÈTES et NOMMÉES (aires géographiques, peuples/ethnies, ateliers, styles, fourchette d'époque précis auxquels ce type d'objet est habituellement rattaché), encadrées de formules prudentes (« évoque », « dans le goût de », « souvent daté de »). Jamais de cadre vague type « Afrique de l'Ouest » ou « XXe siècle » sans précision. TON accessible pour amateur de déco cherchant un supplément d'âme, PAS universitaire : pas de jargon (« cosmogonie », « vecteur du monde invisible »). Aucun fait inventé. Un seul paragraphe, sans saut de ligne.",
         },
         creator_info: {
           type: 'string',
