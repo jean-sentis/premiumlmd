@@ -338,3 +338,43 @@ Cohérence : si ce que tu vois semble en contradiction avec le titre/la descript
     );
   }
 });
+
+/**
+ * Juge qualité (LLM-as-judge) : évalue une analyse au regard des règles
+ * "valeur ajoutée vs contexte" et "pas d'invention de faits".
+ */
+async function runJudge(
+  apiKey: string,
+  lot: LotInput,
+  analysis: SharedAnalysisResult,
+) {
+  const judgeResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'google/gemini-2.5-flash',
+      messages: [
+        { role: 'system', content: JUDGE_SYSTEM_PROMPT },
+        { role: 'user', content: buildJudgeUserPrompt(lot, analysis) },
+      ],
+      tools: [JUDGE_TOOL],
+      tool_choice: { type: 'function', function: { name: 'submit_verdict' } },
+    }),
+  });
+
+  if (!judgeResponse.ok) {
+    const errorText = await judgeResponse.text();
+    console.error('Judge gateway error:', judgeResponse.status, errorText);
+    throw new Error(`Judge gateway error: ${judgeResponse.status}`);
+  }
+
+  const judgeData = await judgeResponse.json();
+  const toolCall = judgeData.choices?.[0]?.message?.tool_calls?.[0];
+  if (!toolCall || toolCall.function.name !== 'submit_verdict') {
+    throw new Error('Unexpected judge response format');
+  }
+  return JSON.parse(toolCall.function.arguments);
+}
