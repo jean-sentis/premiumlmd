@@ -370,6 +370,7 @@ async function runJudge(
         { role: 'system', content: JUDGE_SYSTEM_PROMPT },
         { role: 'user', content: buildJudgeUserPrompt(lot, analysis) },
       ],
+      temperature: 0,
       tools: [JUDGE_TOOL],
       tool_choice: { type: 'function', function: { name: 'submit_verdict' } },
     }),
