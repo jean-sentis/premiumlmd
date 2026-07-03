@@ -24,13 +24,16 @@ Produire une fiche claire, vivante et fiable à partir des seules informations f
 1) EXPLICATION (champ "explanation") — EXACTEMENT DEUX PARAGRAPHES
 
 PARAGRAPHE 1 — VALEUR AJOUTÉE sur l'objet lui-même.
-Ce paragraphe doit APPORTER quelque chose que la description ne dit PAS. Ne paraphrase jamais, ne répète jamais, ne reformule jamais ce qui figure déjà dans la description fournie : le lecteur l'a déjà sous les yeux. Apporte un éclairage complémentaire : ce que l'objet révèle sur sa fonction et son usage réel, la technique ou le savoir-faire de fabrication qu'il suppose, ce qui le rend remarquable, rare ou intéressant pour un amateur, les points d'attention ou de lecture qu'un œil averti remarquerait. Si la description est déjà très complète, va plus loin encore dans l'analyse plutôt que de résumer. Reste prudent sur les hypothèses (« probablement », « dans le goût de », « style… ») et n'invente aucun fait spécifique au lot.
+Ce paragraphe doit APPORTER quelque chose que la description ne dit PAS. Ne paraphrase jamais, ne répète jamais, ne reformule jamais ce qui figure déjà dans la description fournie : le lecteur l'a déjà sous les yeux. Interdiction de recopier ou de reformuler les éléments déjà donnés (titre, matériau, dimensions, décor, signature déjà mentionnée) ; ne les cite que si c'est strictement nécessaire pour introduire une information NOUVELLE. Apporte un éclairage complémentaire : ce que l'objet révèle sur sa fonction et son usage réel, la technique ou le savoir-faire de fabrication qu'il suppose, ce qui le rend remarquable, rare ou intéressant pour un amateur, les points d'attention ou de lecture qu'un œil averti remarquerait. Si la description est déjà très complète, va plus loin encore dans l'analyse plutôt que de résumer. Reste prudent sur les hypothèses (« probablement », « dans le goût de », « style… ») et n'invente aucun fait spécifique au lot.
 
 PARAGRAPHE 2 — CONTEXTE autour du lot.
 Deux cas :
 - Si un auteur, un artiste, un artisan, un créateur, un fabricant, un atelier ou une manufacture est mentionné ou clairement déductible : donne des éléments biographiques et historiques sur cette personne ou cet établissement (dates, lieux, spécialité, production, réputation) permettant de situer et d'apprécier le lot.
 - S'il n'y a rien de tout cela : relie l'objet aux mouvements, courants ou ensembles auxquels il ressemble ou appartient — qu'ils soient artistiques, industriels, politiques ou historiques — pour lui donner un cadre et une profondeur.
 Reste factuel et prudent ; n'invente aucune attribution non suggérée par le lot.
+
+SÉPARATION DES PARAGRAPHES
+Sépare IMPÉRATIVEMENT le paragraphe 1 et le paragraphe 2 par une ligne vide (deux sauts de ligne « \n\n »). Ne colle jamais les deux paragraphes l'un à l'autre.
 
 2) INFOS SUR LE CRÉATEUR (champ "creator_info")
 Si un artiste, un artisan, un atelier, une manufacture, une maison ou un lieu de production identifiable est mentionné (ou clairement déductible) dans le lot, fournis une véritable notice biographique/historique : dates et lieux, formation ou origine, mouvement ou spécialité, œuvres ou productions marquantes, cote et réputation, éléments permettant de situer et valoriser le lot. Sois aussi complet que tes connaissances le permettent.
@@ -42,7 +45,7 @@ RÈGLES DE FIABILITÉ
 - Reste factuel et sobre : pas de superlatifs commerciaux ni d'estimation de prix.
 
 FORMAT
-Réponds exclusivement en français. Explication : EXACTEMENT 2 paragraphes (1 = valeur ajoutée sur l'objet sans paraphraser la description ; 2 = contexte biographique du créateur ou rattachement à des mouvements). Notice créateur : 1 à 2 paragraphes. Prose fluide, sans listes ni markdown dans les valeurs renvoyées.`;
+Réponds exclusivement en français. Explication : EXACTEMENT 2 paragraphes séparés par une ligne vide (« \n\n ») — (1) valeur ajoutée sur l'objet sans paraphraser la description ; (2) contexte biographique du créateur ou rattachement à des mouvements. Notice créateur : 1 à 2 paragraphes. Prose fluide, sans listes ni markdown dans les valeurs renvoyées.`;
 
 export function buildUserPrompt(lot: LotInput): string {
   return `Analyse le lot suivant et aide-moi à le comprendre en respectant strictement les données ci-dessous (n'ajoute aucun fait non fourni) :
@@ -51,7 +54,7 @@ Titre : "${lot.title}"
 ${lot.description ? `Description : "${lot.description}"` : 'Description : (aucune description fournie — appuie-toi uniquement sur le titre et sois prudent)'}
 ${lot.dimensions ? `Dimensions : "${lot.dimensions}"` : ''}
 
-Rédige l'explication en 2 paragraphes : (1) une valeur ajoutée sur l'objet qui NE répète PAS et NE paraphrase PAS la description ci-dessus ; (2) le contexte autour du lot (éléments biographiques du créateur/fabricant si identifiable, sinon rattachement à des mouvements artistiques, industriels, politiques ou historiques). Puis, si et seulement si un créateur est identifiable, remplis sa notice biographique. Sinon, laisse la notice à null.`;
+Rédige l'explication en EXACTEMENT 2 paragraphes séparés par une ligne vide (deux sauts de ligne) : (1) une valeur ajoutée sur l'objet qui NE répète PAS et NE paraphrase PAS la description ci-dessus ; (2) le contexte autour du lot (éléments biographiques du créateur/fabricant si identifiable, sinon rattachement à des mouvements artistiques, industriels, politiques ou historiques). Puis, si et seulement si un créateur est identifiable, remplis sa notice biographique. Sinon, laisse la notice à null.`;
 }
 
 export const ANALYZE_LOT_TOOL = {
