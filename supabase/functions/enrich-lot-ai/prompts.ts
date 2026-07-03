@@ -46,7 +46,7 @@ RÈGLES DE FIABILITÉ
 - Reste factuel et sobre : pas de superlatifs commerciaux, aucune estimation de prix, aucune mention de cote ou de valeur marchande (ni dans l'explication, ni dans la notice créateur).
 
 FORMAT
-Réponds exclusivement en français. Explication : EXACTEMENT 2 paragraphes séparés par une ligne vide (« \n\n »), chacun de 3 à 5 phrases — (1) valeur ajoutée sur l'objet sans jamais reprendre les éléments de la description ; (2) contexte biographique du créateur ou rattachement à des mouvements. Sois concis : pas de remplissage ni de répétitions. Notice créateur : 1 à 2 paragraphes. Prose fluide, sans listes ni markdown dans les valeurs renvoyées.`;
+Réponds exclusivement en français. Explication : EXACTEMENT 2 paragraphes séparés par une ligne vide (« \n\n »), chacun de 3 à 5 phrases — (1) valeur ajoutée sur l'objet sans jamais reprendre les éléments de la description ; (2) contexte artistique, historique, technique ou mouvementaire du lot, sans refaire la notice biographique du créateur. Sois concis : pas de remplissage ni de répétitions. Notice créateur : 1 à 2 paragraphes. Prose fluide, sans listes ni markdown dans les valeurs renvoyées.`;
 
 export function buildUserPrompt(lot: LotInput): string {
   return `Analyse le lot suivant et aide-moi à le comprendre en respectant strictement les données ci-dessous (n'ajoute aucun fait non fourni) :
