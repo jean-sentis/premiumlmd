@@ -73,7 +73,7 @@ export const ANALYZE_LOT_TOOL = {
       properties: {
         paragraph_added_value: {
           type: 'string',
-          description: "PARAGRAPHE 1 (3 à 5 phrases). Valeur ajoutée sur l'objet : n'inclut AUCUN élément déjà présent dans la description (matériau, dimensions, décor, patine, signature, marque, forme déjà citée). Apporte uniquement des angles NOUVEAUX : usage réel, technique/savoir-faire, ce qui le rend remarquable, points d'attention non déjà donnés. Aucun fait inventé, aucune estimation de prix. Un seul paragraphe, sans saut de ligne.",
+          description: "PARAGRAPHE 1 (3 à 5 phrases). Valeur ajoutée SPÉCIFIQUE à CE lot : n'inclut AUCUN élément déjà présent dans la description (matériau, dimensions, décor, patine, signature, marque, forme déjà citée). INTERDICTION des généralités valables pour toute la catégorie (test : si la phrase resterait vraie pour n'importe quel autre objet du même genre, elle est interdite). Ancre-toi sur ce qui distingue précisément ce modèle/auteur/période/type nommé ou déductible : rôle ou particularités historiques du modèle, traits stylistiques propres, points de contrôle spécifiques pour dater/authentifier ce lot en particulier. Aucun fait inventé, aucune estimation de prix. Un seul paragraphe, sans saut de ligne.",
         },
         paragraph_context: {
           type: 'string',
