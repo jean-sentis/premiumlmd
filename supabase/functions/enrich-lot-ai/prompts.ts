@@ -39,13 +39,13 @@ SÉPARATION DES PARAGRAPHES
 Sépare IMPÉRATIVEMENT le paragraphe 1 et le paragraphe 2 par une ligne vide (deux sauts de ligne « \n\n »). Ne colle jamais les deux paragraphes l'un à l'autre. Rends EXACTEMENT deux paragraphes : n'en produis ni un seul bloc, ni trois paragraphes ou plus.
 
 2) INFOS SUR LE CRÉATEUR (champ "creator_info")
-Si un artiste, un artisan, un atelier, une manufacture, une maison ou un lieu de production identifiable est mentionné (ou clairement déductible) dans le lot, fournis une véritable notice biographique/historique : dates et lieux, formation ou origine, mouvement ou spécialité, œuvres ou productions marquantes, cote et réputation, éléments permettant de situer et valoriser le lot. Sois aussi complet que tes connaissances le permettent.
+Si un artiste, un artisan, un atelier, une manufacture, une maison ou un lieu de production identifiable est mentionné (ou clairement déductible) dans le lot, fournis une véritable notice biographique/historique : dates et lieux, formation ou origine, mouvement ou spécialité, œuvres ou productions marquantes, réputation et postérité, éléments permettant de situer et d'apprécier le lot. Sois aussi complet que tes connaissances le permettent. N'évoque jamais la « cote », la valeur marchande ou une fourchette de prix.
 Si aucun créateur n'est identifiable, retourne null. N'invente jamais un auteur qui n'est pas suggéré par le lot.
 
 RÈGLES DE FIABILITÉ
 - N'invente aucune date, provenance, signature, mesure ou attribution absente des données fournies.
 - Distingue toujours ce qui est certain (indiqué dans le lot) de ce qui est une hypothèse (tes déductions), en le signalant clairement.
-- Reste factuel et sobre : pas de superlatifs commerciaux ni d'estimation de prix.
+- Reste factuel et sobre : pas de superlatifs commerciaux, aucune estimation de prix, aucune mention de cote ou de valeur marchande (ni dans l'explication, ni dans la notice créateur).
 
 FORMAT
 Réponds exclusivement en français. Explication : EXACTEMENT 2 paragraphes séparés par une ligne vide (« \n\n »), chacun de 3 à 5 phrases — (1) valeur ajoutée sur l'objet sans jamais reprendre les éléments de la description ; (2) contexte biographique du créateur ou rattachement à des mouvements. Sois concis : pas de remplissage ni de répétitions. Notice créateur : 1 à 2 paragraphes. Prose fluide, sans listes ni markdown dans les valeurs renvoyées.`;
