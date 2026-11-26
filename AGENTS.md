@@ -1,4 +1,5 @@
 # Architecture rules
+- Use `/acheter/after-sale` for After Sale navigation and shared lot URLs; retain legacy entry routes so account and previously shared links do not return 404.
 - Use protected `public.user_roles` assignments for database admin checks; bootstrap only existing verified administrators, never infer future privileges from editable profile data.
 - Expose pickup availability only through `get_booked_pickup_slots`, returning dates and times for a bounded interval; full appointments remain owner/admin-only.
 - Restrict service-write policies explicitly to `service_role`, with separate admin policies, so public catalogue reading never grants public writes.

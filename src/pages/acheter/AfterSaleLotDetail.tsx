@@ -319,7 +319,7 @@ const AfterSaleLotDetail = () => {
   // Generate mailto link for "Je souhaite vendre un objet similaire"
   const handleSellSimilar = () => {
     const subject = encodeURIComponent("Je souhaite vendre un objet similaire");
-    const lotUrl = `${window.location.origin}/after-sale/${lotId}`;
+    const lotUrl = `${window.location.origin}/acheter/after-sale/${lotId}`;
     const lotImages = getImages(lot?.images);
     
     let body = `Je souhaite vendre un objet similaire.\n\n`;

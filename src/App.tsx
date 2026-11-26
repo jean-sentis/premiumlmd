@@ -143,6 +143,9 @@ const App = () => (
                 <Route path="/acheter/guide" element={<GuideAcheteur />} />
                 <Route path="/acheter/after-sale" element={<AfterSale />} />
                 <Route path="/acheter/after-sale/:lotId" element={<AfterSaleLotDetail />} />
+                <Route path="/compte/aftersales" element={<Navigate to="/acheter/after-sale" replace />} />
+                <Route path="/after-sale" element={<Navigate to="/acheter/after-sale" replace />} />
+                <Route path="/after-sale/:lotId" element={<AfterSaleLotDetail />} />
                 
                 {/* Nouvelles routes Vendre */}
                 <Route path="/vendre/journees-estimation" element={<Navigate to="/vendre/estimation-en-ligne#expertises-itinerantes" replace />} />
