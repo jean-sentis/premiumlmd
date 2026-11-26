@@ -8,6 +8,8 @@ import { useSubmenu } from "@/contexts/SubmenuContext";
 import { useUserActionCounts } from "@/hooks/useUserActionCounts";
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from "@/components/ui/sheet";
 import { usePlanning } from "@/contexts/PlanningContext";
+import { Button } from "@/components/ui/button";
+import { isIncompleteSpecialty } from "@/lib/prototype-pages";
 
 // Badge de comptage
 const ActionBadge = ({
@@ -326,10 +328,10 @@ const Header = ({
 
             {/* Spécialités */}
             <div className="relative" onMouseEnter={() => handleMenuEnter("specialites")}>
-              <button className={`font-sans text-[13px] font-medium tracking-tight uppercase px-4 py-2.5 transition-colors relative ${highlightMenu === "specialites" ? "text-[hsl(var(--brand-primary))]" : "text-gray-700 hover:text-[hsl(var(--brand-primary))]"}`}>
+              <Button variant="ghost" onClick={() => handleMenuEnter("specialites")} aria-expanded={activeMenu === "specialites"} className="font-sans text-[13px] font-medium tracking-normal uppercase px-4 py-2.5 h-auto transition-colors relative text-foreground hover:bg-transparent">
                 Spécialités
                 {(highlightMenu === "specialites" || activeMenu === "specialites") && <span className="absolute bottom-0 left-4 right-4 h-[2px] bg-[hsl(var(--brand-secondary))]" />}
-              </button>
+              </Button>
             </div>
 
             {/* À propos */}
@@ -378,9 +380,9 @@ const Header = ({
           {/* Mobile menu button */}
           <Sheet open={isOpen} onOpenChange={setIsOpen}>
             <SheetTrigger asChild className="md:hidden">
-              <button className="p-2 hover:opacity-70 transition-opacity">
+              <Button variant="ghost" size="icon" aria-label="Ouvrir le menu" className="hover:opacity-70 transition-opacity">
                 <Menu size={24} />
-              </button>
+              </Button>
             </SheetTrigger>
             <SheetContent side="right" className="w-[300px] bg-white text-foreground border-l-gray-200 overflow-y-auto pt-14">
               <div className="flex flex-col h-full">
@@ -425,11 +427,17 @@ const Header = ({
                     <span className="font-sans text-xs font-medium tracking-tight uppercase block mb-2 text-[hsl(var(--brand-primary))]">
                       Spécialités
                     </span>
-                    {specialites.map(link => <SheetClose asChild key={link.to}>
-                        <Link to={link.to} className="block text-sm py-1.5 pl-4 text-gray-600 hover:text-[hsl(var(--brand-secondary))] transition-colors tracking-tight">
+                    {specialites.map(link => isIncompleteSpecialty(link.to.replace("/specialites/", "")) ? (
+                      <span key={link.to} role="link" aria-disabled="true" className="block text-sm py-1.5 pl-4 text-muted-foreground cursor-default">
+                        {link.label.replace('\n', ' ')}
+                      </span>
+                    ) : (
+                      <SheetClose asChild key={link.to}>
+                        <Link to={link.to} className="block text-sm py-1.5 pl-4 text-foreground hover:text-brand-secondary transition-colors">
                           {link.label.replace('\n', ' ')}
                         </Link>
-                      </SheetClose>)}
+                      </SheetClose>
+                    ))}
                   </div>
 
                   {/* À propos section */}
@@ -496,8 +504,9 @@ const Header = ({
                 */}
                 <div className="w-fit bg-background px-5">
                   <div className="flex items-center justify-center gap-5">
-                    {specialites.map((item) => (
-                      <Link key={item.to} to={item.to} className="flex flex-col items-center gap-1.5 group">
+                    {specialites.map((item) => {
+                      const inactive = isIncompleteSpecialty(item.to.replace("/specialites/", ""));
+                      const content = <>
                         {item.image ? (
                           <div
                             className="flex items-center justify-center overflow-hidden"
@@ -508,11 +517,11 @@ const Header = ({
                           >
                             <img
                               src={item.image}
-                              alt={item.label}
+                              alt=""
                               width={60}
                               height={60}
                               loading="lazy"
-                              className="w-full h-full object-contain transition-all duration-300 group-hover:scale-110"
+                              className={`w-full h-full object-contain transition-all duration-300 ${inactive ? "" : "group-hover:scale-110"}`}
                             />
                           </div>
                         ) : (
@@ -526,11 +535,16 @@ const Header = ({
                             <span className="text-lg text-muted-foreground">◆</span>
                           </div>
                         )}
-                        <span className="text-xs md:text-sm text-muted-foreground group-hover:text-[hsl(var(--brand-secondary))] transition-colors text-center tracking-tight max-w-[120px] leading-tight whitespace-pre-line">
+                        <span className={`text-xs md:text-sm transition-colors text-center tracking-normal max-w-[120px] leading-tight whitespace-pre-line ${inactive ? "text-muted-foreground" : "text-foreground group-hover:text-brand-secondary"}`}>
                           {item.label}
                         </span>
-                      </Link>
-                    ))}
+                      </>;
+                      return inactive ? (
+                        <div key={item.to} role="link" aria-disabled="true" className="flex flex-col items-center gap-1.5 cursor-default">{content}</div>
+                      ) : (
+                        <Link key={item.to} to={item.to} className="flex flex-col items-center gap-1.5 group">{content}</Link>
+                      );
+                    })}
                   </div>
                 </div>
               </div>

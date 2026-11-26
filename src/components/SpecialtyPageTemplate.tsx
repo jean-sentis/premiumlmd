@@ -4,8 +4,6 @@ import { format, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import PrototypePageNotice from "@/components/PrototypePageNotice";
-import { isIncompleteSpecialty } from "@/lib/prototype-pages";
 import InlinePlanningSlot from "@/components/InlinePlanningSlot";
 import { ChevronRight, HelpCircle, Archive, Calendar } from "lucide-react";
 import {
@@ -196,7 +194,6 @@ const SpecialtyPageTemplate = ({
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      {isIncompleteSpecialty(currentSpecialtyId) && <PrototypePageNotice key={currentSpecialtyId} kind="specialty" />}
       
       {/* Section 1: Hero - H1 avec mention affective */}
       <section 

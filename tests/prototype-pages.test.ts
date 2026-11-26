@@ -1,12 +1,13 @@
 import { describe, expect, test } from "bun:test";
-import { isIncompleteSpecialty, isEmptySale } from "../src/lib/prototype-pages";
+import { COMPLETE_SPECIALTIES, isIncompleteSpecialty, isEmptySale } from "../src/lib/prototype-pages";
 
 describe("Pages incomplètes", () => {
-  test("Art moderne et Vins et spiritueux ne déclenchent pas d'avertissement", () => {
+  test("Seuls Art moderne et Vins et spiritueux sont accessibles dans le menu", () => {
+    expect(COMPLETE_SPECIALTIES.map((item) => item.id)).toEqual(["art-moderne", "vins-spiritueux"]);
     expect(isIncompleteSpecialty("art-moderne")).toBe(false);
     expect(isIncompleteSpecialty("vins-spiritueux")).toBe(false);
   });
-  test("Les neuf autres spécialités déclenchent l'avertissement", () => {
+  test("Les neuf autres spécialités restent inactives dans le menu", () => {
     for (const id of ["argenterie", "art-xxeme", "bijoux-montres", "collections", "mobilier-objets-art", "mode-textile", "voitures-collection", "ceramiques", "militaria"]) {
       expect(isIncompleteSpecialty(id)).toBe(true);
     }
