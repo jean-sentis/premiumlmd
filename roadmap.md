@@ -1,4 +1,6 @@
 # Pages de démonstration
+- [x] Vérifier l’accès public premiumlmd.lovable.app et les liens de ventes : adresse accessible ; version publiée antérieure aux derniers changements, republication nécessaire.
+- [x] Examiner les visuels des ventes en préparation et corriger leurs catégories : vitrine en Mobilier & Objets d’Art, céramiques en Art XXe ; filtres et ouverture vérifiés, 9 tests réussis.
 - [x] Laisser actives les ventes en préparation (date de vente non encore passée) même sans lot renseigné ; ne griser que les ventes passées sans lots.
 - [x] Retirer des listes publiques les vingt dernières ventes en préparation au total (du 18 avril au 19 décembre 2026), sans effacer les historiques clients.
 - [x] Retirer des listes publiques les sept ventes passées les plus anciennes et la vente judiciaire fictive, sans effacer les historiques clients.

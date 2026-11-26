@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { Helmet } from "react-helmet-async";
 import Link from "@/components/SaleAwareLink";
 import { publicSales } from "@/lib/demo-publication";
+import { matchesUpcomingSaleSpecialty } from "@/lib/upcoming-sale-specialties";
 import { format, parseISO, differenceInDays, differenceInHours, differenceInMinutes } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Calendar, Loader2, Plus, Monitor, Users, Clock, ChevronDown, Gavel } from "lucide-react";
@@ -33,18 +34,6 @@ const SPECIALITES_MENU = [
   { value: "mode", label: "Mode", image: imgModeTextile },
   { value: "collections", label: "Collections", image: imgCollections },
 ];
-
-// Mots-clés de filtrage par spécialité
-const SPECIALTY_KEYWORDS: Record<string, string[]> = {
-  "bijoux-montres": ["bijoux", "montre", "joaillerie", "horlogerie", "or", "diamant", "bague", "collier", "bracelet"],
-  "art-moderne": ["art moderne", "art contemporain", "contemporain", "xxe", "xxème", "tableau", "peinture", "sculpture", "1900", "estampe", "lithographie", "grands maîtres", "oeuvre"],
-  "mobilier": ["mobilier", "meuble", "objet", "design", "intérieur", "caractère", "céramique"],
-  "vins": ["vin", "spiritueux", "champagne", "cru", "bordeaux", "bourgogne", "millésime"],
-  "argenterie": ["argent", "argenterie", "orfèvrerie", "vermeil"],
-  "voitures": ["véhicule", "voiture", "automobile", "auto", "moto"],
-  "mode": ["mode", "textile", "vintage", "couture", "hermès", "vuitton", "luxe", "maroquinerie", "accessoire"],
-  "collections": ["collection", "curiosité", "militaria", "arme", "livre", "manuscrit", "numismatique", "philatélie", "tribal", "instrument"],
-};
 
 interface Sale {
   id: string;
@@ -268,13 +257,7 @@ const VentesAVenir = () => {
   const filteredSales = useMemo(() => {
     if (selectedSpecialty === "all") return sales;
     
-    const keywords = SPECIALTY_KEYWORDS[selectedSpecialty] || [];
-    return sales.filter(sale => {
-      const specialty = sale.specialty?.toLowerCase() || '';
-      const title = sale.title.toLowerCase();
-      const combined = `${specialty} ${title}`;
-      return keywords.some(keyword => combined.includes(keyword));
-    });
+    return sales.filter(sale => matchesUpcomingSaleSpecialty(sale, selectedSpecialty));
   }, [sales, selectedSpecialty]);
 
   // Catégoriser les ventes filtrées

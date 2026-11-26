@@ -1,4 +1,5 @@
 # Architecture rules
+- Keep upcoming-sale specialty matching in `upcoming-sale-specialties.ts` with focused tests so category filters remain verifiable independently of rendering.
 - Keep prototype-page classification and sale-link target detection in `src/lib/prototype-pages.ts`, shared by navigation and its tests, so incomplete-page detection stays independently verifiable.
 - Use `SaleAwareLink` for public sale navigation: it renders known-empty past sales as gray, disabled anchors without href, using populated-lot counts and the preparation set cached by `useSaleLotCounts`, never advertised totals or raw row counts; a sale whose auction date has not passed stays reachable even with no populated lot. Unknown counts remain distinct from empty sales. Specialty menu availability uses the shared classification without navigation targets for unavailable items; no prototype popups are shown.
 - Keep populated-lot classification in `prototype-pages.ts` and browser photo checks in `lot-content.ts`, shared by catalogues and counts, so only descriptions with a loadable photo count and image requests are bounded, cached and retried.
