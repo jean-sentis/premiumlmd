@@ -1,3 +1,4 @@
+import { DemoPhone } from "@/components/DemoContact";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import Header from "@/components/Header";
@@ -598,13 +599,12 @@ const Vendre = () => {
             Vous avez un projet, des questions ? Nous serons heureux d'y répondre.
           </p>
           <div className="flex items-center justify-center gap-6">
-            <a 
-              href="tel:+33495121212"
+            <DemoPhone
               className="inline-flex items-center gap-3 font-serif text-xl md:text-2xl font-light hover:opacity-80 transition-opacity"
             >
               <Phone className="w-6 h-6" />
-              04 95 12 12 12
-            </a>
+              00 00 00 00 00
+            </DemoPhone>
             <a 
               href="mailto:jean@lemarteaudigital.fr"
               className="inline-flex items-center gap-3 font-serif text-xl md:text-2xl font-light hover:opacity-80 transition-opacity"

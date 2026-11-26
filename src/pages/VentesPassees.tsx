@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { Helmet } from "react-helmet-async";
 import Link from "@/components/SaleAwareLink";
+import { publicSales } from "@/lib/demo-publication";
 import { format, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Calendar, Loader2, Trophy } from "lucide-react";
@@ -54,7 +55,7 @@ const VentesPassees = () => {
         if (error) {
           console.error('Error fetching past sales:', error);
         } else {
-          setPastSales(data || []);
+          setPastSales(publicSales(data || []));
         }
       } catch (err) {
         console.error('Error:', err);

@@ -3,6 +3,7 @@ import { Link, type LinkProps } from "react-router-dom";
 import { useSaleLotCounts } from "@/hooks/use-sale-lot-counts";
 import { isEmptySale, saleIdFromPath } from "@/lib/prototype-pages";
 import { cn } from "@/lib/utils";
+import { isPublicSale } from "@/lib/demo-publication";
 
 const SaleLink = forwardRef<HTMLAnchorElement, LinkProps & { saleId: string }>(
   ({ saleId, to, className, onClick, ...props }, ref) => {
@@ -31,6 +32,7 @@ SaleLink.displayName = "SaleLink";
 const SaleAwareLink = forwardRef<HTMLAnchorElement, LinkProps>((props, ref) => {
   const path = typeof props.to === "string" ? props.to : props.to.pathname ?? "";
   const saleId = saleIdFromPath(path);
+  if (saleId && !isPublicSale(saleId)) return null;
   return saleId ? <SaleLink {...props} saleId={saleId} ref={ref} /> : <Link {...props} ref={ref} />;
 });
 SaleAwareLink.displayName = "SaleAwareLink";

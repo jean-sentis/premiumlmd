@@ -29,7 +29,7 @@ Informations sur le lot :
 
 Règles :
 - Réponds en français, de manière professionnelle et chaleureuse
-- Si tu ne connais pas la réponse, suggère de contacter l'équipe au 04 95 12 12 12
+- Si tu ne connais pas la réponse, suggère de contacter Le Marteau Digital par e-mail à jean@lemarteaudigital.fr ; ne propose aucun numéro de téléphone pour cette démonstration
 - Ne donne pas d'informations que tu n'as pas
 - Sois concis (2-3 phrases maximum)
 - Pour les questions sur l'authenticité, les conditions de vente, ou le paiement, renvoie vers l'équipe`;
@@ -55,7 +55,7 @@ Règles :
       
       if (response.status === 429) {
         return new Response(
-          JSON.stringify({ answer: "Notre assistant est momentanément surchargé. Appelez-nous au 04 95 12 12 12." }),
+          JSON.stringify({ answer: "Notre assistant est momentanément surchargé. Contactez Le Marteau Digital : jean@lemarteaudigital.fr." }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
@@ -64,7 +64,7 @@ Règles :
     }
 
     const data = await response.json();
-    const answer = data.choices?.[0]?.message?.content || "Je n'ai pas pu répondre. Contactez-nous au 04 95 12 12 12.";
+    const answer = data.choices?.[0]?.message?.content || "Je n'ai pas pu répondre. Contactez Le Marteau Digital : jean@lemarteaudigital.fr.";
 
     console.log("[answer-lot-question] Question:", question);
     console.log("[answer-lot-question] Answer:", answer);
@@ -78,7 +78,7 @@ Règles :
     console.error("Error in answer-lot-question:", error);
     return new Response(
       JSON.stringify({ 
-        answer: "Je n'ai pas pu répondre pour le moment. Contactez notre équipe au 04 95 12 12 12.",
+        answer: "Je n'ai pas pu répondre pour le moment. Contactez Le Marteau Digital : jean@lemarteaudigital.fr.",
         error: error instanceof Error ? error.message : "Unknown error" 
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }

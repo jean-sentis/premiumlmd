@@ -1,3 +1,4 @@
+import { DemoPhone } from "@/components/DemoContact";
 import { useState } from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -64,12 +65,11 @@ const Contact = () => {
                 9h – 12h30 / 14h – 18h
               </p>
               <p>
-                <a 
-                  href={COMPANY_INFO.phoneLink}
+                <DemoPhone
                   className="hover:text-brand-primary transition-colors"
                 >
                   {COMPANY_INFO.phone}
-                </a>
+                </DemoPhone>
               </p>
               <p>
                 <a 

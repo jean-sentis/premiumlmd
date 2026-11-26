@@ -1,3 +1,4 @@
+import { DemoPhone } from "@/components/DemoContact";
 import { useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
@@ -339,10 +340,10 @@ const InventaireDomicile = () => {
                     className="bg-background text-foreground border-background hover:bg-background/90"
                     asChild
                   >
-                    <a href={`tel:${COMPANY_INFO.phone.replace(/\s/g, '')}`}>
+                    <DemoPhone>
                       <Phone className="w-4 h-4 mr-2" />
                       {COMPANY_INFO.phone}
-                    </a>
+                    </DemoPhone>
                   </Button>
                 </div>
                 

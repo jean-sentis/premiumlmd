@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect } from "react";
 import { Helmet } from "react-helmet-async";
 import { useNavigate } from "react-router-dom";
 import Link from "@/components/SaleAwareLink";
+import { publicSales } from "@/lib/demo-publication";
 import { useSaleLotCounts } from "@/hooks/use-sale-lot-counts";
 import { isEmptySale } from "@/lib/prototype-pages";
 import { format, addDays, startOfWeek, isSameDay, isToday, isBefore, startOfDay, parseISO } from "date-fns";
@@ -137,7 +138,7 @@ const Calendrier = () => {
         }
 
         // Convert sales to calendar events
-        const salesEvents: CalendarEvent[] = (sales || []).map(sale => ({
+        const salesEvents: CalendarEvent[] = publicSales(sales || []).map(sale => ({
           id: sale.id,
           date: sale.sale_date ? parseISO(sale.sale_date) : new Date(),
           type: sale.catalog_url ? 'vente-catalogue' : 'vente-preparation' as EventType,

@@ -21,6 +21,7 @@ import Contact from "./pages/Contact";
 import Specialites from "./pages/Specialites";
 import NotFound from "./pages/NotFound";
 import Auth from "./pages/Auth";
+import Legal from "./pages/Legal";
 import BijouxMontres from "./pages/specialites/BijouxMontres";
 import VinsSpiriteux from "./pages/specialites/VinsSpiriteux";
 import ArtXXeme from "./pages/specialites/ArtXXeme";
@@ -104,6 +105,10 @@ const App = () => (
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/auth" element={<Auth />} />
+                <Route path="/inscription" element={<Navigate to="/compte" replace />} />
+                <Route path="/mentions-legales" element={<Legal kind="mentions" />} />
+                <Route path="/cgv" element={<Legal kind="cgv" />} />
+                <Route path="/politique-confidentialite" element={<Legal kind="privacy" />} />
                 <Route path="/vendre" element={<Vendre />} />
                 <Route path="/acheter" element={<Acheter />} />
                 <Route path="/vente/:slug" element={<VenteDetail />} />

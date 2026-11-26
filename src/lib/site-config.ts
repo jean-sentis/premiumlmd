@@ -1,3 +1,5 @@
+import { DEMO_PHONE } from "./demo-publication";
+
 /**
  * =====================================================
  * CONFIGURATION CENTRALE DU SITE
@@ -52,8 +54,8 @@ export const COMPANY_INFO = {
     country: "Corse",
     full: "12 boulevard Albert 1er, 20000 Ajaccio"
   },
-  phone: "04 95 12 12 12",
-  phoneLink: "tel:+33495121212",
+  phone: DEMO_PHONE,
+  phoneLink: undefined,
   email: "jean@lemarteaudigital.fr",
   emailLink: "mailto:jean@lemarteaudigital.fr"
 };
@@ -77,12 +79,12 @@ export const OPENING_HOURS = {
 
 // Réseaux sociaux
 export const SOCIAL_LINKS = {
-  instagram: "https://instagram.com/12pages",
-  facebook: "https://facebook.com/12pages",
-  pinterest: "https://pinterest.com/12pages",
-  youtube: "https://youtube.com/@12pages",
-  linkedin: "https://linkedin.com/company/12pages",
-  twitter: "https://x.com/12pages"
+  instagram: undefined,
+  facebook: undefined,
+  pinterest: undefined,
+  youtube: undefined,
+  linkedin: undefined,
+  twitter: undefined
 };
 
 // Jours fériés français (à mettre à jour chaque année)

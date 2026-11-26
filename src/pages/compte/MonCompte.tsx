@@ -5,6 +5,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { useAuth } from '@/hooks/useAuth';
 import CompteSidebar from '@/components/compte/CompteSidebar';
+import ComptePublic from '@/pages/compte/ComptePublic';
 
 const MonCompte = () => {
   const navigate = useNavigate();
@@ -20,7 +21,7 @@ const MonCompte = () => {
   }, [location.pathname]);
 
   useEffect(() => {
-    if (!loading && !user) {
+    if (!loading && !user && location.pathname !== '/compte') {
       navigate('/auth', { state: { returnTo: location.pathname }, replace: true });
     }
   }, [user, loading, navigate, location.pathname]);
@@ -38,7 +39,7 @@ const MonCompte = () => {
   }
 
   if (!user) {
-    return null;
+    return location.pathname === '/compte' ? <ComptePublic /> : null;
   }
 
   return (

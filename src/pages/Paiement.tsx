@@ -410,7 +410,7 @@ const Paiement = () => {
                   </ul>
                   
                   <Button asChild className="w-full bg-brand-gold hover:bg-brand-gold/90 text-white">
-                    <Link to="/auth?redirect=/compte/paiement">
+                    <Link to="/compte">
                       Créer mon compte gratuitement
                       <ChevronRight className="w-4 h-4 ml-2" />
                     </Link>

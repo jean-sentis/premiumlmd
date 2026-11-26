@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { Helmet } from "react-helmet-async";
 import Link from "@/components/SaleAwareLink";
+import { publicSales } from "@/lib/demo-publication";
 import { format, parseISO, differenceInDays, differenceInHours, differenceInMinutes } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Calendar, Loader2, Plus, Monitor, Users, Clock, ChevronDown, Gavel } from "lucide-react";
@@ -251,7 +252,7 @@ const VentesAVenir = () => {
         if (error) {
           console.error('Error fetching sales:', error);
         } else {
-          setSales(data || []);
+          setSales(publicSales(data || []));
         }
       } catch (err) {
         console.error('Error:', err);
@@ -326,19 +327,7 @@ const VentesAVenir = () => {
   const { liveSales, roomOnlySales, chronoSales, preparationSales } = categorizeSales();
 
   // Vente judiciaire fictive (présente uniquement sur cette page)
-  const judiciarySales: Sale[] = [
-    {
-      id: "judiciaire-demo-001",
-      title: "Liquidation SARL Menuiserie du Sud",
-      sale_date: new Date(getDemoNow().getTime() + 12 * 24 * 60 * 60 * 1000).toISOString(), // +12 jours
-      lot_count: 87,
-      cover_image_url: "/images/sales/judiciaire-menuiserie.jpg",
-      sale_url: "#",
-      sale_type: "judiciaire",
-      specialty: "Matériel professionnel",
-      status: "à venir"
-    }
-  ];
+  const judiciarySales: Sale[] = [];
 
   return (
     <>

@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { generateEstimationEvents, generateExpertiseItineranteEvents } from "@/lib/timeline-utils";
 import { getDemoNow } from "@/lib/site-config";
 import { useSaleLotCounts } from "@/hooks/use-sale-lot-counts";
+import { publicSales } from "@/lib/demo-publication";
 
 export interface TimelineEvent {
   id: string;
@@ -64,7 +65,7 @@ export const useTimelineEvents = (enabled: boolean = true) => {
 
         // === Traitement des ventes ===
         if (salesResult.data) {
-          salesResult.data.forEach((sale) => {
+          publicSales(salesResult.data).forEach((sale) => {
             if (sale.sale_date) {
               const saleEndDate = parseISO(sale.sale_date);
               const saleType = sale.sale_type?.toLowerCase() || '';

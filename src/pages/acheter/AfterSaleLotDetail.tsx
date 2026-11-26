@@ -1,3 +1,4 @@
+import { DemoPhone } from "@/components/DemoContact";
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
@@ -244,7 +245,7 @@ const AfterSaleLotDetail = () => {
       setAiResponse(data?.answer || "Je n'ai pas pu répondre à cette question. Contactez-nous directement.");
     } catch (error) {
       console.error("AI error:", error);
-      setAiResponse("Je n'ai pas pu répondre pour le moment. N'hésitez pas à nous appeler au 04 95 12 12 12.");
+      setAiResponse("Je n'ai pas pu répondre pour le moment. Contactez Le Marteau Digital : jean@lemarteaudigital.fr.");
     }
     setIsAiLoading(false);
   };
@@ -676,9 +677,9 @@ const AfterSaleLotDetail = () => {
                   <div className="flex items-center justify-center gap-2 pt-2 border-t border-border/50 text-sm">
                     <Phone className="w-3.5 h-3.5 text-muted-foreground" />
                     <span className="text-muted-foreground">Besoin d'aide ?</span>
-                    <a href="tel:+33495121212" className="text-brand-gold hover:underline font-medium">
-                      04 95 12 12 12
-                    </a>
+                    <DemoPhone className="text-brand-gold hover:underline font-medium">
+                      00 00 00 00 00
+                    </DemoPhone>
                   </div>
                 </div>
               )}
@@ -730,14 +731,13 @@ const AfterSaleLotDetail = () => {
 
                   {/* Contact téléphone */}
                   <div className="flex items-center justify-center gap-2 pt-2 border-t border-border/50">
-                    <span className="text-xs text-muted-foreground">ou appelez-nous</span>
-                    <a 
-                      href="tel:+33495121212" 
+                    <span className="text-xs text-muted-foreground">Téléphone de démonstration</span>
+                    <DemoPhone
                       className="flex items-center gap-1.5 text-brand-gold hover:text-brand-gold-dark text-sm font-medium transition-colors"
                     >
                       <Phone className="w-3.5 h-3.5" />
-                      04 95 12 12 12
-                    </a>
+                      00 00 00 00 00
+                    </DemoPhone>
                   </div>
                 </div>
               )}

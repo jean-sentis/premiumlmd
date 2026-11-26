@@ -510,13 +510,8 @@ const Auth = () => {
                       <p className="text-sm text-muted-foreground mb-4">
                         Pas encore de compte ?
                       </p>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setIsLogin(false);
-                          setCurrentStep(0);
-                          setErrors({});
-                        }}
+                      <Link
+                        to="/compte"
                         className="group w-full text-left p-4 rounded-lg border border-border hover:border-brand-gold/50 hover:bg-brand-gold/5 transition-all duration-200"
                       >
                         <span className="text-base font-medium text-foreground group-hover:text-brand-gold transition-colors">
@@ -525,7 +520,7 @@ const Auth = () => {
                         <p className="text-sm text-muted-foreground mt-1">
                           Alertes, ordres d'achat, enchères téléphone, accès privilégié aux After-Sales…
                         </p>
-                      </button>
+                      </Link>
                     </div>
                   </div>
                 ) : (
