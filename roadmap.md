@@ -1,8 +1,8 @@
 # Pages de démonstration
 - [x] Restreindre les accès aux bordereaux, estimations, rendez-vous et images ; corriger les règles publiques d’écriture apparentées sans supprimer de données. Aucun risque critique au contrôle renouvelé ; restent deux avertissements sur les mots de passe compromis et les envois anonymes de photos.
 - [x] Préserver la réservation de créneaux sans exposer les coordonnées des autres clients : 38 tests réussis, dont 13 contrôles réels de droits ; rendez-vous créé depuis le formulaire et relu après rechargement ; toutes les données temporaires supprimées.
-- [ ] Raccorder une adresse sans lovable.app ; en attente du nom de domaine choisi et de l’accès à ses réglages.
-- [ ] Republier les corrections ; contrôles terminés, publication non exécutée après interruption, en attente du choix d’adresse personnalisée.
+- [ ] Raccorder une adresse sans lovable.app : domaine retenu `sur-mesure.lemarteaudigital.fr`, contrôlé par le client. Raccordement impossible tant que le workspace reste sur le plan gratuit ; la fenêtre de raccordement n'a pas été affichée (refus du client).
+- [ ] Republier les corrections une fois le domaine personnalisé raccordé ; contrôles terminés, publication volontairement reportée par le client.
 - [x] Vérifier l’accès public premiumlmd.lovable.app et les liens de ventes : adresse accessible ; version publiée antérieure aux derniers changements, republication nécessaire.
 - [x] Examiner les visuels des ventes en préparation et corriger leurs catégories : vitrine en Mobilier & Objets d’Art, céramiques en Art XXe ; filtres et ouverture vérifiés, 9 tests réussis.
 - [x] Laisser actives les ventes en préparation (date de vente non encore passée) même sans lot renseigné ; ne griser que les ventes passées sans lots.
