@@ -1,4 +1,5 @@
 # Pages de démonstration
+- [x] Retirer des listes publiques les dix dernières ventes en préparation (du 3 octobre au 19 décembre 2026), sans effacer les historiques clients.
 - [x] Retirer des listes publiques les sept ventes passées les plus anciennes et la vente judiciaire fictive, sans effacer les historiques clients.
 - [x] Créer les mentions légales, CGV et confidentialité avec avertissement de démonstration et traitements réellement présents.
 - [x] Présenter les avantages puis l’inscription sur /compte, avec la connexion en dessous et les liens de création corrigés ; conserver le profil existant, conformément à la confirmation du client.
