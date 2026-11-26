@@ -1,12 +1,11 @@
 import { useState, useMemo, useEffect } from "react";
 import { Helmet } from "react-helmet-async";
-import { Link } from "react-router-dom";
+import Link from "@/components/SaleAwareLink";
 import { format, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Calendar, Loader2, Trophy } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import SaleAvailabilityBadge from "@/components/SaleAvailabilityBadge";
 import { supabase } from "@/integrations/supabase/client";
 
 interface PastSale {
@@ -215,7 +214,6 @@ const VentesPassees = () => {
                             )}
                           </div>
                           <div className="p-6 flex flex-col flex-1">
-                            <SaleAvailabilityBadge saleId={sale.id} />
                             <h4 className="font-serif text-lg font-semibold mb-2 line-clamp-2 group-hover:text-brand-gold transition-colors">
                               {sale.title}
                             </h4>

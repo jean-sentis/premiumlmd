@@ -16,6 +16,19 @@
 }
 
 @layer components {
+  .sale-unavailable[aria-disabled="true"] {
+    filter: grayscale(1);
+    opacity: 0.65;
+    cursor: default;
+    color: hsl(var(--muted-foreground));
+  }
+  .sale-unavailable[aria-disabled="true"]:hover {
+    transform: none;
+    box-shadow: none;
+  }
+  .sale-unavailable[aria-disabled="true"] * {
+    pointer-events: none;
+  }
   .prototype-marker {
     display: block;
     padding: 0.375rem 0.5rem;

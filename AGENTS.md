@@ -1,3 +1,3 @@
 # Architecture rules
-- Keep prototype-page classification and sale recommendation filtering in `src/lib/prototype-pages.ts`, shared by the notice and its tests, so incomplete-page detection stays independently verifiable.
-- Use `PrototypePageNotice` only for empty sale pages; mark empty sale cards with `SaleAvailabilityBadge`, using cached relational lot counts rather than advertised totals. Specialty menu availability uses the shared classification, rendering unavailable items without navigation targets.
+- Keep prototype-page classification and sale-link target detection in `src/lib/prototype-pages.ts`, shared by navigation and its tests, so incomplete-page detection stays independently verifiable.
+- Use `SaleAwareLink` for public sale navigation: it renders known-empty sales as gray, disabled anchors without href, using relational lot counts cached by `useSaleLotCounts`, never advertised totals. Unknown counts remain distinct from empty sales. Specialty menu availability uses the shared classification without navigation targets for unavailable items; no prototype popups are shown.

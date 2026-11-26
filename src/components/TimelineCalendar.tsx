@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef, useEffect } from "react";
-import { Link } from "react-router-dom";
+import Link from "@/components/SaleAwareLink";
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Droplet } from "lucide-react";
 import {
   format,

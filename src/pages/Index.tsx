@@ -4,7 +4,7 @@ import Footer from "@/components/Footer";
 import InlinePlanningSlot from "@/components/InlinePlanningSlot";
 import ResultCard from "@/components/ResultCard";
 import TestimonialsCarousel from "@/components/TestimonialsCarousel";
-import { Link } from "react-router-dom";
+import Link from "@/components/SaleAwareLink";
 import { ChevronLeft, ChevronRight, X, Calendar, Loader2 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";

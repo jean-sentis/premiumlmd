@@ -13,7 +13,6 @@ import imgSartene from "@/assets/villes/sartene.png";
 import imgHDV from "@/assets/hotel-des-ventes-ajaccio.png";
 import Footer from "@/components/Footer";
 import LotsGrid from "@/components/LotsGrid";
-import PrototypePageNotice from "@/components/PrototypePageNotice";
 import SaleStickyHeader from "@/components/SaleStickyHeader";
 import InlinePlanningSlot from "@/components/InlinePlanningSlot";
 import { getSpecialtyShadowClass } from "@/lib/design-rules";
@@ -97,7 +96,6 @@ const VenteDetail = () => {
   const [sale, setSale] = useState<Sale | null>(null);
   const [expositions, setExpositions] = useState<Exposition[]>([]);
   const [lotsCount, setLotsCount] = useState(0);
-  const [lotsCountVerified, setLotsCountVerified] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [imageError, setImageError] = useState(false);
@@ -112,7 +110,6 @@ const VenteDetail = () => {
     const fetchSale = async () => {
       setIsLoading(true);
       setNotFound(false);
-      setLotsCountVerified(false);
       if (!slug) {
         setNotFound(true);
         setIsLoading(false);
@@ -144,14 +141,13 @@ const VenteDetail = () => {
           }
           
           // Check if we have scraped lots for this sale
-          const { count, error: countError } = await supabase
+          const { count } = await supabase
             .from('interencheres_lots')
             .select('*', { count: 'exact', head: true })
             .eq('sale_id', data.id);
           
           console.log('[VenteDetail] Lots count for sale:', data.id, count);
           setLotsCount(count || 0);
-          setLotsCountVerified(!countError && count !== null);
           
           // Fetch upcoming expertises before the sale date (from DB)
           if (data.sale_date) {
@@ -248,9 +244,6 @@ const VenteDetail = () => {
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
       <Header />
-      {lotsCountVerified && lotsCount === 0 && (
-        <PrototypePageNotice key={sale.id} kind="sale" />
-      )}
       
       {/* Spacer under fixed header - aligns to the sticky anchor under "Estimation gratuite" */}
       <div style={{ height: 'var(--header-sticky-top, var(--header-main-height, 145px))' }} />
