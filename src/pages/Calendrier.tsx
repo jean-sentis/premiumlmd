@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import Link from "@/components/SaleAwareLink";
 import { publicSales } from "@/lib/demo-publication";
 import { useSaleLotCounts } from "@/hooks/use-sale-lot-counts";
-import { isEmptySale } from "@/lib/prototype-pages";
+import { isInPreparationSale, isSaleWithoutContent } from "@/lib/prototype-pages";
 import { format, addDays, startOfWeek, isSameDay, isToday, isBefore, startOfDay, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Calendar, Gavel, Eye, Clock, MapPin, ExternalLink, Loader2 } from "lucide-react";
@@ -94,13 +94,20 @@ const eventTypeConfig: Record<EventType, {
 const Calendrier = () => {
   const navigate = useNavigate();
   const { data: saleLotCounts } = useSaleLotCounts();
+  // A sale still in preparation stays reachable even with no populated lot yet.
+  const isSaleUnavailable = (id: string) => isSaleWithoutContent(
+    saleLotCounts?.counts.get(id),
+    Boolean(saleLotCounts?.preparation.has(id)),
+  );
+  // A sale whose auction date has already passed is no longer "in preparation".
+  const isSaleInPreparation = (event: CalendarEvent) => isInPreparationSale(event.date.toISOString(), today);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [hoveredEvent, setHoveredEvent] = useState<CalendarEvent | null>(null);
   const [hoveredPosition, setHoveredPosition] = useState({ x: 0, y: 0 });
   const [rawEvents, setEvents] = useState<CalendarEvent[]>([]);
   const events = useMemo(() => rawEvents.map((event) => {
     if (!event.interencheres) return event;
-    const count = saleLotCounts?.get(event.id);
+    const count = saleLotCounts?.counts.get(event.id);
     return { ...event, lotCount: count || undefined, description: count ? `${count} lots` : 'Vente aux enchères' };
   }), [rawEvents, saleLotCounts]);
   const [isLoading, setIsLoading] = useState(true);
@@ -232,7 +239,7 @@ const Calendrier = () => {
 
   // Gérer le clic sur un événement
   const handleEventClick = (event: CalendarEvent) => {
-    if (event.interencheres && (!saleLotCounts || isEmptySale(saleLotCounts.get(event.id)))) return;
+    if (event.interencheres && (!saleLotCounts || isSaleUnavailable(event.id))) return;
     if (event.interencheres && event.id) {
       // Naviguer vers la page de détail de la vente
       navigate(`/vente/${event.id}`);
@@ -318,8 +325,8 @@ const Calendrier = () => {
                       return (
                         <div 
                           key={sale.id}
-                          className={isEmptySale(saleLotCounts?.get(sale.id)) ? "sale-unavailable" : "group cursor-pointer"}
-                          aria-disabled={isEmptySale(saleLotCounts?.get(sale.id)) || undefined}
+                          className={isSaleUnavailable(sale.id) ? "sale-unavailable" : "group cursor-pointer"}
+                          aria-disabled={isSaleUnavailable(sale.id) || undefined}
                           onClick={() => handleEventClick(sale)}
                         >
                           {/* Carte catalogue */}
@@ -344,9 +351,12 @@ const Calendrier = () => {
                             
                             {/* Badge type de vente */}
                             <div className={`absolute top-3 left-3 px-2 py-1 text-xs uppercase tracking-wider font-medium rounded
-                              ${sale.type === 'vente-catalogue' ? 'bg-brand-primary text-brand-primary-foreground' : 'bg-blue-100 text-blue-800 border border-blue-300'}
+                              ${sale.type === 'vente-catalogue' ? 'bg-brand-primary text-brand-primary-foreground'
+                                : isSaleInPreparation(sale) ? 'bg-blue-100 text-blue-800 border border-blue-300'
+                                : 'bg-muted text-muted-foreground border border-border'}
                             `}>
-                              {sale.type === 'vente-catalogue' ? 'Catalogue en ligne' : 'En préparation'}
+                              {sale.type === 'vente-catalogue' ? 'Catalogue en ligne'
+                                : isSaleInPreparation(sale) ? 'En préparation' : 'Vente passée'}
                             </div>
 
                             {/* Nombre de lots */}
@@ -408,10 +418,10 @@ const Calendrier = () => {
                         return (
                           <button
                             key={event.id}
-                            disabled={Boolean(event.interencheres && isEmptySale(saleLotCounts?.get(event.id)))}
-                            aria-disabled={Boolean(event.interencheres && isEmptySale(saleLotCounts?.get(event.id)))}
+                            disabled={Boolean(event.interencheres && isSaleUnavailable(event.id))}
+                            aria-disabled={Boolean(event.interencheres && isSaleUnavailable(event.id))}
                             onClick={() => handleEventClick(event)}
-                            className={`${event.interencheres && isEmptySale(saleLotCounts?.get(event.id)) ? "sale-unavailable" : ""} flex items-center gap-3 px-4 py-3 rounded-lg border-l-4 transition-all hover:scale-[1.02] hover:shadow-md
+                            className={`${event.interencheres && isSaleUnavailable(event.id) ? "sale-unavailable" : ""} flex items-center gap-3 px-4 py-3 rounded-lg border-l-4 transition-all hover:scale-[1.02] hover:shadow-md
                               ${config.bgColor} ${config.borderColor}
                             `}
                           >

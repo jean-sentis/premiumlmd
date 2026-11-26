@@ -229,9 +229,9 @@ const VentesPassees = () => {
                                 }
                               </span>
                             </div>
-                            {(saleLotCounts?.get(sale.id) ?? 0) > 0 && (
+                            {(saleLotCounts?.counts.get(sale.id) ?? 0) > 0 && (
                               <p className="text-sm text-muted-foreground">
-                                {saleLotCounts?.get(sale.id)} lots
+                                {saleLotCounts?.counts.get(sale.id)} lots
                               </p>
                             )}
                           </div>

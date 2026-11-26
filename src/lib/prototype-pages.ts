@@ -8,6 +8,19 @@ export const isIncompleteSpecialty = (id: string) =>
 
 export const isEmptySale = (actualLotCount: number | null | undefined) => actualLotCount === 0;
 
+// A sale whose auction has not happened yet legitimately has no catalogue yet:
+// it must stay reachable even when no populated lot exists.
+export const isInPreparationSale = (saleDate: string | null | undefined, now: Date): boolean => {
+  if (!saleDate) return true;
+  const date = new Date(saleDate);
+  return Number.isNaN(date.getTime()) || date.getTime() >= now.getTime();
+};
+
+export const isSaleWithoutContent = (
+  actualLotCount: number | null | undefined,
+  inPreparation: boolean,
+) => !inPreparation && isEmptySale(actualLotCount);
+
 export interface LotContent {
   description: string | null;
   images: unknown;

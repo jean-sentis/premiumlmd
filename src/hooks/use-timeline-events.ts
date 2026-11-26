@@ -71,7 +71,7 @@ export const useTimelineEvents = (enabled: boolean = true) => {
               const saleType = sale.sale_type?.toLowerCase() || '';
               const isChrono = saleType.includes('chrono') || saleType.includes('online');
               const daysUntilSale = differenceInDays(saleEndDate, demoDate);
-              const lotCount = saleLotCounts?.get(sale.id);
+              const lotCount = saleLotCounts?.counts.get(sale.id);
               
               // Vente en préparation: plus de 14 jours et moins de 4 lots
               const isInPreparation = daysUntilSale > 14 && lotCount !== undefined && lotCount < 4;

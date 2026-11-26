@@ -1,14 +1,17 @@
 import { forwardRef } from "react";
 import { Link, type LinkProps } from "react-router-dom";
 import { useSaleLotCounts } from "@/hooks/use-sale-lot-counts";
-import { isEmptySale, saleIdFromPath } from "@/lib/prototype-pages";
+import { isSaleWithoutContent, saleIdFromPath } from "@/lib/prototype-pages";
 import { cn } from "@/lib/utils";
 import { isPublicSale } from "@/lib/demo-publication";
 
 const SaleLink = forwardRef<HTMLAnchorElement, LinkProps & { saleId: string }>(
   ({ saleId, to, className, onClick, ...props }, ref) => {
     const { data, isPending } = useSaleLotCounts();
-    if (!isPending && !isEmptySale(data?.get(saleId))) {
+    // Sales still in preparation keep their catalogue even with no populated lot yet.
+    const unavailable = isPending
+      || isSaleWithoutContent(data?.counts.get(saleId), Boolean(data?.preparation.has(saleId)));
+    if (!unavailable) {
       return <Link ref={ref} to={to} className={className} onClick={onClick} {...props} />;
     }
     return (

@@ -290,7 +290,7 @@ const VentesAVenir = () => {
     filteredSales.forEach(sale => {
       const saleType = (sale.sale_type || "").toLowerCase();
       const status = (sale.status || "").toLowerCase();
-      const lotCount = saleLotCounts?.get(sale.id);
+      const lotCount = saleLotCounts?.counts.get(sale.id);
       const saleDate = sale.sale_date ? parseISO(sale.sale_date) : null;
       
       // Vérifier si c'est une vente en préparation :

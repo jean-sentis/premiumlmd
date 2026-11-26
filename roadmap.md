@@ -1,4 +1,5 @@
 # Pages de démonstration
+- [x] Laisser actives les ventes en préparation (date de vente non encore passée) même sans lot renseigné ; ne griser que les ventes passées sans lots.
 - [x] Retirer des listes publiques les vingt dernières ventes en préparation au total (du 18 avril au 19 décembre 2026), sans effacer les historiques clients.
 - [x] Retirer des listes publiques les sept ventes passées les plus anciennes et la vente judiciaire fictive, sans effacer les historiques clients.
 - [x] Créer les mentions légales, CGV et confidentialité avec avertissement de démonstration et traitements réellement présents.

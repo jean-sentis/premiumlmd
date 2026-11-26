@@ -97,7 +97,7 @@ const VenteDetail = () => {
   const [sale, setSale] = useState<Sale | null>(null);
   const [expositions, setExpositions] = useState<Exposition[]>([]);
   const { data: saleLotCounts, isPending: isCountingLots } = useSaleLotCounts();
-  const lotsCount = (sale ? saleLotCounts?.get(sale.id) : undefined) ?? 0;
+  const lotsCount = (sale ? saleLotCounts?.counts.get(sale.id) : undefined) ?? 0;
   const [isLoading, setIsLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [imageError, setImageError] = useState(false);

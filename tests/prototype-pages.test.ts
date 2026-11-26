@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { COMPLETE_SPECIALTIES, isIncompleteSpecialty, isEmptySale, saleIdFromPath, filterPopulatedLots, isPopulatedLot } from "../src/lib/prototype-pages";
+import { COMPLETE_SPECIALTIES, isIncompleteSpecialty, isEmptySale, isInPreparationSale, isSaleWithoutContent, saleIdFromPath, filterPopulatedLots, isPopulatedLot } from "../src/lib/prototype-pages";
 
 describe("Lots réellement renseignés", () => {
   const visible = async (url: string) => url === "/photo.jpg";
@@ -58,5 +58,29 @@ describe("Pages incomplètes", () => {
     expect(saleIdFromPath("/vente/vente-exemple#catalogue")).toBe("vente-exemple");
     expect(saleIdFromPath("/vente/vente-exemple/lot/lot-exemple")).toBeUndefined();
     expect(saleIdFromPath("/acheter/ventes-a-venir")).toBeUndefined();
+  });
+});
+
+describe("Ventes en préparation", () => {
+  const now = new Date("2026-01-03T00:00:00Z");
+  test("Une vente à venir est en préparation, même sans date", () => {
+    expect(isInPreparationSale("2026-01-10T13:00:00+00:00", now)).toBe(true);
+    expect(isInPreparationSale(null, now)).toBe(true);
+    expect(isInPreparationSale("date invalide", now)).toBe(true);
+  });
+  test("Une vente déjà tenue n'est plus en préparation", () => {
+    expect(isInPreparationSale("2025-12-20T13:00:00+00:00", now)).toBe(false);
+  });
+  test("Une vente en préparation reste active sans aucun lot", () => {
+    expect(isSaleWithoutContent(0, true)).toBe(false);
+    expect(isSaleWithoutContent(0, false)).toBe(true);
+  });
+  test("Une vente avec des lots reste active, en préparation ou non", () => {
+    expect(isSaleWithoutContent(12, false)).toBe(false);
+    expect(isSaleWithoutContent(12, true)).toBe(false);
+  });
+  test("Un comptage inconnu ne grise jamais une vente", () => {
+    expect(isSaleWithoutContent(undefined, false)).toBe(false);
+    expect(isSaleWithoutContent(null, true)).toBe(false);
   });
 });
