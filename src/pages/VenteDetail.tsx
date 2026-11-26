@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/accordion";
 import { supabase } from "@/integrations/supabase/client";
 import { getDemoNow } from "@/lib/site-config";
+import { useSaleLotCounts } from "@/hooks/use-sale-lot-counts";
 
 // Helper to detect if a sale is a chrono/online sale
 const isChronoSale = (saleType: string | null): boolean => {
@@ -95,7 +96,8 @@ const VenteDetail = () => {
   const { slug } = useParams<{ slug: string }>();
   const [sale, setSale] = useState<Sale | null>(null);
   const [expositions, setExpositions] = useState<Exposition[]>([]);
-  const [lotsCount, setLotsCount] = useState(0);
+  const { data: saleLotCounts, isPending: isCountingLots } = useSaleLotCounts();
+  const lotsCount = (sale ? saleLotCounts?.get(sale.id) : undefined) ?? 0;
   const [isLoading, setIsLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [imageError, setImageError] = useState(false);
@@ -140,15 +142,6 @@ const VenteDetail = () => {
             setExpositions(expos);
           }
           
-          // Check if we have scraped lots for this sale
-          const { count } = await supabase
-            .from('interencheres_lots')
-            .select('*', { count: 'exact', head: true })
-            .eq('sale_id', data.id);
-          
-          console.log('[VenteDetail] Lots count for sale:', data.id, count);
-          setLotsCount(count || 0);
-          
           // Fetch upcoming expertises before the sale date (from DB)
           if (data.sale_date) {
             const today = format(new Date(), 'yyyy-MM-dd');
@@ -182,7 +175,7 @@ const VenteDetail = () => {
   }, [slug]);
 
 
-  if (isLoading) {
+  if (isLoading || isCountingLots) {
     return (
       <div className="min-h-screen bg-background">
         <Header />
@@ -251,7 +244,7 @@ const VenteDetail = () => {
       {/* Chrono sales: sticky bar as main header */}
       {isChrono && saleDate && (
         <ChronoStickyBar
-          saleTitle={`${decodedTitle}${sale.lot_count ? ` — ${sale.lot_count} lots` : ''}`}
+          saleTitle={`${decodedTitle}${lotsCount ? ` — ${lotsCount} lot${lotsCount > 1 ? 's' : ''}` : ''}`}
           endDate={saleDate}
           saleUrl={sale.sale_url}
           saleId={sale.id}
@@ -284,7 +277,7 @@ const VenteDetail = () => {
                 <p className="text-sm">
                   <span className="text-brand-gold font-medium capitalize">{formattedDate}</span>
                   {formattedTime && <span className="text-brand-gold font-semibold"> à {formattedTime}</span>}
-                  {sale.lot_count && <span className="text-muted-foreground"> — {sale.lot_count} lots</span>}
+                  {lotsCount > 0 && <span className="text-muted-foreground"> — {lotsCount} lot{lotsCount > 1 ? 's' : ''}</span>}
                 </p>
                 {sale.location && (
                   <p className="text-xs text-muted-foreground mt-0.5">{sale.location}</p>
@@ -294,7 +287,7 @@ const VenteDetail = () => {
               {/* Desktop: original header */}
               <div className="hidden md:block">
                 <h1 className="font-serif text-xl md:text-2xl font-semibold tracking-wide uppercase mb-2">
-                  {decodedTitle}{sale.lot_count ? ` — ${sale.lot_count} lots` : ''}
+                  {decodedTitle}{lotsCount ? ` — ${lotsCount} lot${lotsCount > 1 ? 's' : ''}` : ''}
                 </h1>
                 <div className="space-y-1 mb-6">
                   <p className="text-base capitalize">
@@ -340,7 +333,7 @@ const VenteDetail = () => {
                         href="#catalogue"
                         className="border border-border px-4 md:px-5 py-2 md:py-2.5 text-xs tracking-widest hover:border-foreground transition-colors whitespace-nowrap text-center"
                       >
-                        VOIR LE CATALOGUE — {lotsCount} LOTS
+                        VOIR LE CATALOGUE — {lotsCount} LOT{lotsCount > 1 ? 'S' : ''}
                       </a>
                     )}
                   </div>
@@ -423,7 +416,7 @@ const VenteDetail = () => {
                   {/* Sale title and dates */}
                   <div className="mb-6">
                     <h1 className="font-serif text-xl md:text-2xl font-semibold tracking-wide uppercase mb-2">
-                      {decodedTitle}{sale.lot_count ? ` — ${sale.lot_count} lots` : ''}
+                      {decodedTitle}{lotsCount ? ` — ${lotsCount} lot${lotsCount > 1 ? 's' : ''}` : ''}
                     </h1>
                     <div className="space-y-1">
                       {isChronoInPreparation ? (

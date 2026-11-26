@@ -9,6 +9,7 @@ import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { getDemoNow } from "@/lib/site-config";
+import { useSaleLotCounts } from "@/hooks/use-sale-lot-counts";
 
 // Images des spécialités (menu)
 import imgArgenterie from "@/assets/menu/argenterie.png";
@@ -230,6 +231,7 @@ const SaleCategoryRow = ({
 };
 
 const VentesAVenir = () => {
+  const { data: saleLotCounts } = useSaleLotCounts();
   const [sales, setSales] = useState<Sale[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedSpecialty, setSelectedSpecialty] = useState<string>("all");
@@ -287,7 +289,7 @@ const VentesAVenir = () => {
     filteredSales.forEach(sale => {
       const saleType = (sale.sale_type || "").toLowerCase();
       const status = (sale.status || "").toLowerCase();
-      const lotCount = sale.lot_count ?? 0;
+      const lotCount = saleLotCounts?.get(sale.id);
       const saleDate = sale.sale_date ? parseISO(sale.sale_date) : null;
       
       // Vérifier si c'est une vente en préparation :
@@ -296,7 +298,7 @@ const VentesAVenir = () => {
       const isInPreparation = 
         status.includes("préparation") || 
         status.includes("preparation") ||
-        (lotCount < 4 && saleDate && saleDate > twoWeeksFromNow);
+        (lotCount !== undefined && lotCount < 4 && saleDate && saleDate > twoWeeksFromNow);
       
       if (isInPreparation) {
         preparationSales.push(sale);

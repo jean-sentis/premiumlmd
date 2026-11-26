@@ -8,6 +8,7 @@ import TimelineLayout from "@/components/TimelineLayout";
 import Footer from "@/components/Footer";
 import { supabase } from "@/integrations/supabase/client";
 import { getDemoNow } from "@/lib/site-config";
+import { getPopulatedLots } from "@/lib/lot-content";
 
 // Proxy les images interenchères pour éviter le blocage CORS/hotlink
 const getProxiedImageUrl = (url: string): string => {
@@ -34,7 +35,7 @@ const AfterSale = () => {
         .order('after_sale_end_date', { ascending: true });
       
       if (error) throw error;
-      return data || [];
+      return getPopulatedLots(data || []);
     }
   });
 

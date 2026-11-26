@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import Link from "@/components/SaleAwareLink";
 import { format, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
 import Header from "@/components/Header";

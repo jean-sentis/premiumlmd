@@ -96,7 +96,12 @@ const Calendrier = () => {
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [hoveredEvent, setHoveredEvent] = useState<CalendarEvent | null>(null);
   const [hoveredPosition, setHoveredPosition] = useState({ x: 0, y: 0 });
-  const [events, setEvents] = useState<CalendarEvent[]>([]);
+  const [rawEvents, setEvents] = useState<CalendarEvent[]>([]);
+  const events = useMemo(() => rawEvents.map((event) => {
+    if (!event.interencheres) return event;
+    const count = saleLotCounts?.get(event.id);
+    return { ...event, lotCount: count || undefined, description: count ? `${count} lots` : 'Vente aux enchères' };
+  }), [rawEvents, saleLotCounts]);
   const [isLoading, setIsLoading] = useState(true);
 
   // Important: le site fonctionne en "Mode démo" (date de référence).
@@ -137,12 +142,11 @@ const Calendrier = () => {
           date: sale.sale_date ? parseISO(sale.sale_date) : new Date(),
           type: sale.catalog_url ? 'vente-catalogue' : 'vente-preparation' as EventType,
           title: sale.title,
-          description: `${sale.lot_count ? `${sale.lot_count} lots` : 'Vente aux enchères'}`,
+          description: 'Vente aux enchères',
           time: sale.sale_date ? format(parseISO(sale.sale_date), 'HH:mm') : undefined,
           location: sale.location || undefined,
           catalogUrl: sale.catalog_url || sale.sale_url,
           interencheres: true,
-          lotCount: sale.lot_count || undefined,
           coverImageUrl: sale.cover_image_url || undefined,
         }));
 
@@ -227,7 +231,7 @@ const Calendrier = () => {
 
   // Gérer le clic sur un événement
   const handleEventClick = (event: CalendarEvent) => {
-    if (event.interencheres && isEmptySale(saleLotCounts?.get(event.id))) return;
+    if (event.interencheres && (!saleLotCounts || isEmptySale(saleLotCounts.get(event.id)))) return;
     if (event.interencheres && event.id) {
       // Naviguer vers la page de détail de la vente
       navigate(`/vente/${event.id}`);

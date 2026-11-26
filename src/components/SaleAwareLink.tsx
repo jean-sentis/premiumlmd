@@ -6,8 +6,8 @@ import { cn } from "@/lib/utils";
 
 const SaleLink = forwardRef<HTMLAnchorElement, LinkProps & { saleId: string }>(
   ({ saleId, to, className, onClick, ...props }, ref) => {
-    const { data } = useSaleLotCounts();
-    if (!isEmptySale(data?.get(saleId))) {
+    const { data, isPending } = useSaleLotCounts();
+    if (!isPending && !isEmptySale(data?.get(saleId))) {
       return <Link ref={ref} to={to} className={className} onClick={onClick} {...props} />;
     }
     return (
@@ -18,8 +18,9 @@ const SaleLink = forwardRef<HTMLAnchorElement, LinkProps & { saleId: string }>(
         aria-label={props["aria-label"]}
         role="link"
         aria-disabled="true"
+        aria-busy={isPending || undefined}
         tabIndex={-1}
-        className={cn(className?.split(" ").filter((name) => name !== "group").join(" "), "sale-unavailable")}
+        className={cn(className?.split(" ").filter((name) => name !== "group").join(" "), !isPending && "sale-unavailable")}
         onClick={(event) => { event.preventDefault(); event.stopPropagation(); }}
       >{props.children}</a>
     );

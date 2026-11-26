@@ -6,6 +6,7 @@ import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
 import LotCard from "./LotCard";
 import { pickBestInterencheresImages } from "@/lib/interencheres-images";
+import { getPopulatedLots } from "@/lib/lot-content";
 
 interface Lot {
   id: string;
@@ -54,7 +55,8 @@ const LotsGrid = ({ saleId, saleTitle, specialty }: LotsGridProps) => {
       console.error("Error fetching lots:", error);
     } else if (data) {
       // Parse images JSON and cast to proper types
-      const parsedLots: Lot[] = data.map((lot) => {
+      const populatedLots = await getPopulatedLots(data);
+      const parsedLots: Lot[] = populatedLots.map((lot) => {
         const rawImages = Array.isArray(lot.images) ? (lot.images as string[]) : [];
         const images = pickBestInterencheresImages(rawImages, 12);
 
@@ -171,7 +173,7 @@ const LotsGrid = ({ saleId, saleTitle, specialty }: LotsGridProps) => {
       </div>
       
       <p className="text-center text-muted-foreground mb-8 max-w-2xl mx-auto">
-        {lots.length} lots disponibles dans cette vente. Cliquez sur un lot pour voir les détails.
+        {lots.length} lot{lots.length > 1 ? 's disponibles' : ' disponible'} dans cette vente.
       </p>
       
       {/* Filters */}

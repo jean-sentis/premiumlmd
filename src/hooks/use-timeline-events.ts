@@ -3,6 +3,7 @@ import { parseISO, subDays, format, addDays, differenceInDays } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { generateEstimationEvents, generateExpertiseItineranteEvents } from "@/lib/timeline-utils";
 import { getDemoNow } from "@/lib/site-config";
+import { useSaleLotCounts } from "@/hooks/use-sale-lot-counts";
 
 export interface TimelineEvent {
   id: string;
@@ -26,6 +27,7 @@ export interface TimelineEvent {
  * - Créneaux d'estimation gratuite générés automatiquement (lundis matin)
  */
 export const useTimelineEvents = (enabled: boolean = true) => {
+  const { data: saleLotCounts } = useSaleLotCounts();
   const [events, setEvents] = useState<TimelineEvent[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -68,10 +70,10 @@ export const useTimelineEvents = (enabled: boolean = true) => {
               const saleType = sale.sale_type?.toLowerCase() || '';
               const isChrono = saleType.includes('chrono') || saleType.includes('online');
               const daysUntilSale = differenceInDays(saleEndDate, demoDate);
-              const lotCount = sale.lot_count || 0;
+              const lotCount = saleLotCounts?.get(sale.id);
               
               // Vente en préparation: plus de 14 jours et moins de 4 lots
-              const isInPreparation = daysUntilSale > 14 && lotCount < 4;
+              const isInPreparation = daysUntilSale > 14 && lotCount !== undefined && lotCount < 4;
 
               if (isInPreparation) {
                 // Vente en préparation
@@ -198,7 +200,7 @@ export const useTimelineEvents = (enabled: boolean = true) => {
     };
 
     fetchData();
-  }, [enabled]);
+  }, [enabled, saleLotCounts]);
 
   return { events, isLoading, error };
 };

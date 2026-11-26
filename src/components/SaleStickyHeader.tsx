@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import Link from "@/components/SaleAwareLink";
 import { ArrowLeft, FileText, Info } from "lucide-react";
 import { DEFAULT_SALE_LOCATION } from "@/lib/site-config";
 

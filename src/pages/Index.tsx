@@ -5,6 +5,7 @@ import InlinePlanningSlot from "@/components/InlinePlanningSlot";
 import ResultCard from "@/components/ResultCard";
 import TestimonialsCarousel from "@/components/TestimonialsCarousel";
 import Link from "@/components/SaleAwareLink";
+import { getPopulatedLots } from "@/lib/lot-content";
 import { ChevronLeft, ChevronRight, X, Calendar, Loader2 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -127,7 +128,7 @@ const Index = () => {
       try {
         const { data, error } = await supabase
           .from('interencheres_lots')
-          .select('id, title, images, estimate_low, estimate_high, adjudication_price, sale_id')
+          .select('id, title, description, images, estimate_low, estimate_high, adjudication_price, sale_id')
           .not('images', 'is', null)
           .limit(50);
 
@@ -137,7 +138,7 @@ const Index = () => {
         }
 
         // Filter lots with local images (starting with /images/)
-        const lotsWithLocalImages = (data || [])
+        const lotsWithLocalImages = (await getPopulatedLots(data || []))
           .map(lot => {
             const rawImages = Array.isArray(lot.images) ? lot.images : [];
             const stringImages = rawImages.filter((img): img is string => typeof img === 'string');

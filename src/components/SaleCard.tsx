@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import Link from "@/components/SaleAwareLink";
 import { Button } from "@/components/ui/button";
 import { DEFAULT_SALE_LOCATION, COMPANY_INFO } from "@/lib/site-config";
 

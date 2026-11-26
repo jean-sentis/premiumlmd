@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate, Link, useLocation } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
+import Link from "@/components/SaleAwareLink";
 import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -12,6 +13,7 @@ import SaleStickyHeader from "@/components/SaleStickyHeader";
 import InlinePlanningSlot from "@/components/InlinePlanningSlot";
 import ImageViewer from "@/components/ImageViewer";
 import { normalizeInterencheresImageUrl } from "@/lib/interencheres-images";
+import { getPopulatedLots } from "@/lib/lot-content";
 import { getDisplayUrl, getThumbnailUrl, getFullscreenUrl } from "@/lib/image-utils";
 import { ChronoCountdown, ChronoBidButton, ChronoStickyBar } from "@/components/chrono";
 import { LotActionsPanel, LotActionIcons, SaleInfoAccordion, MemorizeButton } from "@/components/lot";
@@ -125,15 +127,16 @@ const LotDetail = () => {
         // Fetch adjacent lots for navigation
         const { data: allLots } = await supabase
           .from("interencheres_lots")
-          .select("id, lot_number")
+          .select("id, lot_number, description, images")
           .eq("sale_id", effectiveSaleId)
           .order("lot_number", { ascending: true });
 
         if (allLots) {
-          const currentIndex = allLots.findIndex((l) => l.id === lotId);
+          const populatedLots = await getPopulatedLots(allLots);
+          const currentIndex = populatedLots.findIndex((l) => l.id === lotId);
           setAdjacentLots({
-            prev: currentIndex > 0 ? allLots[currentIndex - 1].id : null,
-            next: currentIndex < allLots.length - 1 ? allLots[currentIndex + 1].id : null,
+            prev: currentIndex > 0 ? populatedLots[currentIndex - 1]?.id ?? null : null,
+            next: currentIndex >= 0 ? populatedLots[currentIndex + 1]?.id ?? null : null,
           });
         }
       }

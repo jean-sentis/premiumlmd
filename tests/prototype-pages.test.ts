@@ -1,5 +1,35 @@
 import { describe, expect, test } from "bun:test";
-import { COMPLETE_SPECIALTIES, isIncompleteSpecialty, isEmptySale, saleIdFromPath } from "../src/lib/prototype-pages";
+import { COMPLETE_SPECIALTIES, isIncompleteSpecialty, isEmptySale, saleIdFromPath, filterPopulatedLots, isPopulatedLot } from "../src/lib/prototype-pages";
+
+describe("Lots réellement renseignés", () => {
+  const visible = async (url: string) => url === "/photo.jpg";
+  test("Un numéro seul ou une photo sans descriptif ne compte pas", async () => {
+    for (const description of [null, "", "   ", "<p>&nbsp;</p>", "123"]) {
+      expect(await isPopulatedLot({ description, images: ["/photo.jpg"] }, visible)).toBe(false);
+    }
+  });
+  test("Un descriptif sans photo affichable ne compte pas", async () => {
+    for (const images of [null, [], [""], ["/photo-cassee.jpg"]]) {
+      expect(await isPopulatedLot({ description: "Vase en porcelaine.", images }, visible)).toBe(false);
+    }
+  });
+  test("Une photo affichable et un descriptif sont tous deux nécessaires", async () => {
+    expect(await isPopulatedLot({ description: "Vase en porcelaine.", images: ["/photo.jpg"] }, visible)).toBe(true);
+  });
+  test("Une photo de secours affichable suffit si le descriptif est renseigné", async () => {
+    expect(await isPopulatedLot({ description: "Vase en porcelaine.", images: ["/photo-cassee.jpg", "/photo.jpg"] }, visible)).toBe(true);
+  });
+  test("Cinq emplacements dont un seul renseigné comptent pour un lot et non cinq", async () => {
+    const lots = [
+      { id: 1, description: "Vase en porcelaine.", images: ["/photo.jpg"] },
+      { id: 2, description: null, images: ["/photo.jpg"] },
+      { id: 3, description: "Commode en noyer.", images: [] },
+      { id: 4, description: "Montre en acier.", images: ["/photo-cassee.jpg"] },
+      { id: 5, description: "", images: [] },
+    ];
+    expect((await filterPopulatedLots(lots, visible)).map((lot) => lot.id)).toEqual([1]);
+  });
+});
 
 describe("Pages incomplètes", () => {
   test("Seuls Art moderne et Vins et spiritueux sont accessibles dans le menu", () => {

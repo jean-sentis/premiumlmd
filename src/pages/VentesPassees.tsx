@@ -7,6 +7,7 @@ import { Calendar, Loader2, Trophy } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { supabase } from "@/integrations/supabase/client";
+import { useSaleLotCounts } from "@/hooks/use-sale-lot-counts";
 
 interface PastSale {
   id: string;
@@ -25,6 +26,7 @@ interface BelleEnchere {
 }
 
 const VentesPassees = () => {
+  const { data: saleLotCounts } = useSaleLotCounts();
   const [pastSales, setPastSales] = useState<PastSale[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -226,9 +228,9 @@ const VentesPassees = () => {
                                 }
                               </span>
                             </div>
-                            {sale.lot_count && (
+                            {(saleLotCounts?.get(sale.id) ?? 0) > 0 && (
                               <p className="text-sm text-muted-foreground">
-                                {sale.lot_count} lots
+                                {saleLotCounts?.get(sale.id)} lots
                               </p>
                             )}
                           </div>

@@ -1,6 +1,6 @@
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { Link } from 'react-router-dom';
+import Link from '@/components/SaleAwareLink';
 import {
   Accordion,
   AccordionContent,
