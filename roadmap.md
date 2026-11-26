@@ -1,4 +1,7 @@
 # Pages de démonstration
+- [ ] Restreindre les accès aux bordereaux, estimations, rendez-vous et images ; corriger les règles publiques d’écriture apparentées sans supprimer de données.
+- [ ] Préserver la réservation de créneaux sans exposer les coordonnées des autres clients et vérifier les droits client/administrateur.
+- [ ] Relancer le contrôle de sécurité, puis demander la republication sous sur-mesure-lmd.lovable.app.
 - [x] Vérifier l’accès public premiumlmd.lovable.app et les liens de ventes : adresse accessible ; version publiée antérieure aux derniers changements, republication nécessaire.
 - [x] Examiner les visuels des ventes en préparation et corriger leurs catégories : vitrine en Mobilier & Objets d’Art, céramiques en Art XXe ; filtres et ouverture vérifiés, 9 tests réussis.
 - [x] Laisser actives les ventes en préparation (date de vente non encore passée) même sans lot renseigné ; ne griser que les ventes passées sans lots.

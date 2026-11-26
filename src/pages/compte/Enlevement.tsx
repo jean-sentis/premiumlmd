@@ -156,9 +156,10 @@ const Enlevement = () => {
 
     // Fetch all booked slots to disable them
     const { data: allBookedData } = await supabase
-      .from('pickup_appointments')
-      .select('appointment_date, appointment_time')
-      .gte('appointment_date', format(new Date(), 'yyyy-MM-dd'));
+      .rpc('get_booked_pickup_slots', {
+        start_date: format(new Date(), 'yyyy-MM-dd'),
+        end_date: format(addDays(new Date(), 90), 'yyyy-MM-dd')
+      });
     
     if (allBookedData) {
       setBookedSlots(allBookedData.map(b => ({

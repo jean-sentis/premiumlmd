@@ -1115,11 +1115,36 @@ export type Database = {
         }
         Relationships: []
       }
+      user_roles: {
+        Row: {
+          id: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      get_booked_pickup_slots: {
+        Args: { end_date: string; start_date: string }
+        Returns: {
+          appointment_date: string
+          appointment_time: string
+        }[]
+      }
       is_admin: { Args: never; Returns: boolean }
     }
     Enums: {

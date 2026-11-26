@@ -1,0 +1,2 @@
+ALTER POLICY "Service role write for svv_events" ON public.svv_events TO service_role;
+CREATE POLICY "Admins can manage calendar events" ON public.svv_events FOR ALL TO authenticated USING (public.is_admin()) WITH CHECK (public.is_admin());

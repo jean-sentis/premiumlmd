@@ -1,4 +1,7 @@
 # Architecture rules
+- Use protected `public.user_roles` assignments for database admin checks; bootstrap only existing verified administrators, never infer future privileges from editable profile data.
+- Expose pickup availability only through `get_booked_pickup_slots`, returning dates and times for a bounded interval; full appointments remain owner/admin-only.
+- Restrict service-write policies explicitly to `service_role`, with separate admin policies, so public catalogue reading never grants public writes.
 - Keep upcoming-sale specialty matching in `upcoming-sale-specialties.ts` with focused tests so category filters remain verifiable independently of rendering.
 - Keep prototype-page classification and sale-link target detection in `src/lib/prototype-pages.ts`, shared by navigation and its tests, so incomplete-page detection stays independently verifiable.
 - Use `SaleAwareLink` for public sale navigation: it renders known-empty past sales as gray, disabled anchors without href, using populated-lot counts and the preparation set cached by `useSaleLotCounts`, never advertised totals or raw row counts; a sale whose auction date has not passed stays reachable even with no populated lot. Unknown counts remain distinct from empty sales. Specialty menu availability uses the shared classification without navigation targets for unavailable items; no prototype popups are shown.

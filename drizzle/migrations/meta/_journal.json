@@ -1,0 +1,20 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1795701257431,
+      "tag": "0000_secure_client_records_and_public_catalogue",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1795701298026,
+      "tag": "0001_restrict_event_service_writes",
+      "breakpoints": true
+    }
+  ]
+}
