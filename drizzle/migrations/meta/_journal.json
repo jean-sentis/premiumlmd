@@ -15,6 +15,13 @@
       "when": 1795701298026,
       "tag": "0001_restrict_event_service_writes",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1795701496291,
+      "tag": "0002_preserve_estimation_admin_management",
+      "breakpoints": true
     }
   ]
 }

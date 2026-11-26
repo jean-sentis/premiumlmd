@@ -75,6 +75,7 @@ const Enlevement = () => {
   const [purchasedLots, setPurchasedLots] = useState<PurchasedLot[]>([]);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [bookedSlots, setBookedSlots] = useState<{ date: string; time: string }[]>([]);
+  const [checkingSlots, setCheckingSlots] = useState(false);
   
   // Form state
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
@@ -89,6 +90,27 @@ const Enlevement = () => {
       setLoading(false);
     }
   }, [user]);
+
+  useEffect(() => {
+    if (!user || !selectedDate) return;
+    let active = true;
+    const day = format(selectedDate, 'yyyy-MM-dd');
+    setCheckingSlots(true);
+    supabase.rpc('get_booked_pickup_slots', { start_date: day, end_date: day })
+      .then(({ data, error }) => {
+        if (!active) return;
+        if (error) {
+          toast({ title: "Créneaux indisponibles", description: "Impossible de vérifier les horaires. Veuillez sélectionner à nouveau la date.", variant: "destructive" });
+          return;
+        }
+        setBookedSlots(previous => [
+          ...previous.filter(slot => slot.date !== day),
+          ...(data || []).map(slot => ({ date: slot.appointment_date, time: slot.appointment_time }))
+        ]);
+        setCheckingSlots(false);
+      });
+    return () => { active = false; };
+  }, [user, selectedDate, toast]);
 
   const fetchData = async () => {
     if (!user) return;
@@ -181,7 +203,7 @@ const Enlevement = () => {
   };
 
   const handleSubmit = async () => {
-    if (!user || !selectedDate || !selectedTime) {
+    if (!user || !selectedDate || !selectedTime || checkingSlots) {
       toast({
         title: "Informations manquantes",
         description: "Veuillez sélectionner une date et un créneau horaire",
@@ -413,7 +435,7 @@ const Enlevement = () => {
                     <button
                       key={time}
                       onClick={() => !isBooked && setSelectedTime(time)}
-                      disabled={isBooked}
+                      disabled={isBooked || checkingSlots}
                       className={cn(
                         "py-2 px-3 text-sm rounded-md border transition-colors",
                         isBooked && "bg-muted text-muted-foreground cursor-not-allowed line-through",
@@ -449,7 +471,7 @@ const Enlevement = () => {
           {/* Bouton de soumission */}
           <Button
             onClick={handleSubmit}
-            disabled={submitting || !selectedDate || !selectedTime}
+            disabled={submitting || checkingSlots || !selectedDate || !selectedTime}
             className="w-full bg-brand-gold hover:bg-brand-gold/90 text-white h-12"
           >
             {submitting ? 'Réservation en cours...' : 'Confirmer le rendez-vous'}

@@ -1,6 +1,6 @@
 # Pages de démonstration
-- [ ] Restreindre les accès aux bordereaux, estimations, rendez-vous et images ; corriger les règles publiques d’écriture apparentées sans supprimer de données.
-- [ ] Préserver la réservation de créneaux sans exposer les coordonnées des autres clients et vérifier les droits client/administrateur.
+- [x] Restreindre les accès aux bordereaux, estimations, rendez-vous et images ; corriger les règles publiques d’écriture apparentées sans supprimer de données. Aucun risque critique au contrôle renouvelé ; restent deux avertissements sur les mots de passe compromis et les envois anonymes de photos.
+- [x] Préserver la réservation de créneaux sans exposer les coordonnées des autres clients : 38 tests réussis, dont 13 contrôles réels de droits ; rendez-vous créé depuis le formulaire et relu après rechargement ; toutes les données temporaires supprimées.
 - [ ] Relancer le contrôle de sécurité, puis demander la republication sous sur-mesure-lmd.lovable.app.
 - [x] Vérifier l’accès public premiumlmd.lovable.app et les liens de ventes : adresse accessible ; version publiée antérieure aux derniers changements, republication nécessaire.
 - [x] Examiner les visuels des ventes en préparation et corriger leurs catégories : vitrine en Mobilier & Objets d’Art, céramiques en Art XXe ; filtres et ouverture vérifiés, 9 tests réussis.
