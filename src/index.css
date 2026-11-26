@@ -2,6 +2,34 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  :root {
+    --prototype-background: 0 0% 34%;
+    --prototype-foreground: 0 0% 100%;
+    --prototype-border: 0 0% 23%;
+  }
+  .dark {
+    --prototype-background: 0 0% 34%;
+    --prototype-foreground: 0 0% 100%;
+    --prototype-border: 0 0% 65%;
+  }
+}
+
+@layer components {
+  .prototype-marker {
+    display: block;
+    padding: 0.375rem 0.5rem;
+    border-left: 3px solid hsl(var(--prototype-border));
+    background: hsl(var(--prototype-background));
+    color: hsl(var(--prototype-foreground));
+    font-size: 0.6875rem;
+    font-weight: 600;
+    line-height: 1.4;
+    letter-spacing: 0;
+    text-align: center;
+  }
+}
+
 /* ============================================
    LOCAL FONTS - 100% autonome, pas de dépendance externe
    Inter (sans-serif) & Playfair Display (serif)

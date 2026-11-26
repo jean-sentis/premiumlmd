@@ -6,6 +6,7 @@ import { fr } from "date-fns/locale";
 import { Calendar, Loader2, Search, X, MoreHorizontal, Archive } from "lucide-react";
 import TimelineLayout from "@/components/TimelineLayout";
 import Footer from "@/components/Footer";
+import SaleAvailabilityBadge from "@/components/SaleAvailabilityBadge";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -187,6 +188,7 @@ const SaleCard = ({
       
       {/* Titre compact */}
       <div className="p-2 bg-card">
+        <SaleAvailabilityBadge saleId={sale.id} />
         <h4 className="font-serif text-[10px] md:text-[11px] font-medium text-center tracking-wide line-clamp-2 uppercase leading-tight">
           {sale.title}
         </h4>

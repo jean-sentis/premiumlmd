@@ -1,0 +1,3 @@
+# Architecture rules
+- Keep prototype-page classification and sale recommendation filtering in `src/lib/prototype-pages.ts`, shared by the notice and its tests, so incomplete-page detection stays independently verifiable.
+- Use the shared `PrototypePageNotice` dialog for incomplete specialty and empty sale pages; mark empty sale cards with `SaleAvailabilityBadge`, using cached relational lot counts rather than advertised totals.

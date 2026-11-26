@@ -6,6 +6,7 @@ import { fr } from "date-fns/locale";
 import { Calendar, Loader2, Plus, Monitor, Users, Clock, ChevronDown, Gavel } from "lucide-react";
 import TimelineLayout from "@/components/TimelineLayout";
 import Footer from "@/components/Footer";
+import SaleAvailabilityBadge from "@/components/SaleAvailabilityBadge";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { getDemoNow } from "@/lib/site-config";
@@ -166,6 +167,7 @@ const SaleCard = ({ sale, showCountdown = false }: { sale: Sale; showCountdown?:
         {showCountdown && sale.sale_date && <CountdownOverlay saleDate={sale.sale_date} />}
       </div>
       <div className="p-3 bg-card">
+        <SaleAvailabilityBadge saleId={sale.id} />
         <h3 className="font-serif text-[11px] md:text-xs font-medium text-center tracking-wide mb-1 line-clamp-2 uppercase">
           {sale.title.replace(/^vente\s*/i, "")}
         </h3>

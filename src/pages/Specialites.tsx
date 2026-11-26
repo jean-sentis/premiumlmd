@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { isIncompleteSpecialty } from "@/lib/prototype-pages";
 import { ArrowRight } from "lucide-react";
 
 const specialites = [
@@ -90,6 +91,7 @@ const Specialites = () => {
                   />
                 </div>
                 <div className="p-6">
+                  {isIncompleteSpecialty(spec.id) && <span className="prototype-marker mb-3">Maquette · Contenu incomplet</span>}
                   <h2 className="text-xl font-serif text-[hsl(var(--brand-primary))] mb-1 group-hover:text-[hsl(var(--brand-blue-600))] transition-colors">
                     {spec.title}
                   </h2>
